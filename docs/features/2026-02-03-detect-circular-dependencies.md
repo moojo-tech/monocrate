@@ -46,31 +46,22 @@ Cycle detection happens in `computePackageClosure()`, immediately after starting
 The error message clearly shows the packages forming the cycle:
 
 ```
-Circular dependency detected in runtime dependencies:
+Circular dependency detected:
   @myorg/app → @myorg/lib → @myorg/utils → @myorg/app
-
-Monocrate cannot assemble packages with circular dependencies.
-```
-
-For cycles detected in devDependencies:
-
-```
-Circular dependency detected in compile-time dependencies:
-  @myorg/app → @myorg/test-utils → @myorg/app
 
 Monocrate cannot assemble packages with circular dependencies.
 ```
 
 ### Which Traversals to Check
 
-Both traversal phases should check for cycles:
+Only the **runtime traversal** needs cycle detection:
 
-| Phase | Includes | Why Check |
-|-------|----------|-----------|
-| Runtime (`runtimeMembers`) | `dependencies` only | These are the packages that ship to consumers |
-| Compile-time (`compiletimeMembers`) | `dependencies` + `devDependencies` | Build tooling must also be acyclic |
+| Phase | Includes | Check for Cycles? |
+|-------|----------|-------------------|
+| Runtime (`runtimeMembers`) | `dependencies` only | **Yes** - these packages ship to consumers |
+| Compile-time (`compiletimeMembers`) | `dependencies` + `devDependencies` | No - devDeps are stripped from output |
 
-A cycle in either phase is an error.
+A cycle in devDependencies doesn't affect the published package. If someone has a devDependency cycle in their monorepo, that's a local tooling concern outside monocrate's scope.
 
 ---
 
@@ -159,14 +150,14 @@ expect(() => computePackageClosure('@test/a', explorer))
   .toThrow('@test/a → @test/a')
 ```
 
-### Cycle in devDependencies only
+### Cycle in devDependencies only (allowed)
 
 ```typescript
 // packages/a devDepends on packages/b
 // packages/b depends on packages/a
-// Runtime traversal succeeds, compile-time traversal fails
+// No cycle in runtime dependencies - should succeed
 expect(() => computePackageClosure('@test/a', explorer))
-  .toThrow('compile-time dependencies')
+  .not.toThrow()
 ```
 
 ### Diamond dependency (no cycle)
