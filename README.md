@@ -28,6 +28,8 @@ produces a standard npm package that looks like you hand-crafted it for publicat
 
 ### Quickstart
 
+> **⚠️ ESM only** — monocrate requires ES modules and rejects CommonJS packages. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html) so that you can use monocrate.
+
 ```bash
 # Install
 pnpm add --save-dev monocrate
@@ -43,8 +45,6 @@ npx monocrate packages/my-awesome-package --bump patch
 # Or use --dry-run to do everything short of publishing
 npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
 ```
-
-> **⚠️ ESM only** — monocrate requires ES modules and rejects CommonJS packages. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html) so that you can use monocrate.
 
 ### What Gets Published
 
