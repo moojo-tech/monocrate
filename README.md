@@ -216,13 +216,13 @@ A few constraints to be aware of:
 monocrate <packages...> [options]
 ```
 
-#### Arguments
+**Arguments**
 
 | Argument | Description |
 |----------|-------------|
 | `packages` | One or more package directories to publish (required) |
 
-#### Options
+**Options**
 
 | Option | Alias | Type | Default | Description |
 |--------|-------|------|---------|-------------|
@@ -239,11 +239,11 @@ monocrate <packages...> [options]
 
 ### API
 
-#### `monocrate(options): Promise<MonocrateResult>`
+**`monocrate(options): Promise<MonocrateResult>`**
 
 Assembles one or more monorepo packages and their in-repo dependencies, and optionally publishes to npm.
 
-#### `MonocrateOptions`
+**`MonocrateOptions`**
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
@@ -257,7 +257,7 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 | `mirrorTo` | `string` | No | — | Mirror source files to this directory. |
 | `npmrcPath` | `string` | No | — | Path to `.npmrc` file for npm authentication. |
 
-#### `MonocrateResult`
+**`MonocrateResult`**
 
 | Property | Type | Description |
 |----------|------|-------------|
