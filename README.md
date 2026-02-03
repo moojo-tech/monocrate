@@ -82,37 +82,29 @@ mangled version of its package name. This avoids name collisions regardless of w
 
 ### Version Resolution
 
-`monocrate` uses **registry-based versioning**: it queries the registry for the latest published version and bumps it
-according to your `--bump` flag (`patch`, `minor`, `major`). Your source `package.json` is never modified.
+The `--bump` flag determines the published version. There are three approaches:
 
-This means you don't need to maintain version numbers in your source code. The registry is the versioning source of
-truth, and `monocrate` computes the next version at publish time. Of course, if an exact version is specified
-(`--bump 1.7.9`) it is used as-is.
+**Registry-based** (`patch`, `minor`, `major`) queries npm for the latest published version and applies the bump. This is the default—the registry is the source of truth. For first-time publishing, monocrate treats the current version as `0.0.0`—a patch bump gives `0.0.1`, minor gives `0.1.0`, major gives `1.0.0`.
 
-For first-time publishing (when the package doesn't exist in the registry yet), `monocrate` treats the current version
-as `0.0.0` and applies the bump—resulting in `0.0.1` for patch, `0.1.0` for minor (the default), or `1.0.0` for major.
+**Explicit** (`1.8.9`) uses the specified version as-is.
 
-If the version to publish to is already set in the package's `package.json` file (via `npm version`, Changesets, Lerna,
-etc.), you can use `--bump package` to read the version directly from there:
+**Package-based** (`package`) reads the version from your `package.json`, useful when you manage versions with Changesets, Lerna, or `npm version`.
 
-```bash
-npm version minor --no-git-tag-version   # Sets version in package.json
-npx monocrate . --bump package           # Uses that version
-```
+We find registry-based the most freeing—no version bookkeeping in source control, just decide the bump level and go. But if your workflow already manages versions in `package.json`, package-based fits right in. When publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
-## Examples
+In all cases, your source `package.json` is never modified—the resolved version only appears in the assembled output.
 
 ```bash
-# --bump defaults to "minor", so these two are equivalent:
-npx monocrate packages/my-awesome-package --bump minor
-npx monocrate packages/my-awesome-package
+# Registry-based: query npm, bump from latest (default is minor)
+npx monocrate packages/my-awesome-package              # bumps minor
+npx monocrate packages/my-awesome-package --bump patch
 
-# Explicit version
+# Explicit: use exact version
 npx monocrate packages/my-awesome-package --bump 2.3.0
 
-# Package location is resolved relative to CWD
-cd /path/to/my-monorepo/packages
-npx monocrate my-awesome-package --bump 2.3.0
+# Package-based: read from package.json
+npm version minor --no-git-tag-version
+npx monocrate packages/my-awesome-package --bump package
 ```
 
 ## Programmatic API
