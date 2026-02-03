@@ -18,7 +18,7 @@ Now you want to publish it.
 
 ## The Solution
 
-[monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets this right. It produces a single 
+[monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets monorepos. It produces a single 
 publishable directory containing everything needed from your package and its in-repo dependencies. Essentially, it 
 produces a standard npm package that looks like you hand-crafted it for publication.
 
