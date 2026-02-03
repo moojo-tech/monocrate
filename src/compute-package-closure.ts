@@ -33,7 +33,10 @@ function formatConflictError(conflicts: Partial<Record<string, string[]>>): stri
 }
 
 function formatCycleError(path: Set<string>, cycleTo: string): string {
-  const cyclePath = [...path, cycleTo].join(' → ')
+  const pathArray = [...path]
+  const cycleStartIndex = pathArray.indexOf(cycleTo)
+  const cycleOnly = pathArray.slice(cycleStartIndex)
+  const cyclePath = [...cycleOnly, cycleTo].join(' → ')
   return `Circular dependency detected:\n  ${cyclePath}\n\nMonocrate cannot assemble packages with circular dependencies.`
 }
 

@@ -22,7 +22,11 @@ describe('circular dependency detection', () => {
         publish: false,
         bump: '1.0.0',
       })
-    ).rejects.toThrow('@test/a → @test/b → @test/a')
+    ).rejects.toThrow(
+      'Circular dependency detected:\n' +
+        '  @test/a → @test/b → @test/a\n\n' +
+        'Monocrate cannot assemble packages with circular dependencies.'
+    )
   })
 
   it('detects indirect cycle (A → B → C → A)', async () => {
@@ -43,7 +47,11 @@ describe('circular dependency detection', () => {
         publish: false,
         bump: '1.0.0',
       })
-    ).rejects.toThrow('@test/a → @test/b → @test/c → @test/a')
+    ).rejects.toThrow(
+      'Circular dependency detected:\n' +
+        '  @test/a → @test/b → @test/c → @test/a\n\n' +
+        'Monocrate cannot assemble packages with circular dependencies.'
+    )
   })
 
   it('detects self-dependency (A → A)', async () => {
@@ -60,7 +68,11 @@ describe('circular dependency detection', () => {
         publish: false,
         bump: '1.0.0',
       })
-    ).rejects.toThrow('@test/a → @test/a')
+    ).rejects.toThrow(
+      'Circular dependency detected:\n' +
+        '  @test/a → @test/a\n\n' +
+        'Monocrate cannot assemble packages with circular dependencies.'
+    )
   })
 
   it('allows cycle in devDependencies only', async () => {
@@ -101,13 +113,18 @@ describe('circular dependency detection', () => {
     expect(output['package.json']).toHaveProperty('name', '@test/a')
   })
 
-  it('includes helpful error message', async () => {
+  it('reports only the cycle, not the full path (A → B → C → D → C)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
+      // Traversal: a → b → c → d → c (cycle is c → d → c, not including a and b)
       'packages/a/package.json': pj('@test/a', { dependencies: { '@test/b': 'workspace:*' } }),
       'packages/a/dist/index.js': `import { b } from '@test/b'; export const a = b;`,
-      'packages/b/package.json': pj('@test/b', { dependencies: { '@test/a': 'workspace:*' } }),
-      'packages/b/dist/index.js': `import { a } from '@test/a'; export const b = a;`,
+      'packages/b/package.json': pj('@test/b', { dependencies: { '@test/c': 'workspace:*' } }),
+      'packages/b/dist/index.js': `import { c } from '@test/c'; export const b = c;`,
+      'packages/c/package.json': pj('@test/c', { dependencies: { '@test/d': 'workspace:*' } }),
+      'packages/c/dist/index.js': `import { d } from '@test/d'; export const c = d;`,
+      'packages/d/package.json': pj('@test/d', { dependencies: { '@test/c': 'workspace:*' } }),
+      'packages/d/dist/index.js': `import { c } from '@test/c'; export const d = c;`,
     })
 
     await expect(
@@ -117,6 +134,10 @@ describe('circular dependency detection', () => {
         publish: false,
         bump: '1.0.0',
       })
-    ).rejects.toThrow('Monocrate cannot assemble packages with circular dependencies')
+    ).rejects.toThrow(
+      'Circular dependency detected:\n' +
+        '  @test/c → @test/d → @test/c\n\n' +
+        'Monocrate cannot assemble packages with circular dependencies.'
+    )
   })
 })
