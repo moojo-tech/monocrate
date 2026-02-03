@@ -1,6 +1,6 @@
 # Circular Dependency Detection
 
-## Status: Proposed
+## Status: Implemented
 
 Detect circular dependencies in the in-repo package graph and fail early with a clear error message showing the cycle.
 
