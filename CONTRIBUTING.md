@@ -11,6 +11,7 @@ Thank you for your interest in contributing to Monocrate! We welcome contributio
 - [Testing](#testing)
 - [Commit Message Format](#commit-message-format)
 - [Pull Request Process](#pull-request-process)
+- [Troubleshooting](#troubleshooting)
 - [Getting Help](#getting-help)
 
 ## Code of Conduct
@@ -33,7 +34,7 @@ There are many ways to contribute to Monocrate:
 ### Prerequisites
 
 - Node.js >= 20.0.0
-- npm (comes with Node.js)
+- pnpm (install via `corepack enable` or `npm install -g pnpm`)
 - Git
 
 ### Getting Started
@@ -53,28 +54,30 @@ There are many ways to contribute to Monocrate:
 
 4. **Install dependencies**:
    ```bash
-   npm install
+   pnpm install
    ```
 
 5. **Verify your setup**:
    ```bash
-   npm run build
-   npm test
+   pnpm build
+   pnpm test
    ```
+
+6. **Read CLAUDE.md** for architecture overview and coding patterns used in this project
 
 ### Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run build` | Compile TypeScript to JavaScript |
-| `npm test` | Run tests once |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run test:coverage` | Run tests with coverage report |
-| `npm run lint` | Check code for linting errors |
-| `npm run lint:fix` | Automatically fix linting errors |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check if code is formatted |
-| `npm run typecheck` | Run TypeScript type checking |
+| `pnpm build` | Compile TypeScript to JavaScript |
+| `pnpm test` | Run tests once |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
+| `pnpm lint` | Check code for linting errors |
+| `pnpm lint:fix` | Automatically fix linting errors |
+| `pnpm format` | Format code with Prettier |
+| `pnpm format:check` | Check if code is formatted |
+| `pnpm typecheck` | Run TypeScript type checking |
 
 ## Code Style
 
@@ -92,8 +95,8 @@ Our ESLint configuration enforces:
 
 Run the linter:
 ```bash
-npm run lint
-npm run lint:fix  # Auto-fix issues
+pnpm lint
+pnpm lint:fix  # Auto-fix issues
 ```
 
 ### Prettier
@@ -113,15 +116,15 @@ Our Prettier configuration:
 
 Format your code:
 ```bash
-npm run format
-npm run format:check  # Check without modifying
+pnpm format
+pnpm format:check  # Check without modifying
 ```
 
 ### TypeScript
 
 We use strict TypeScript settings. Key requirements:
 
-- All code must pass type checking with `npm run typecheck`
+- All code must pass type checking with `pnpm typecheck`
 - Use type imports: `import type { Foo } from './foo'`
 - Avoid `any` - use `unknown` with type guards if needed
 - All function parameters and return types should be typed
@@ -133,9 +136,9 @@ We use [Vitest](https://vitest.dev/) for testing.
 ### Running Tests
 
 ```bash
-npm test              # Run all tests once
-npm run test:watch    # Run tests in watch mode (recommended during development)
-npm run test:coverage # Run tests with coverage report
+pnpm test              # Run all tests once
+pnpm test:watch        # Run tests in watch mode (recommended during development)
+pnpm test:coverage     # Run tests with coverage report
 ```
 
 ### Writing Tests
@@ -232,10 +235,10 @@ Use a scope to provide additional context:
 
 4. **Run all checks locally**:
    ```bash
-   npm run lint
-   npm run typecheck
-   npm test
-   npm run build
+   pnpm lint
+   pnpm typecheck
+   pnpm test
+   pnpm build
    ```
 
 5. **Commit your changes** using conventional commit format
@@ -264,6 +267,33 @@ Your pull request should:
 2. Address any requested changes
 3. Once approved, a maintainer will merge your PR
 4. Your contribution will be included in the next release
+
+## Troubleshooting
+
+### pnpm not found
+
+If you see "pnpm: command not found", install pnpm:
+
+```bash
+corepack enable
+# or
+npm install -g pnpm
+```
+
+### Module not found errors
+
+pnpm uses a stricter `node_modules` structure than npm. If you see "module not found" errors for a package you're using but didn't declare, add it explicitly:
+
+```bash
+pnpm add <package-name>
+```
+
+### IDE not finding types
+
+Some editors cache `node_modules` paths. Try:
+
+1. Restart your editor/IDE
+2. In VS Code: `Cmd/Ctrl + Shift + P` → "TypeScript: Restart TS Server"
 
 ## Getting Help
 
