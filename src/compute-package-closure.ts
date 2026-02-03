@@ -32,20 +32,33 @@ function formatConflictError(conflicts: Partial<Record<string, string[]>>): stri
   return lines.join('\n')
 }
 
+function formatCycleError(path: Set<string>, cycleTo: string): string {
+  const cyclePath = [...path, cycleTo].join(' → ')
+  return `Circular dependency detected:\n  ${cyclePath}\n\nMonocrate cannot assemble packages with circular dependencies.`
+}
+
 export function computePackageClosure(pkgName: string, repoExplorer: RepoExplorer): PackageClosure {
   const subjectPackage = repoExplorer.getPackage(pkgName)
 
   function traverse(
     root: MonorepoPackage,
     includeDevDeps: boolean,
+    detectCycles: boolean,
     thirdPartyVersions?: Map<string, VersionInfo[]>
   ): Map<string, MonorepoPackage> {
     const visited = new Map<string, MonorepoPackage>()
+    const path = new Set<string>()
 
     function visit(pkg: MonorepoPackage): void {
+      if (detectCycles && path.has(pkg.name)) {
+        throw new Error(formatCycleError(path, pkg.name))
+      }
+
       if (visited.has(pkg.name)) {
         return
       }
+
+      path.add(pkg.name)
       visited.set(pkg.name, pkg)
 
       const deps = includeDevDeps
@@ -66,6 +79,8 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
           thirdPartyVersions.set(depName, existing)
         }
       }
+
+      path.delete(pkg.name)
     }
 
     visit(root)
@@ -73,7 +88,7 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
   }
 
   const thirdPartyVersions = new Map<string, VersionInfo[]>()
-  const runtimeVisited = traverse(subjectPackage, false, thirdPartyVersions)
+  const runtimeVisited = traverse(subjectPackage, false, true, thirdPartyVersions)
 
   const conflicts = detectVersionConflicts(thirdPartyVersions)
   if (Object.keys(conflicts).length > 0) {
@@ -89,7 +104,7 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
     allThirdPartyDeps[depName] = first.version
   }
 
-  const compiletimeVisited = traverse(subjectPackage, true)
+  const compiletimeVisited = traverse(subjectPackage, true, false)
 
   return {
     subjectPackageName: subjectPackage.name,
