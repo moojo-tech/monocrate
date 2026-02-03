@@ -90,7 +90,7 @@ The `--bump` flag determines the published version. There are three approaches:
 
 **Package-based** (`package`) reads the version from your `package.json`, useful when you manage versions with Changesets, Lerna, or `npm version`.
 
-We find registry-based the most freeing—just decide the bump level at publish time and go. But if your workflow already manages versions in `package.json`, package-based fits right in. When publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
+We find registry-based the most freeing—just decide the bump level at publish time and go. But if your workflow already manages versions in `package.json`, package-based fits right in. Separately, when publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
 In all cases, your source `package.json` is never modified—the resolved version only appears in the assembled output.
 
