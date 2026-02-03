@@ -13,7 +13,7 @@ Consider `@acme/my-awesome-package`, which imports `@acme/internal-utils`, a wor
 Now you want to publish it.
 
 - **Naive approach**: `npm publish` produces an uninstallable package - `@acme/internal-utils` was never published.
-- **Lerna approach**: Publish every internal dependency. Now your _internal_ `@acme/internal-utils` is a permanent public API - rename a function there, break consumers you never intended to have.
+- **Lerna approach**: Publishes every internal dependency. Now your _internal_ `@acme/internal-utils` is a permanent public API - rename a function there, break consumers you never intended to have.
 - **Bundler approach**: Tools like esbuild produce a self-contained blob, but types and sourcemaps break, and consumers can't tree-shake.
 
 ## The Solution
