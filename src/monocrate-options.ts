@@ -71,4 +71,13 @@ export interface MonocrateOptions {
    * and you want to preserve meaningful versioning per package.
    */
   max?: boolean
+
+  /**
+   * **WARNING: This option exists ONLY for testing purposes.** In production use, always
+   * leave this undefined to get a unique directory name. Setting this to a predictable
+   * value in production could cause name collisions with existing directories in your package.
+   *
+   * Suffix appended to the deps directory name to ensure uniqueness.
+   */
+  uniquenessSuffix?: string
 }
