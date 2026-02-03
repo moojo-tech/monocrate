@@ -8,7 +8,7 @@ import { AbsolutePath, RelativePath } from './paths.js'
 import type { PackageJson } from './package-json.js'
 import type { NpmClient } from './npm-client.js'
 import { manglePackageName } from './name-mangler.js'
-import { computeDepsDir } from './deps-dir.js'
+import { createDepsDir } from './deps-dir.js'
 
 /**
  * Resolves an import specifier to a package-relative path using Node.js resolution semantics.
@@ -72,16 +72,9 @@ export async function collectPackageLocations(
   closure: PackageClosure,
   outputDir: AbsolutePath
 ): Promise<CollectPackageLocationsResult> {
-  // Get subject package's files first to check for deps directory collision
-  const subjectPkg = closure.runtimeMembers.find((dep) => dep.name === closure.subjectPackageName)
-  if (!subjectPkg) {
-    throw new Error(`Subject package "${closure.subjectPackageName}" not found in runtime members`)
-  }
-  const subjectFiles = await getFilesToPack(npmClient, subjectPkg.fromDir)
-
-  // Ensure output directory exists before computing deps dir (needed for mkdtempSync if collision)
+  // Create unique deps directory for in-repo dependencies
   fs.mkdirSync(outputDir, { recursive: true })
-  const depsDir = computeDepsDir(subjectFiles, outputDir)
+  const depsDir = createDepsDir(outputDir)
 
   // TODO(imaman): use promises()
   const locations = await Promise.all(
