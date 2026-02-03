@@ -45,7 +45,7 @@ describe('deps directory collision handling', () => {
     expect(output['deps/internal/helper.js']).toContain("VERSION = '1.0'")
 
     // Find the new deps directory (should be deps-<random>)
-    const depsKeys = Object.keys(output).filter((k) => /^deps-[a-f0-9]{8}\//.exec(k))
+    const depsKeys = Object.keys(output).filter((k) => /^deps-[a-zA-Z0-9]+\//.exec(k))
     expect(depsKeys.length).toBeGreaterThan(0)
 
     // Verify the in-repo dependency was placed in the unique deps directory
@@ -54,7 +54,7 @@ describe('deps directory collision handling', () => {
 
     // Verify imports are rewritten to the unique deps path
     const importContent = output['dist/index.js'] as string
-    expect(importContent).toMatch(/\.\/deps-[a-f0-9]{8}\/__test__lib\//)
+    expect(importContent).toMatch(/\.\/deps-[a-zA-Z0-9]+\/__test__lib\//)
   })
 
   it('adds unique deps directory to files array in package.json when collision exists', async () => {
@@ -82,7 +82,7 @@ describe('deps directory collision handling', () => {
     expect(packageJson.files).toContain('dist')
 
     // Should have a deps-<random> entry (and original "deps" still present)
-    const uniqueDepsEntry = packageJson.files.find((f) => /^deps-[a-f0-9]{8}$/.exec(f))
+    const uniqueDepsEntry = packageJson.files.find((f) => /^deps-[a-zA-Z0-9]+$/.exec(f))
     expect(uniqueDepsEntry).toBeDefined()
 
     // The original "deps" should still be in the files array since that's the subject's own directory

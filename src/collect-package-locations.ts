@@ -78,7 +78,10 @@ export async function collectPackageLocations(
     throw new Error(`Subject package "${closure.subjectPackageName}" not found in runtime members`)
   }
   const subjectFiles = await getFilesToPack(npmClient, subjectPkg.fromDir)
-  const depsDir = computeDepsDir(subjectFiles)
+
+  // Ensure output directory exists before computing deps dir (needed for mkdtempSync if collision)
+  fs.mkdirSync(outputDir, { recursive: true })
+  const depsDir = computeDepsDir(subjectFiles, outputDir)
 
   // TODO(imaman): use promises()
   const locations = await Promise.all(
