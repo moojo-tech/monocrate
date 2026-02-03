@@ -8,7 +8,7 @@ import type { AbsolutePath } from './paths.js'
 export function rewritePackageJson(closure: PackageClosure, version: string | undefined, outputDir: AbsolutePath) {
   const subject = closure.runtimeMembers.find((at) => at.name === closure.subjectPackageName)
   if (!subject) {
-    throw new Error(`Incosistency in subject package name: "${closure.subjectPackageName}"`)
+    throw new Error(`Inconsistency in subject package name: "${closure.subjectPackageName}"`)
   }
 
   const { dependencies: _1, devDependencies: _2, monocrate: _3, ...rest } = subject.packageJson
