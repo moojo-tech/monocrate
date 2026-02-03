@@ -1,7 +1,7 @@
 # monocrate
 
 [![npm version](https://img.shields.io/npm/v/monocrate.svg)](https://www.npmjs.com/package/monocrate)
-[![CI](https://github.com/imaman/monocrate/actions/workflows/ci.yml/badge.svg)](https://github.com/imaman/monocrate/actions/workflows/ci.yml)
+[![CI](https://github.com/moojo-tech/monocrate/actions/workflows/ci.yml/badge.svg)](https://github.com/moojo-tech/monocrate/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 *Monorepos? Great. Publishing from a monorepo? Comically hard.*
@@ -30,9 +30,6 @@ produces a standard npm package that looks like you hand-crafted it for publicat
 - 🔒 Internal packages remain unpublished
 - ✅ Tree-shaking, sourcemaps, and types all work
 
-> [!NOTE]
-> **ESM only** — monocrate supports ES modules exclusively. CommonJS packages (`.cjs` files or `.js` without `"type": "module"`) are not supported. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
-
 ### Quickstart
 
 ```bash
@@ -50,6 +47,8 @@ npx monocrate packages/my-awesome-package --bump patch
 # Or use --dry-run to do everything short of publishing
 npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
 ```
+
+> **⚠️ ESM only** — monocrate requires ES modules and rejects CommonJS packages. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html) so that you can use monocrate.
 
 ### What Gets Published
 
