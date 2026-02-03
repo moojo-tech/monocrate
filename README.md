@@ -8,17 +8,11 @@
 
 ## The Problem
 
-Consider `@acme/my-awesome-package`, which imports `@acme/internal-utils`, a workspace dependency. The naive 
-approach - running `npm publish` - produces an uninstallable package because `@acme/internal-utils` was never published
-to npm.
+Consider `@acme/my-awesome-package`, which imports `@acme/internal-utils`, a workspace dependency.
 
-The standard solution is the "publish everything" approach. Tools like [Lerna](https://lerna.js.org/) will publish every
-internal dependency as its own public package. Installation now works, but `@acme/internal-utils` just became a 
-permanently published API you're committed to maintaining. _Your internal refactoring freedom is gone._
-
-You can throw a bundler at the problem: tools like [esbuild](https://esbuild.github.io/) or 
-[Rollup](https://rollupjs.org/) produce a self-contained file from a given entrypoint. But type declarations and 
-sourcemaps often break, and consumers can't tree-shake a pre-bundled blob.
+- **Naive approach**: `npm publish` produces an uninstallable package - `@acme/internal-utils` was never published.
+- **Lerna approach**: Publish every internal dependency. Now your _internal_ `@acme/internal-utils` is a permanent public API - rename a function there, break consumers you never intended to have.
+- **Bundler approach**: Tools like esbuild produce a self-contained blob, but types and sourcemaps break, and consumers can't tree-shake.
 
 ## The Solution
 
