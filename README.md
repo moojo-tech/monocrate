@@ -48,7 +48,7 @@ npx monocrate packages/my-awesome-package --bump patch
 npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
 ```
 
-> **⚠️ ESM only** — monocrate requires ES modules and rejects CommonJS packages (`.cjs` files or `.js` without `"type": "module"`). If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
+> **⚠️ ESM only** — monocrate requires ES modules and rejects CommonJS packages (`.cjs` files or `.js` without `"type": "module"`). If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html) to use monocrate.
 
 ### What Gets Published
 
