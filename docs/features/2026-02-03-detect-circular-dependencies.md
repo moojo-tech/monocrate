@@ -91,12 +91,7 @@ function visit(pkg):
     path.remove(pkg)  // Backtrack
 ```
 
-To report the cycle path, we also need to track the traversal order. Options:
-
-1. **Array as path** - Use `path: string[]` instead of `Set`. On cycle, slice from the first occurrence to get the cycle.
-2. **Parent map** - Store `parent: Map<string, string>` and reconstruct path on error.
-
-Option 1 is simpler and sufficient for our case (dependency graphs are typically shallow).
+To report the cycle path, we use a `Set<string>` for the path. JavaScript Sets maintain insertion order per ECMAScript spec, so we get both O(1) lookup and ordered iteration to reconstruct the cycle path.
 
 ---
 
@@ -104,10 +99,10 @@ Option 1 is simpler and sufficient for our case (dependency graphs are typically
 
 All changes are in `src/compute-package-closure.ts`:
 
-1. Add a `path: string[]` parameter to track current traversal path
+1. Add a `path: Set<string>` to track current traversal path
 2. Check if `pkg.name` exists in `path` before processing
-3. On cycle detection, format error message showing `[...path, pkg.name]`
-4. Remove from `path` after processing children (backtrack)
+3. On cycle detection, format error message using `[...path, pkg.name]` (Set iteration preserves insertion order)
+4. Delete from `path` after processing children (backtrack)
 
 The `traverse()` function signature changes from:
 
