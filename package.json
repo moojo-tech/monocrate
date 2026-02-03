@@ -40,8 +40,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imaman/monocrate.git"
+    "url": "git+https://github.com/moojo-tech/monocrate.git"
   },
+  "bugs": {
+    "url": "https://github.com/moojo-tech/monocrate/issues"
+  },
+  "homepage": "https://github.com/moojo-tech/monocrate#readme",
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^20.19.29",
