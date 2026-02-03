@@ -240,6 +240,7 @@ console.log('Hello from bin');
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '1.0.0',
+      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)

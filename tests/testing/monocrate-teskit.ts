@@ -57,6 +57,7 @@ export async function runMonocrate(
     monorepoRoot,
     bump,
     publish: false,
+    uniquenessSuffix: '',
   })
 
   let stdout = ''

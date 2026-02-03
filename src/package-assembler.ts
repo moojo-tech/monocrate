@@ -20,7 +20,8 @@ export class PackageAssembler {
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath
+    private readonly outputRoot: AbsolutePath,
+    private readonly depsDir: string
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
@@ -43,7 +44,7 @@ export class PackageAssembler {
   async assemble(newVersion: string | undefined): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir)
+    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.depsDir)
     validateEsmOnly(locations, this.explorer.repoRootDir)
 
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
@@ -69,7 +70,7 @@ export class PackageAssembler {
     await new ImportRewriter(packageMap, isInRepoPackage, toRepoPath).rewriteAll(copiedFiles)
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
-    rewritePackageJson(closure, newVersion, outputDir)
+    rewritePackageJson(closure, newVersion, outputDir, this.depsDir)
 
     return { compiletimeMembers: closure.compiletimeMembers }
   }
