@@ -36,7 +36,7 @@ pnpm add --save-dev monocrate
 # or: yarn add --dev monocrate
 # or: npm install --save-dev monocrate
 
-# Build (monocrate publishes, it doesn't build)
+# Build first (monocrate publishes, it doesn't build)
 npm run build
 
 # Publish
@@ -80,9 +80,17 @@ Running `npx monocrate packages/my-awesome-package` produces:
 The `deps/` directory is where the files of in-repo dependencies get embedded. Each dependency is placed under a
 mangled version of its package name. This avoids name collisions regardless of where packages live in the monorepo.
 
+For a detailed look at how monocrate assembles packages, see [The Assembly Process](docs/assembly-process.md).
+
 ### Version Resolution
 
 The `--bump` flag determines the published version. There are three approaches:
+
+| `--bump` value | Source of truth | Example result |
+|----------------|-----------------|----------------|
+| `patch`/`minor`/`major` | npm registry | 1.2.3 → 1.2.4 |
+| `1.8.9` | CLI argument | 1.8.9 |
+| `package` | package.json | (whatever's in file) |
 
 **Registry-based** (`patch`, `minor`, `major`): Monocrate queries npm for the latest published version and applies the bump, treating the registry as the source of truth. For first-time publishing, it treats the current version as `0.0.0`—a patch bump gives `0.0.1`, minor gives `0.1.0`, major gives `1.0.0`.
 
@@ -200,19 +208,21 @@ A few constraints to be aware of:
 - **Symlinks must stay within monorepo** — Packages symlinked from outside the monorepo root are rejected.
 - **Undeclared in-repo imports fail** — If your code imports an in-repo package not listed in `dependencies`, monocrate catches this and fails with a clear error.
 
-## CLI Reference
+## Reference
+
+### CLI
 
 ```
 monocrate <packages...> [options]
 ```
 
-### Arguments
+**Arguments**
 
 | Argument | Description |
 |----------|-------------|
 | `packages` | One or more package directories to publish (required) |
 
-### Options
+**Options**
 
 | Option | Alias | Type | Default | Description |
 |--------|-------|------|---------|-------------|
@@ -227,13 +237,13 @@ monocrate <packages...> [options]
 | `--version` | | | | Show version number |
 
 
-## API Reference
+### API
 
-### `monocrate(options): Promise<MonocrateResult>`
+**`monocrate(options): Promise<MonocrateResult>`**
 
 Assembles one or more monorepo packages and their in-repo dependencies, and optionally publishes to npm.
 
-### `MonocrateOptions`
+**`MonocrateOptions`**
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
@@ -247,25 +257,10 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 | `mirrorTo` | `string` | No | — | Mirror source files to this directory. |
 | `npmrcPath` | `string` | No | — | Path to `.npmrc` file for npm authentication. |
 
-### `MonocrateResult`
+**`MonocrateResult`**
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `outputDir` | `string` | Directory where the first package was assembled. |
 | `resolvedVersion` | `string \| undefined` | The unified resolved version (only set when `max: true`). |
 | `summaries` | `Array<{ packageName: string; outputDir: string; version: string }>` | Details for each assembled package, including its version. |
-
-
-## The Assembly Process
-
-Here's a conceptual breakdown of the steps that happen at a typical `monocrate` run:
-
-0. **Setup**: Creates a dedicated output directory
-1. **Version Resolution**: Computes the new version (see [above](#version-resolution))
-2. **Dependency Discovery**: Traverses the dependency graph to find all in-repo packages the package depends on, transitively
-3. **File Embedding**: Copies the publishable files (per `npm pack`) of each in-repo dependency into the output directory
-4. **Entry Point Resolution**: Examines each package's entry points (respecting `exports` and `main` fields) to compute
-the exact file locations that import statements will resolve to
-5. **Import Rewriting**: Scans the `.js` and `.d.ts` files, converting imports of workspace packages to relative path
-imports (`@acme/internal-utils` becomes `../deps/__acme__internal-utils/dist/index.js`)
-6. **Package.json Rewrite**: Sets the resolved version, removes in-repo deps, and adds any third-party deps they brought in
