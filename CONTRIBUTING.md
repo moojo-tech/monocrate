@@ -20,8 +20,8 @@ Read [CLAUDE.md](CLAUDE.md) for architecture and coding patterns.
 pnpm build          # compile
 pnpm test           # run tests
 pnpm test:watch     # tests in watch mode
-pnpm lint           # check style
-pnpm lint:fix       # fix style
+pnpm lint           # check formatting and linting
+pnpm lint:fix       # fix formatting and linting
 pnpm typecheck      # type check
 ```
 

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { AbsolutePath } from './paths.js'
-import type { NpmOptionsBase} from './run-npm.js';
+import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
 
 const NpmErrorResponse = z.object({
@@ -29,9 +29,7 @@ export class NpmClient {
 
     if (!ok) {
       const registry = this.npmOptions?.userconfig ? ` (using config: ${this.npmOptions.userconfig})` : ''
-      throw new Error(
-        `Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`
-      )
+      throw new Error(`Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`)
     }
 
     return stdout.trim()

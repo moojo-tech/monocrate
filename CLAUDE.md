@@ -9,8 +9,8 @@ npm run build          # Compile TypeScript (tsc)
 npm test               # Run tests once (vitest run)
 npm run test:watch     # Run tests in watch mode
 npm run test:coverage  # Run tests with coverage report
-npm run lint           # Run ESLint on src/
-npm run lint:fix       # Auto-fix lint issues
+npm run lint           # Check formatting (Prettier) and linting (ESLint)
+npm run lint:fix       # Auto-fix formatting and lint issues
 npm run typecheck      # Type-check without emitting (tsc --noEmit)
 ```
 

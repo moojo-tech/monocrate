@@ -30,7 +30,7 @@ describe('npm login check', () => {
         publish: true,
         npmrcPath,
       })
-    ).rejects.toThrow("Not logged in to npm")
+    ).rejects.toThrow('Not logged in to npm')
 
     // Should not throw when publish is false
     const result = await monocrate({

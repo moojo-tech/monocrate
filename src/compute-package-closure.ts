@@ -66,7 +66,7 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
 
       const deps = includeDevDeps
         ? { ...pkg.packageJson.dependencies, ...pkg.packageJson.devDependencies }
-        : pkg.packageJson.dependencies ?? {}
+        : (pkg.packageJson.dependencies ?? {})
 
       for (const [depName, depVersion] of Object.entries(deps)) {
         const depPackage = repoExplorer.lookupPackage(depName)

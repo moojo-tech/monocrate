@@ -13,7 +13,7 @@ import type { NpmClient } from './npm-client.js'
 import { validateEsmOnly } from './validate-esm.js'
 
 /**
- * 
+ *
  */
 export class PackageAssembler {
   readonly pkgName
@@ -24,7 +24,8 @@ export class PackageAssembler {
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath,    private readonly depsDir: string
+    private readonly outputRoot: AbsolutePath,
+    private readonly depsDir: string
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
