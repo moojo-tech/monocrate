@@ -28,7 +28,8 @@ produces a standard npm package that looks like you hand-crafted it for publicat
 
 ### Quickstart
 
-> **⚠️ ESM only** — monocrate only supports ES modules. If your monorepo uses CommonJS, you need to [migrate to ESM](https://nodejs.org/api/esm.html) first.
+> **⚠️ ESM only** — monocrate only supports ES modules. If your monorepo uses CommonJS, you need to
+[migrate to ESM](https://nodejs.org/api/esm.html) first.
 
 ```bash
 # Install
