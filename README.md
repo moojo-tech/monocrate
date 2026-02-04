@@ -78,9 +78,11 @@ Running `npx monocrate packages/my-awesome-package` produces:
                     └── index.js
 ```
 
-> **Note:** In the diagram above, `deps` is shown for clarity. The actual directory name includes a random suffix (e.g., `deps-a1b2c3d4-...`) to avoid collisions with existing directories in your package.
+The `deps/` directory is where in-repo dependencies get embedded. Each dependency is placed under a mangled version of
+its package name, avoiding collisions regardless of where packages live in the monorepo.
 
-The deps directory is where the files of in-repo dependencies get embedded. Each dependency is placed under a mangled version of its package name. This avoids name collisions regardless of where packages live in the monorepo.
+> **Note:** The actual directory name includes a randomized suffix (e.g., `deps-a1b2c3d4/`) to prevent conflicts with
+existing directories in your package.
 
 For a detailed look at how monocrate assembles packages, see [The Assembly Process](docs/assembly-process.md).
 
