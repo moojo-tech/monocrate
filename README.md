@@ -19,12 +19,13 @@ Now you want to publish it.
 ## The Solution
 
 [monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets monorepos. It produces a single 
-publishable directory containing everything needed from your package and its in-repo dependencies. Essentially, it 
-produces a standard npm package that looks like you hand-crafted it for publication.
+publishable directory containing everything needed from your package and its in-repo dependencies. 
 
-- 📦 Consumers get one package with exactly the code they need
+- 📦 Consumers get a single package with exactly what they need
 - 🔒 Internal packages remain unpublished
 - ✅ Tree-shaking, sourcemaps, and types all work
+
+The result: a standard npm package that looks like you had hand-crafted it for publishing.
 
 ### Quickstart
 
@@ -37,7 +38,7 @@ pnpm add --save-dev monocrate
 # Or: yarn add --dev monocrate
 # Or: npm install --save-dev monocrate
 
-# Build first (monocrate publishes, it doesn't build)
+# Build first (monocrate publishes; it doesn't build)
 npm run build
 
 # Publish
@@ -67,33 +68,35 @@ Running `npx monocrate packages/my-awesome-package` produces:
 ```
 /tmp/monocrate-xxxxxx/
 └── packages/
-    └── my-awesome-package/      # preserves the package's path in the monorepo
+    └── my-awesome-package/      # preserves the package's original path
         ├── package.json         # name: "@acme/my-awesome-package", version: "1.3.0" (the new resolved version)
         ├── dist/
         │   └── index.js         # rewritten:
         │                        # import ... from '../deps/__acme__internal-utils/dist/index.js'
         └── deps/
-            └── __acme__internal-utils/  # mangled package name, exact notation may vary.
+            └── __acme__internal-utils/  # mangled package name, the exact notation may vary.
                 └── dist/
                     └── index.js
 ```
 
-> **Note:** In the diagram above, `deps` is shown for clarity. The actual directory name includes a random suffix (e.g., `deps-a1b2c3d4-...`) to avoid collisions with existing directories in your package.
+The `deps/` directory is where in-repo dependencies are embedded. Each dependency is placed under a mangled form of
+its package name, avoiding collisions regardless of where packages live in the monorepo.
 
-The deps directory is where the files of in-repo dependencies get embedded. Each dependency is placed under a mangled version of its package name. This avoids name collisions regardless of where packages live in the monorepo.
+> **Note:** The actual directory name includes a randomized suffix (e.g., `deps-a1b2c3d4/`) to prevent conflicts with
+existing directories in your package.
 
-For a detailed look at how monocrate assembles packages, see [The Assembly Process](docs/assembly-process.md).
+For details on how `monocrate` assembles packages, see [The Assembly Process](docs/assembly-process.md).
 
 ### Supported Scope
 
-monocrate validates (and rejects with a clear error):
+⚠️ Important:
+- **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
+- **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. It's your responsibility to ensure these are published and available to consumers.
+
+`monocrate` validates (and rejects with a clear error):
 - **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
 - **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
-- **Symlinks must stay within monorepo** — packages symlinked from outside the monorepo root are not supported.
-
-⚠️ Be aware:
-- **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. You're responsible for ensuring these are published and available to consumers.
-- **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
+- **Symlinks must stay within the monorepo** — packages symlinked from outside the monorepo root are not supported.
 
 ### Version Resolution
 
@@ -103,15 +106,9 @@ The `--bump` flag determines the published version. There are three approaches:
 |----------------|-----------------|----------------|
 | `patch`/`minor`/`major` | npm registry | 1.2.3 → 1.2.4 |
 | `1.8.9` | CLI argument | 1.8.9 |
-| `package` | package.json | (whatever's in file) |
+| `package` | package.json | (whatever's in the file) |
 
-**Registry-based** (`patch`, `minor`, `major`): Monocrate queries npm for the latest published version and applies the bump, treating the registry as the source of truth. For first-time publishing, it treats the current version as `0.0.0`—a patch bump gives `0.0.1`, minor gives `0.1.0`, major gives `1.0.0`.
-
-**Explicit** (`1.8.9`) uses the specified version as-is.
-
-**Package-based** (`package`) reads the version from your `package.json`, useful when you manage versions with Changesets, Lerna, or `npm version`.
-
-We find registry-based the most freeing—just decide the bump level at publish time and go. But if your workflow already manages versions in `package.json`, package-based fits right in. Separately, when publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
+When publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
 In all cases, your source `package.json` is never modified—the resolved version only appears in the assembled output.
 
@@ -187,7 +184,7 @@ If you have several public packages in your monorepo, publish them in one go by 
 npx monocrate packages/lib-a packages/lib-b --bump patch
 ```
 
-By default, each package will be published at its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
+By default, each package will be published with its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
 is at `2.0.0`, a patch bump publishes them at `1.0.1` and `2.0.1` respectively.
 
 You can also publish all specified packages at the same version (unified versioning, à la AWS SDK v3), by using the 
@@ -198,7 +195,7 @@ You can also publish all specified packages at the same version (unified version
 npx monocrate packages/lib-a packages/lib-b --bump patch --max
 ```
 
-This is purely a stylistic choice; correctness is unaffected since in-repo dependencies are always embedded.
+This is purely a stylistic choice; it doesn't affect correctness since in-repo dependencies are always embedded.
 
 ## Reference
 
