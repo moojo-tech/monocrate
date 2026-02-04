@@ -21,11 +21,11 @@ Now you want to publish it.
 [monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets monorepos. It produces a single 
 publishable directory containing everything needed from your package and its in-repo dependencies. 
 
-- 📦 Consumers get one package with exactly the code they need
+- 📦 Consumers get a single package with exactly what they need
 - 🔒 Internal packages remain unpublished
 - ✅ Tree-shaking, sourcemaps, and types all work
 
-The result: a standard npm package that looks like you hand-crafted it for publication.
+The result: a standard npm package that looks like you hand-crafted it for publishing.
 
 ### Quickstart
 
@@ -38,7 +38,7 @@ pnpm add --save-dev monocrate
 # Or: yarn add --dev monocrate
 # Or: npm install --save-dev monocrate
 
-# Build first (monocrate publishes, it doesn't build)
+# Build first (monocrate publishes; it doesn't build)
 npm run build
 
 # Publish
@@ -68,7 +68,7 @@ Running `npx monocrate packages/my-awesome-package` produces:
 ```
 /tmp/monocrate-xxxxxx/
 └── packages/
-    └── my-awesome-package/      # preserves the package's path in the monorepo
+    └── my-awesome-package/      # preserves the package's original path
         ├── package.json         # name: "@acme/my-awesome-package", version: "1.3.0" (the new resolved version)
         ├── dist/
         │   └── index.js         # rewritten:
@@ -79,19 +79,19 @@ Running `npx monocrate packages/my-awesome-package` produces:
                     └── index.js
 ```
 
-The `deps/` directory is where in-repo dependencies get embedded. Each dependency is placed under a mangled version of
+The `deps/` directory is where in-repo dependencies get embedded. Each dependency is placed under a mangled form of
 its package name, avoiding collisions regardless of where packages live in the monorepo.
 
 > **Note:** The actual directory name includes a randomized suffix (e.g., `deps-a1b2c3d4/`) to prevent conflicts with
 existing directories in your package.
 
-For a detailed look at how `monocrate` assembles packages, see [The Assembly Process](docs/assembly-process.md).
+For details on how `monocrate` assembles packages, see [The Assembly Process](docs/assembly-process.md).
 
 ### Supported Scope
 
 ⚠️ Be aware:
-- **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. You're responsible for ensuring these are published and available to consumers.
 - **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
+- **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. It's your responsibility to ensure these are published and available to consumers.
 
 `monocrate` validates (and rejects with a clear error):
 - **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
@@ -108,7 +108,7 @@ The `--bump` flag determines the published version. There are three approaches:
 | `1.8.9` | CLI argument | 1.8.9 |
 | `package` | package.json | (whatever's in file) |
 
-Separately, when publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
+When publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
 In all cases, your source `package.json` is never modified—the resolved version only appears in the assembled output.
 
@@ -195,7 +195,7 @@ You can also publish all specified packages at the same version (unified version
 npx monocrate packages/lib-a packages/lib-b --bump patch --max
 ```
 
-This is purely a stylistic choice; correctness is unaffected since in-repo dependencies are always embedded.
+This is purely a stylistic choice; it doesn't affect correctness since in-repo dependencies are always embedded.
 
 ## Reference
 
