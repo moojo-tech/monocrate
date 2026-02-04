@@ -25,6 +25,12 @@ pnpm lint:fix       # fix formatting and linting
 pnpm typecheck      # type check
 ```
 
+## Pre-commit Hook
+
+This repo runs `pnpm lint` automatically on pre-commit. Not everyone loves pre-commit hooks—if you find it disruptive, you can bypass it with `git commit --no-verify`.
+
+That said, there's a reason we have it: it's frustrating to push a PR, wait for CI, and then discover it failed because of an indentation issue, a missing trailing newline, or some other trivial formatting problem. These are easy to fix but annoying to discover after the fact. The pre-commit hook catches these issues locally, before they waste your time on a round-trip.
+
 ## Before Submitting
 
 1. Run `pnpm lint && pnpm typecheck && pnpm test && pnpm build`
