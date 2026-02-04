@@ -27,7 +27,7 @@ pnpm typecheck      # type check
 
 ## Before Submitting
 
-1. Run `pnpm lint && pnpm typecheck && pnpm test && pnpm build`
+1. Run `pnpm lint && pnpm test && pnpm build`
 2. Write tests for new code
 
 ## PR Titles
