@@ -9,14 +9,14 @@ Storing passwords in plaintext works. Validating user input only on the frontend
 
 Out of all the ways something can seemingly work, only a narrow subset actually works correctly. Finding that subset is the job.
 
-A manager can say "make it work." A PM can wave their hands at a spec. But a developer is the one who has to wage an excruciating fight with the stubborn programming language to land in "works correctly," not just "works."
+A manager can say "make it work." A PM can wave their hands at a spec. But the developer can't—the programming language won't let them. They have to fight it until the code lands in "works correctly," not just "works."
 
 
 ## Agents: finally, relief
 
 AI coding agents flip this dynamic. Suddenly, *you* can hand-wave. You can say "make it work" and often... it does. Write me a function that does X. Hook up this API. Fix this bug.
 
-This is genuine relief. No more battling a machine that only understands formal syntax. You can finally speak in broad human terms. The friction is gone.
+This is a real relief. No more battling a machine that only understands formal syntax. You can finally speak in broad human terms. The friction is gone.
 
 But when the agent produces code that runs, you can't tell from the output whether it's correct or just seemingly working. That distinction lives in the code itself—how the API key is stored, whether validation happens server-side, how errors are handled.
 
@@ -37,4 +37,6 @@ So we're not free from the code. Disengaging from it lands us right in "seemingl
 
 And now it's arguably harder: reading code is often harder than writing it. Especially code you didn't write, shaped by patterns you didn't choose, solving the problem in ways you didn't anticipate.
 
-The only lever you have: make it less to read. Small chunks. Frequent review. The agent writes; you stay close enough to catch the difference.
+Agents are often hailed as a way out. They delivered a shift: from writing to reviewing. But reviewing is still being in the code. There's no escaping it.
+
+The only lever you have is making it less to read. Small chunks. Frequent review. The agent writes; you stay close.
