@@ -184,7 +184,7 @@ If you have several public packages in your monorepo, publish them in one go by 
 npx monocrate packages/lib-a packages/lib-b --bump patch
 ```
 
-By default, each package will be published at its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
+By default, each package will be published with its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
 is at `2.0.0`, a patch bump publishes them at `1.0.1` and `2.0.1` respectively.
 
 You can also publish all specified packages at the same version (unified versioning, à la AWS SDK v3), by using the 
