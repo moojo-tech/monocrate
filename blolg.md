@@ -12,14 +12,24 @@ Out of all the ways something can seemingly work, only a narrow subset actually 
 A manager can say "make it work." A PM can wave their hands at a spec. But a developer is the one who has to wage an excruciating fight with the stubborn programming language to land in "works correctly," not just "works."
 
 
-
 ## Agents: finally, relief
 
 AI coding agents flip this dynamic. Suddenly, *you* can hand-wave. You can say "make it work" and often... it does. Write me a function that does X. Hook up this API. Fix this bug.
 
 This is genuine relief. No more battling a machine that only understands formal syntax. You can finally speak in broad human terms. The friction is gone.
 
-But, and this is the key point: when the agent produces code that runs, you can't tell from the output whether it's correct or just seemingly working. That distinction lives in the code itself—how the API key is stored, whether validation happens server-side, how errors are handled.
+But when the agent produces code that runs, you can't tell from the output whether it's correct or just seemingly working. That distinction lives in the code itself—how the API key is stored, whether validation happens server-side, how errors are handled.
+
+Here's what this looks like in practice.
+
+I asked an agent to migrate our hand-rolled API call logic to react-query. We had a mix—some places already used react-query, others had hand-crafted code that was essentially a poor imitation of it. The agent did a great job, except in one place where it chose `useMutation` instead of `useQuery`.
+
+In its defense: it was a borderline case. There was a minor side effect on the server. But the main point of the call was fetching a token for later use, and it happened on mount—not in response to user action, which is `useMutation`'s typical pattern.
+
+Weird things started happening. It took us a while to trace it back. Once we switched to `useQuery`, the problems vanished immediately.
+
+The agent had done exactly what I asked across dozens of call sites. It got one wrong. And that one was wrong in a way that was hard to see and hard to debug, because the choice wasn't crazy—it was just incorrect for reasons that required knowing the full context.
+
 
 ## Pulled back in
 
