@@ -108,13 +108,7 @@ The `--bump` flag determines the published version. There are three approaches:
 | `1.8.9` | CLI argument | 1.8.9 |
 | `package` | package.json | (whatever's in file) |
 
-**Registry-based** (`patch`, `minor`, `major`): Monocrate queries npm for the latest published version and applies the bump, treating the registry as the source of truth. For first-time publishing, it treats the current version as `0.0.0`—a patch bump gives `0.0.1`, minor gives `0.1.0`, major gives `1.0.0`.
-
-**Explicit** (`1.8.9`) uses the specified version as-is.
-
-**Package-based** (`package`) reads the version from your `package.json`, useful when you manage versions with Changesets, Lerna, or `npm version`.
-
-We find registry-based the most freeing—just decide the bump level at publish time and go. But if your workflow already manages versions in `package.json`, package-based fits right in. Separately, when publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
+Separately, when publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
 In all cases, your source `package.json` is never modified—the resolved version only appears in the assembled output.
 
