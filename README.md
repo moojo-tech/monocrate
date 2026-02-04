@@ -28,13 +28,13 @@ produces a standard npm package that looks like you hand-crafted it for publicat
 
 ### Quickstart
 
-> **⚠️ ESM only** — monocrate only supports ES modules and rejects CommonJS packages. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
+> **⚠️ ESM only** — monocrate only supports ES modules. If your monorepo uses CommonJS, you need to [migrate to ESM](https://nodejs.org/api/esm.html) first.
 
 ```bash
 # Install
 pnpm add --save-dev monocrate
-# or: yarn add --dev monocrate
-# or: npm install --save-dev monocrate
+# Or: yarn add --dev monocrate
+# Or: npm install --save-dev monocrate
 
 # Build first (monocrate publishes, it doesn't build)
 npm run build
@@ -42,7 +42,7 @@ npm run build
 # Publish
 npx monocrate packages/my-awesome-package --bump patch
 
-# Or use --dry-run to do everything short of publishing
+# Or: use --dry-run to do everything short of publishing
 npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
 ```
 
@@ -123,8 +123,9 @@ npx monocrate packages/my-awesome-package --bump patch
 npx monocrate packages/my-awesome-package --bump 2.3.0
 
 # Package-based: read from package.json
+cd packages/my-awesome-package
 npm version minor --no-git-tag-version
-npx monocrate packages/my-awesome-package --bump package
+npx monocrate . --bump package
 ```
 
 ## Programmatic API
