@@ -39,4 +39,4 @@ And now it's arguably harder: reading code is often harder than writing it. Espe
 
 Agents are often hailed as a way out. They delivered a shift: from writing to reviewing. But reviewing is still being in the code. There's no escaping it.
 
-The only lever you have is making it less to read. Small chunks. Frequent review. The agent writes; you stay close.
+The only lever you have is making it less to read. Small chunks. Frequent review. The agent writes; you stay close. But that's not freedom—it's just the new shape of the work.
