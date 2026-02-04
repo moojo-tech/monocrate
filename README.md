@@ -91,7 +91,7 @@ monocrate validates (and rejects with a clear error):
 
 Be aware:
 - **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. You're responsible for ensuring these are published and available to consumers.
-- **ESM only** — monocrate rewrites ESM `import` statements; `require()` calls are not rewritten, so CJS-style `require()`-ing of in-repo packages yields a broken published package.
+- **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
 
 ### Version Resolution
 
