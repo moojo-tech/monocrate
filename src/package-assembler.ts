@@ -24,8 +24,7 @@ export class PackageAssembler {
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath,
-    private readonly depsDir: string
+    private readonly outputRoot: AbsolutePath,    private readonly depsDir: string
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
