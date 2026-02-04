@@ -25,7 +25,7 @@ publishable directory containing everything needed from your package and its in-
 - 🔒 Internal packages remain unpublished
 - ✅ Tree-shaking, sourcemaps, and types all work
 
-The result: a standard npm package that looks like you hand-crafted it for publishing.
+The result: a standard npm package that looks like you had hand-crafted it for publishing.
 
 ### Quickstart
 
@@ -74,12 +74,12 @@ Running `npx monocrate packages/my-awesome-package` produces:
         │   └── index.js         # rewritten:
         │                        # import ... from '../deps/__acme__internal-utils/dist/index.js'
         └── deps/
-            └── __acme__internal-utils/  # mangled package name, exact notation may vary.
+            └── __acme__internal-utils/  # mangled package name, the exact notation may vary.
                 └── dist/
                     └── index.js
 ```
 
-The `deps/` directory is where in-repo dependencies get embedded. Each dependency is placed under a mangled form of
+The `deps/` directory is where in-repo dependencies are embedded. Each dependency is placed under a mangled form of
 its package name, avoiding collisions regardless of where packages live in the monorepo.
 
 > **Note:** The actual directory name includes a randomized suffix (e.g., `deps-a1b2c3d4/`) to prevent conflicts with
@@ -89,14 +89,14 @@ For details on how `monocrate` assembles packages, see [The Assembly Process](do
 
 ### Supported Scope
 
-⚠️ Be aware:
+⚠️ Important:
 - **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
 - **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. It's your responsibility to ensure these are published and available to consumers.
 
 `monocrate` validates (and rejects with a clear error):
 - **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
 - **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
-- **Symlinks must stay within monorepo** — packages symlinked from outside the monorepo root are not supported.
+- **Symlinks must stay within the monorepo** — packages symlinked from outside the monorepo root are not supported.
 
 ### Version Resolution
 
@@ -106,7 +106,7 @@ The `--bump` flag determines the published version. There are three approaches:
 |----------------|-----------------|----------------|
 | `patch`/`minor`/`major` | npm registry | 1.2.3 → 1.2.4 |
 | `1.8.9` | CLI argument | 1.8.9 |
-| `package` | package.json | (whatever's in file) |
+| `package` | package.json | (whatever's in the file) |
 
 When publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
