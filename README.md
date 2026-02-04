@@ -85,18 +85,18 @@ its package name, avoiding collisions regardless of where packages live in the m
 > **Note:** The actual directory name includes a randomized suffix (e.g., `deps-a1b2c3d4/`) to prevent conflicts with
 existing directories in your package.
 
-For a detailed look at how monocrate assembles packages, see [The Assembly Process](docs/assembly-process.md).
+For a detailed look at how `monocrate` assembles packages, see [The Assembly Process](docs/assembly-process.md).
 
 ### Supported Scope
-
-monocrate validates (and rejects with a clear error):
-- **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
-- **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
-- **Symlinks must stay within monorepo** — packages symlinked from outside the monorepo root are not supported.
 
 ⚠️ Be aware:
 - **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. You're responsible for ensuring these are published and available to consumers.
 - **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
+
+`monocrate` validates (and rejects with a clear error):
+- **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
+- **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
+- **Symlinks must stay within monorepo** — packages symlinked from outside the monorepo root are not supported.
 
 ### Version Resolution
 
