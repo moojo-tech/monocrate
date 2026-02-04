@@ -19,6 +19,7 @@
   ],
   "scripts": {
     "preinstall": "npx only-allow pnpm",
+    "prepare": "husky",
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
