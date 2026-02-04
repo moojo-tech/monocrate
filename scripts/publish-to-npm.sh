@@ -51,7 +51,7 @@ NEW_VERSION="${NEW_VERSION#v}"  # Remove 'v' prefix if present
 echo "    New version: $NEW_VERSION"
 
 echo "==> Publishing to npm..."
-npm publish
+npm publish --ignore-scripts
 
 echo "==> Creating and pushing git tag..."
 cd "$PROJECT_ROOT"
