@@ -89,7 +89,7 @@ monocrate validates (and rejects with a clear error):
 - **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
 - **Symlinks must stay within monorepo** — packages symlinked from outside the monorepo root are not supported.
 
-Be aware:
+⚠️ Be aware:
 - **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. You're responsible for ensuring these are published and available to consumers.
 - **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
 
