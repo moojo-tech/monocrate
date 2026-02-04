@@ -12,16 +12,16 @@ import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
 import { validateEsmOnly } from './validate-esm.js'
 
+/** Assembles a package and its in-repo dependencies into a publishable unit. */
 export class PackageAssembler {
   readonly pkgName
   readonly publishAs
   private readonly pathInRepo
+
   constructor(
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
-    private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath,
-    private readonly depsDir: string
+    private readonly fromDir: AbsolutePath,    private readonly outputRoot: AbsolutePath,    private readonly depsDir: string
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
