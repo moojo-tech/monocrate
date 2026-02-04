@@ -19,14 +19,13 @@
   ],
   "scripts": {
     "preinstall": "npx only-allow pnpm",
+    "prepare": "husky",
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" && eslint src tests",
+    "lint:fix": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" && eslint src tests --fix",
     "typecheck": "tsc --noEmit",
     "publish-to-npm": "./scripts/publish-to-npm.sh"
   },
