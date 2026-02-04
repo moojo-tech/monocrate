@@ -28,7 +28,7 @@ produces a standard npm package that looks like you hand-crafted it for publicat
 
 ### Quickstart
 
-> **⚠️ ESM only** — monocrate requires ES modules and rejects CommonJS packages. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
+> **⚠️ ESM only** — monocrate only supports ES modules and rejects CommonJS packages. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
 
 ```bash
 # Install
@@ -81,6 +81,17 @@ The `deps/` directory is where the files of in-repo dependencies get embedded. E
 mangled version of its package name. This avoids name collisions regardless of where packages live in the monorepo.
 
 For a detailed look at how monocrate assembles packages, see [The Assembly Process](docs/assembly-process.md).
+
+### Supported Scope
+
+monocrate validates (and rejects with a clear error):
+- **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
+- **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
+- **Symlinks must stay within monorepo** — packages symlinked from outside the monorepo root are not supported.
+
+⚠️ Be aware:
+- **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. You're responsible for ensuring these are published and available to consumers.
+- **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
 
 ### Version Resolution
 
@@ -185,28 +196,6 @@ npx monocrate packages/lib-a packages/lib-b --bump patch --max
 ```
 
 This is purely a stylistic choice; correctness is unaffected since in-repo dependencies are always embedded.
-
-## Scope
-
-monocrate makes a few deliberate choices:
-
-- **Runtime dependencies only** — Only `dependencies` are traversed and embedded. `devDependencies` are ignored since 
-consumers don't need your build tools.
-- **Version conflicts fail early** — If two in-repo packages require different versions of the same third-party 
-dependency, monocrate stops with a clear error rather than silently picking one.
-- **File selection via `npm pack`** — Your `files` field in package.json is the source of truth for what gets published.
-monocrate doesn't introduce its own file configuration.
-- **Validates before heavy work** — npm login and other prerequisites are checked upfront, before any file copying 
-begins.
-
-A few constraints to be aware of:
-
-- **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; if a dynamic module path like `await import(variable)` is detected, `monocrate` stops with a clear error.
-- **Prerelease versions require explicit `--bump`** — `--bump package` expects strict semver (`X.Y.Z`). For prereleases, pass the version explicitly: `--bump 1.0.0-beta.1`.
-- **peerDependencies are preserved, not embedded** — As with any package publishing tool, you're responsible for ensuring peer dependencies (in-repo or not) are published and available to consumers.
-- **optionalDependencies are preserved, not embedded** — If you list an in-repo package as optional, you're responsible for publishing it separately.
-- **Symlinks must stay within monorepo** — Packages symlinked from outside the monorepo root are rejected.
-- **Undeclared in-repo imports fail** — If your code imports an in-repo package not listed in `dependencies`, monocrate catches this and fails with a clear error.
 
 ## Reference
 
