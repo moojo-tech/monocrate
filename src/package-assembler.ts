@@ -12,9 +12,6 @@ import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
 import { validateEsmOnly } from './validate-esm.js'
 
-/**
- *
- */
 export class PackageAssembler {
   readonly pkgName
   readonly publishAs
