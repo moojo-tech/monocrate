@@ -31,7 +31,7 @@ We asked agents to debug it. They spotted the StrictMode double-mount but kept t
 
 ![Code diff showing useMutation replaced with useQuery—the one fix that solved the problem](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/h34yxjtk5yf4wpk2u4kr.png)
 
-The agent had done exactly what I asked across dozens of call sites. It got one wrong—in a way that was hard to see and hard to debug, because the choice wasn't crazy. It was just incorrect—and catching it required questioning what I saw, not just debugging it. Maybe I unknowingly leaned on human critical thinking.
+The agent had done exactly what I asked across dozens of call sites. It got one wrong—in a way that was hard to see and hard to debug, because the choice wasn't crazy. It was just incorrect—and catching it required stepping into the code, questioning the structures in it. Maybe I unknowingly leaned on human critical thinking.
 
 ## Pulled back in
 
