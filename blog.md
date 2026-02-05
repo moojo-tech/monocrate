@@ -39,4 +39,4 @@ And now it's arguably harder: reading code is often harder than writing it. Espe
 
 Agents are often hailed as a way out of the messy coding layer. But just when you think you're out, the code pulls you back in. Turns out, they merely shift your work from writing to reviewing.
 
-And doing the reviewing well takes practice—especially at the pace agents write. There's a craft to it, one worth developing.
+And reviewing at the pace agents write takes practice. There's a craft to it—one worth developing.
