@@ -29,7 +29,7 @@ Weird things started happening in dev. React's StrictMode double-mounts componen
 
 We asked agents to debug it. They spotted the StrictMode double-mount but kept trying to make `useMutation` work—patching the symptom, not questioning the choice. Only by reading the code did I see the real fix: this should have been `useQuery` all along. Once I switched it, the problems vanished.
 
-![Code diff showing useMutation replaced with useQuery—the one fix that solved the problem](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/dto6u50qzdme7r6fj2ha.png)
+![Code diff showing useMutation replaced with useQuery—the one fix that solved the problem](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/h34yxjtk5yf4wpk2u4kr.png)
 
 The agent had done exactly what I asked across dozens of call sites. It got one wrong—in a way that was hard to see and hard to debug, because the choice wasn't crazy. It was just incorrect for reasons that required knowing the full context.
 
