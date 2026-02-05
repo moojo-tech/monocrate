@@ -9,9 +9,9 @@ Storing passwords in plaintext works. Validating user input only on the frontend
 
 Out of all the ways something appears to work, only a narrow subset actually works correctly. Finding that subset is the job.
 
-A manager can say "make it work." A PM can wave their hands at a spec. But the developer can't—the programming language won't let them. They have to fight it until the code hits "works correctly," not just "works."
+A manager can say "make it work." A PM can wave their hands at a spec. But the developer can't—the programming language won't let them. They have to fight until the code actually works—not just appears to.
 
-For decades, this asymmetry was just how software got built.
+For decades, this asymmetry was just how software got built. Then came agents.
 
 ## Agents: finally, relief
 
@@ -21,13 +21,11 @@ This is a real relief. No more battling a machine that only understands formal s
 
 But when the agent produces code that runs, you can't tell from the output whether it's correct or just appears to work. That distinction lives in the code itself—how the API key is stored, whether validation happens server-side, how errors are handled.
 
-Here's what this looks like in practice.
-
-I asked an agent to migrate our hand-rolled API call logic to react-query. We had a mix—some places already used react-query, others had hand-crafted code that was essentially a poor imitation of it. The agent did a great job, except in one place where it chose `useMutation` instead of `useQuery`.
+I ran into this recently. I asked an agent to migrate our hand-rolled API call logic to react-query. We had a mix—some places already used react-query, others had hand-crafted code that was essentially a poor imitation of it. The agent did a great job, except in one place where it chose `useMutation` instead of `useQuery`.
 
 In its defense: it was a borderline case. There was a minor side effect on the server. But the main point of the call was fetching a token for later use, and it happened on mount—not in response to user action, which is `useMutation`'s typical pattern.
 
-Weird things started happening. In dev mode, React's StrictMode double-mounts components, and the mutation fired twice—but the backend refused to generate a second token, so we'd get errors. A dev-only problem, sure—but it seriously slowed us down while we hunted for the cause.
+Weird things started happening in dev. React's StrictMode double-mounts components, and the mutation fired twice—but the backend refused to generate a second token, so we'd get errors. A dev-only problem, sure—but it seriously slowed us down while we hunted for the cause.
 
 We asked agents to debug it. They spotted the StrictMode double-mount but kept trying to make `useMutation` work—patching the symptom, not questioning the choice. Only by reading the code did I see the real fix: this should have been `useQuery` all along. Once I switched it, the problems vanished.
 
@@ -39,6 +37,6 @@ So we're not free from the code. Disengaging from it lands us right in "appears 
 
 And now it's arguably harder: reading code is often harder than writing it. Especially code you didn't write, shaped by patterns you didn't choose, solving the problem in ways you didn't anticipate.
 
-Agents are often hailed as a way out. They delivered a shift: from writing to reviewing. But reviewing still keeps you in the code. There's no escaping it.
+Agents are often hailed as a way out of the messy coding layer. But just when you think you're out, the code pulls you back in. Turns out, they merely shift your work from writing to reviewing.
 
-And doing it well takes practice. You have to organize things differently: structure prompts to produce reviewable chunks, keep the feedback loop tight, build habits that didn't exist before. But there's a craft to it—one worth developing.
+And doing the reviewing well takes practice—especially at the pace agents write. There's a craft to it, one worth developing.
