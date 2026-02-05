@@ -21,7 +21,7 @@ This is a real relief. No more battling a machine that only understands formal s
 
 But when the agent produces code that runs, you can't tell from the output whether it's correct or just appears to work. That distinction lives in the code itself—how the API key is stored, whether validation happens server-side, how errors are handled.
 
-I ran into this recently. I asked an agent to migrate our hand-rolled API call logic to react-query. We had a mix—some places already used react-query, others had hand-crafted code that was essentially a poor imitation of it. The agent did a great job, except in one place where it chose [https://tanstack.com/query/v5/docs/framework/react/guides/mutations](useMutation) instead of [https://tanstack.com/query/v5/docs/framework/react/guides/queries](useQuery).
+I ran into this recently. I asked an agent to migrate our hand-rolled API call logic to react-query. We had a mix—some places already used react-query, others had hand-crafted code that was essentially a poor imitation of it. The agent did a great job, except in one place where it chose [useMutation](https://tanstack.com/query/v5/docs/framework/react/guides/mutations) instead of [useQuery](https://tanstack.com/query/v5/docs/framework/react/guides/queries).
 
 In its defense: it was a borderline case. There was a minor side effect on the server. But the main point of the call was fetching a token for later use, and it happened on mount—not in response to user action, which is `useMutation`'s typical pattern.
 
@@ -39,6 +39,6 @@ So we're not free from the code. Disengaging from it lands us right in "appears 
 
 And now it's arguably harder: reading code is often harder than writing it. Especially code you didn't write, shaped by patterns you didn't choose, solving the problem in ways you didn't anticipate.
 
-Agents are often hailed as a way out of the messy coding layer. But just when you think you're out, the code pulls you back in. Turns out, they merely shift your work from writing to reviewing.
+Agents are often hailed as a way out of the messy coding layer. But [just when you think you're out](https://www.youtube.com/watch?v=UPw-3e_pzqU), the code pulls you back in. Turns out, they merely shift your work from writing to reviewing.
 
 And reviewing at the pace agents write takes practice. There's a craft to it—one worth developing.
