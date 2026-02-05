@@ -11,6 +11,7 @@ Out of all the ways something can seemingly work, only a narrow subset actually 
 
 A manager can say "make it work." A PM can wave their hands at a spec. But the developer can't—the programming language won't let them. They have to fight it until the code lands in "works correctly," not just "works."
 
+For decades, this was simply the cost of building software. You either paid it or you didn't ship.
 
 ## Agents: finally, relief
 
