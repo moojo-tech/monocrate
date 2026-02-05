@@ -1,6 +1,3 @@
-# Just When I Thought I Was Out, The Code Pulls Me Back In
-
-
 Code is unforgiving. It either works or it doesn't. No hand-waving, no "you know what I mean," no close enough. This is what makes programming frustrating—and what makes programmers valuable.
 
 ## The gap between "works" and "works correctly"
