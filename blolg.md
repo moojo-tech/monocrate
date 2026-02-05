@@ -11,7 +11,6 @@ Out of all the ways something can seemingly work, only a narrow subset actually 
 
 A manager can say "make it work." A PM can wave their hands at a spec. But the developer can't—the programming language won't let them. They have to fight it until the code lands in "works correctly," not just "works."
 
-For decades, this was simply the cost of building software. You either paid it or you didn't ship.
 
 ## Agents: finally, relief
 
@@ -27,8 +26,8 @@ I asked an agent to migrate our hand-rolled API call logic to react-query. We ha
 
 In its defense: it was a borderline case. There was a minor side effect on the server. But the main point of the call was fetching a token for later use, and it happened on mount—not in response to user action, which is `useMutation`'s typical pattern.
 
-Weird things started happening. In dev mode, React's StrictMode double-mounts components, and the mutation fired twice—but the backend refused to generate a second token, so we'd get errors. A dev-only problem, sure—but it seriously slowed us down while we hunted for the cause. Once we switched to `useQuery`, the problems vanished immediately.
-
+Weird things started happening. It took us a while to trace it back. Once we switched to `useQuery`, the problems vanished immediately.
+ 
 The agent had done exactly what I asked across dozens of call sites. It got one wrong. And that one was wrong in a way that was hard to see and hard to debug, because the choice wasn't crazy—it was just incorrect for reasons that required knowing the full context.
 
 
