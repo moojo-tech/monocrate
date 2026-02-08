@@ -430,7 +430,6 @@ export declare const bar: typeof foo;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -460,7 +459,6 @@ export const bar = 'bar';
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -520,7 +518,6 @@ export const helper = foo + '-helper';
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -550,7 +547,6 @@ export const bar = foo + util;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -594,7 +590,6 @@ export declare const bar: typeof foo;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -661,7 +656,6 @@ export const result = helper;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -688,7 +682,6 @@ export const foo = b.foo;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)

@@ -71,13 +71,4 @@ export interface MonocrateOptions {
    * and you want to preserve meaningful versioning per package.
    */
   max?: boolean
-
-  /**
-   * @deprecated No-op. Kept for backward compatibility with older tests/callers.
-   *
-   * Previously controlled suffix for the temporary deps directory used by import rewriting.
-   * The current assembly model copies in-repo packages into node_modules and does not use
-   * this option.
-   */
-  uniquenessSuffix?: string
 }
