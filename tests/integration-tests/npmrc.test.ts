@@ -27,20 +27,16 @@ describe('.npmrc file handling', () => {
     expect((await runMonocrate(monorepoRoot, 'packages/app')).output).not.toHaveProperty('.npmrc')
   })
 
-  it('includes .npmrc from in-repo dependencies', async () => {
+  it('does not include .npmrc from in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': pj('app', undefined, { dependencies: { lib: 'workspace:*' } }),
-      'packages/app/dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
+      'packages/app/dist/index.js': `import { greet } from 'lib'; console.log(greet());`,
       'packages/lib/package.json': pj('lib'),
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
       'packages/lib/.npmrc': 'registry=https://lib.registry.com',
     })
 
-    expect(await runMonocrate(monorepoRoot, 'packages/app')).toMatchObject({
-      output: {
-        'node_modules/lib/.npmrc': 'registry=https://lib.registry.com',
-      },
-    })
+    expect((await runMonocrate(monorepoRoot, 'packages/app')).output).not.toHaveProperty('node_modules/lib/.npmrc')
   })
 })

@@ -74,6 +74,8 @@ export async function runNpm(
 > {
   const errorPolicy = options?.nonZeroExitCodePolicy ?? 'throw'
   const stdio = options?.stdio ?? 'inherit'
+  // Some environments have a broken global npm cache (permissions/locks). Use an isolated cache per invocation
+  // so pack/view/publish behavior is deterministic and doesn't depend on host-level ~/.npm state.
   const npmCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-npm-cache-'))
   const env = {
     ...process.env,

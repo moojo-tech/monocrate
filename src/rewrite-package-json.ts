@@ -28,8 +28,12 @@ export function rewritePackageJson(closure: PackageClosure, version: string | un
 
   const bundled = closure.runtimeMembers.filter((pkg) => pkg.name !== closure.subjectPackageName).map((pkg) => pkg.name)
 
-  if (bundled.length > 0) {
-    rewritten.bundledDependencies = bundled
+  const existingBundled = rewritten.bundledDependencies ?? rewritten.bundleDependencies ?? []
+  const mergedBundled = [...new Set([...existingBundled, ...bundled])]
+
+  if (mergedBundled.length > 0) {
+    rewritten.bundledDependencies = mergedBundled
+    delete rewritten.bundleDependencies
   }
 
   fs.writeFileSync(path.join(outputDir, 'package.json'), JSON.stringify(rewritten, null, 2) + '\n')

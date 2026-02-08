@@ -41,14 +41,17 @@ export function resolveImport(packageJson: PackageJson, subpath: string): string
 async function createPackageLocation(
   npmClient: NpmClient,
   pkg: MonorepoPackage,
-  directoryInOutput: AbsolutePath
+  directoryInOutput: AbsolutePath,
+  includeNpmrc: boolean
 ): Promise<PackageLocation> {
   const filesToCopy = await getFilesToPack(npmClient, pkg.fromDir)
 
-  // Add .npmrc if it exists (npm pack doesn't include it since it's a config file)
-  const npmrcPath = AbsolutePath.join(pkg.fromDir, RelativePath('.npmrc'))
-  if (fs.existsSync(npmrcPath)) {
-    filesToCopy.push('.npmrc')
+  if (includeNpmrc) {
+    // Add .npmrc for the subject package only (npm pack doesn't include config files).
+    const npmrcPath = AbsolutePath.join(pkg.fromDir, RelativePath('.npmrc'))
+    if (fs.existsSync(npmrcPath)) {
+      filesToCopy.push('.npmrc')
+    }
   }
 
   return {
@@ -73,7 +76,8 @@ export async function collectPackageLocations(
         dep,
         dep.name === closure.subjectPackageName
           ? outputDir
-          : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name))
+          : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name)),
+        dep.name === closure.subjectPackageName
       )
     )
   )
