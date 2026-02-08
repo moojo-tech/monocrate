@@ -98,16 +98,17 @@ console.log('Hello from bin');
     const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '3.9.27' })
 
     expect(output).toMatchObject({
-      'dist/index.js': `import { greet } from '../deps/__test__lib/dist/index.js'; console.log(greet());`,
+      'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
       'package.json': {
         main: 'dist/index.js',
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
+        bundledDependencies: ['@test/lib'],
       },
-      'deps/__test__lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
-      'deps/__test__lib/extra/utils.js': `export const helper = 'helper';`,
-      'deps/__test__lib/package.json': {
+      'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
+      'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
+      'node_modules/@test/lib/package.json': {
         files: ['dist', 'extra'],
         main: 'dist/index.js',
         name: '@test/lib',
@@ -214,7 +215,7 @@ console.log('Hello from bin');
     expect(pkgJson.files).toEqual(['dist', 'bin'])
   })
 
-  it('adds deps to files array when subject has both files field and in-repo dependencies', async () => {
+  it('adds bundledDependencies when subject has in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -240,20 +241,17 @@ console.log('Hello from bin');
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '1.0.0',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
     expect(output['package.json']).toEqual({
-      files: [
-        'dist',
-        // deps must be in files array, otherwise npm pack will exclude it
-        'deps',
-      ],
+      files: ['dist'],
       main: 'dist/index.js',
       name: '@test/app',
       type: 'module',
       version: '1.0.0',
+      dependencies: { '@test/lib': '1.0.0' },
+      bundledDependencies: ['@test/lib'],
     })
   })
 })

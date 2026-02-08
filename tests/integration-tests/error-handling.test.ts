@@ -109,78 +109,6 @@ describe('error handling', () => {
     ).rejects.toThrow(/Package "@test\/external" is located at .* which is outside the monorepo root/)
   })
 
-  it('throws when code imports an in-repo package not listed in dependencies', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      // app imports @test/lib but does NOT list it in dependencies
-      'packages/app/package.json': pj('@test/app'),
-      'packages/app/dist/index.js': `import { greet } from '@test/lib';
-export const message = greet();
-`,
-      // lib exists in the monorepo
-      'packages/lib/package.json': pj('@test/lib'),
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
-    })
-
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow(
-      'Import of in-repo package "@test/lib" found in packages/app/dist/index.js, ' +
-        'but "@test/lib" is not listed in package.json dependencies'
-    )
-  })
-
-  it('throws when code imports an in-repo package not listed in dependencies (via re-export)', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      // app re-exports from @test/lib but does NOT list it in dependencies
-      'packages/app/package.json': pj('@test/app'),
-      'packages/app/dist/index.js': `export { greet } from '@test/lib';
-`,
-      'packages/lib/package.json': pj('@test/lib'),
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
-    })
-
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Import of in-repo package "@test/lib" found in packages/app/dist/index.js')
-  })
-
-  it('throws when code imports an in-repo package not listed in dependencies (via dynamic import)', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      // app dynamically imports @test/lib but does NOT list it in dependencies
-      'packages/app/package.json': pj('@test/app'),
-      'packages/app/dist/index.js': `const lib = await import('@test/lib');
-export const message = lib.greet();
-`,
-      'packages/lib/package.json': pj('@test/lib'),
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
-    })
-
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Import of in-repo package "@test/lib" found in packages/app/dist/index.js')
-  })
-
   it('throws when workspaces field in package.json is malformed', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: 'not-an-array-or-object' },
@@ -237,6 +165,8 @@ export const message = lib.greet();
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
+      dependencies: { '@test/lib': '0.9.9' },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello!')

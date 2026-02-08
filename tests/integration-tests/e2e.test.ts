@@ -46,9 +46,11 @@ describe('monocrate e2e', () => {
       main: 'dist/index.js',
       types: 'dist/index.d.ts',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
     // Verify end-to-end:
     expect(stdout.trim()).toBe('Hello, World!')
@@ -112,9 +114,11 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib-alpha': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib-alpha'],
     })
     expect(alpha.stdout.trim()).toBe('Alpha: ALPHA')
 
@@ -127,9 +131,11 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib-beta': '2.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
+      bundledDependencies: ['@test/lib-beta'],
     })
     expect(beta.stdout.trim()).toBe('Beta: BETA')
   }, 30000)
@@ -218,12 +224,17 @@ export function fromLevel3() {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/level1': '1.0.0',
+        '@test/level2': '1.0.0',
+        '@test/level3': '1.0.0',
+        '@test/level4': '1.0.0',
         express: '^4.18.0',
         lodash: '^4.17.21',
         chalk: '^5.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
+      bundledDependencies: ['@test/level1', '@test/level2', '@test/level3', '@test/level4'],
     })
 
     expect(stdout.trim()).toBe('L1->L2->L3->L4')
@@ -271,9 +282,11 @@ console.log(pnpmGreet());
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/pnpm-lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/pnpm-lib'],
     })
 
     expect(stdout.trim()).toBe('pnpm works!')
@@ -325,9 +338,11 @@ console.log(greet('World'));
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -350,10 +365,10 @@ console.log(greet('World'));
     const { output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '1.0.0' })
 
     // lib (production dependency) should be included
-    expect(output).toHaveProperty('deps/__test__lib/package.json')
+    expect(output).toHaveProperty('node_modules/@test/lib/package.json')
 
     // build-tool (devDependency) should NOT be included in packaged output
-    expect(output).not.toHaveProperty('deps/__test__build-tool/package.json')
+    expect(output).not.toHaveProperty('node_modules/@test/build-tool/package.json')
   })
 
   it('preserves line numbers in stack traces', async () => {
@@ -396,7 +411,7 @@ throwError();
     expect(stderr).toContain('index.js:2')
   })
 
-  it('rewrites imports in both .js and .d.ts files', async () => {
+  it('keeps imports in both .js and .d.ts files and bundles dep under node_modules', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', undefined, {
@@ -424,22 +439,18 @@ export declare const bar: typeof foo;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
 
-    console.error(JSON.stringify(output, null, 2))
-    // Verify .js file has rewritten import
-    expect(output['dist/index.js']).toContain('../deps/__myorg__b/dist/index.js')
-    expect(output['dist/index.js']).not.toContain("'@myorg/b'")
-
-    // Verify .d.ts file has rewritten import
-    expect(output['dist/index.d.ts']).toContain('../deps/__myorg__b/dist/index.js')
-    expect(output['dist/index.d.ts']).not.toContain("'@myorg/b'")
+    // Verify imports stay untouched
+    expect(output['dist/index.js']).toContain("from '@myorg/b'")
+    expect(output['dist/index.d.ts']).toContain("from '@myorg/b'")
+    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.js')
+    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.d.ts')
   })
 
-  it('rewrites export declarations', async () => {
+  it('keeps export declarations unchanged', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
@@ -457,15 +468,13 @@ export const bar = 'bar';
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
 
-    // Verify export declarations have rewritten module specifiers
+    // Verify export declarations keep package specifiers unchanged
     const indexJs = output['dist/index.js'] as string
-    expect(indexJs).toContain('../deps/__myorg__b/dist/index.js')
-    expect(indexJs).not.toContain("'@myorg/b'")
+    expect(indexJs).toContain("from '@myorg/b'")
   })
 
   it('leaves third-party imports unchanged', async () => {
@@ -497,7 +506,7 @@ export const bar = foo;
     expect(indexJs).toContain("from 'node:path'")
   })
 
-  it('rewrites imports in nested files at different depths', async () => {
+  it('keeps imports in nested files unchanged', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
@@ -518,17 +527,13 @@ export const helper = foo + '-helper';
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
 
-    // Root level file should have '../deps/...'
-    expect(output['dist/index.js']).toContain('../deps/__myorg__b/dist/index.js')
-
-    // Nested file should have '../../deps/...'
-    expect(output['dist/utils/helper.js']).toContain('../../deps/__myorg__b/dist/index.js')
-  })
+    expect(output['dist/index.js']).toContain("from '@myorg/b'")
+    expect(output['dist/utils/helper.js']).toContain("from '@myorg/b'")
+  }, 15000)
 
   it('handles packages in different monorepo directories', async () => {
     const monorepoRoot = folderify({
@@ -551,19 +556,18 @@ export const bar = foo + util;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
     const indexJs = output['dist/index.js'] as string
 
-    // Both imports should be rewritten with correct paths
-    expect(indexJs).toContain('../deps/__myorg__b/dist/index.js')
-    expect(indexJs).toContain('../deps/__myorg__utils/dist/index.js')
+    // Both imports should remain package-based
+    expect(indexJs).toContain("from '@myorg/b'")
+    expect(indexJs).toContain("from '@myorg/utils'")
 
-    // Verify the deps directory structure uses mangled package names
-    expect(output).toHaveProperty('deps/__myorg__b/dist/index.js')
-    expect(output).toHaveProperty('deps/__myorg__utils/dist/index.js')
+    // Dependencies should be copied under node_modules with real package names
+    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.js')
+    expect(output).toHaveProperty('node_modules/@myorg/utils/dist/index.js')
   }, 15000)
 
   it('verifies output directory structure matches spec', async () => {
@@ -595,7 +599,6 @@ export declare const bar: typeof foo;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
@@ -607,9 +610,9 @@ export declare const bar: typeof foo;
     expect(output).toHaveProperty('dist/utils/helper.js')
     expect(output).toHaveProperty('dist/utils/helper.d.ts')
 
-    // Verify deps structure
-    expect(output).toHaveProperty('deps/__myorg__b/dist/index.js')
-    expect(output).toHaveProperty('deps/__myorg__b/dist/index.d.ts')
+    // Verify node_modules structure
+    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.js')
+    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.d.ts')
   })
 
   it('handles source package importing itself by name', async () => {
@@ -633,9 +636,8 @@ export const result = helper;
     const output = unfolderify(outputDir)
     const indexJs = output['dist/index.js'] as string
 
-    // Self-import should be rewritten to relative path
-    expect(indexJs).toContain('./utils/helper')
-    expect(indexJs).not.toContain("'@myorg/a/utils/helper'")
+    // Self-import should stay unchanged
+    expect(indexJs).toContain("from '@myorg/a/utils/helper'")
   })
 
   it('handles subpath imports like @myorg/b/submodule', async () => {
@@ -663,15 +665,13 @@ export const result = helper;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
     const indexJs = output['dist/index.js'] as string
 
-    // Subpath import should be rewritten with preserved subpath
-    expect(indexJs).toContain('../deps/__myorg__b/dist/utils/helper')
-    expect(indexJs).not.toContain("'@myorg/b/utils/helper'")
+    // Subpath import should stay unchanged
+    expect(indexJs).toContain("from '@myorg/b/utils/helper'")
   })
 
   it('handles dynamic imports', async () => {
@@ -691,18 +691,16 @@ export const foo = b.foo;
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
-      uniquenessSuffix: '',
     })
 
     const output = unfolderify(outputDir)
     const indexJs = output['dist/index.js'] as string
 
-    // Dynamic import should be rewritten
-    expect(indexJs).toContain('../deps/__myorg__b/dist/index.js')
-    expect(indexJs).not.toContain("import('@myorg/b')")
+    // Dynamic import should stay unchanged
+    expect(indexJs).toContain("import('@myorg/b')")
   })
 
-  it('errors on computed dynamic imports', async () => {
+  it('allows computed dynamic imports', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
@@ -722,7 +720,9 @@ export const foo = b.foo;
         publish: false,
         bump: '2.8.512',
       })
-    ).rejects.toThrow('Computed import not supported: import(modulePath)')
+    ).resolves.toMatchObject({
+      summaries: [{ packageName: '@myorg/a', version: '2.8.512' }],
+    })
   })
 
   it('handles cross-dependency imports between in-repo deps', async () => {
@@ -743,10 +743,9 @@ export const a = 'a-' + b;
 
     const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
 
-    // Verify the deps files also have their imports rewritten
-    const libAIndex = output['deps/__myorg__lib-a/dist/index.js'] as string
-    expect(libAIndex).toContain('../__myorg__lib-b/dist/index.js')
-    expect(libAIndex).not.toContain("'@myorg/lib-b'")
+    // Verify bundled dependency files keep imports as package names
+    const libAIndex = output['node_modules/@myorg/lib-a/dist/index.js'] as string
+    expect(libAIndex).toContain("from '@myorg/lib-b'")
 
     // Verify execution works
     expect(stdout.trim()).toBe('a-b')
@@ -786,9 +785,11 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -828,9 +829,11 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -889,16 +892,20 @@ console.log(a + '-' + b + '-' + c);
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib-a': '1.0.0',
+        '@test/lib-b': '2.0.0',
+        '@test/lib-c': '3.0.0',
         express: '^4.0.0',
         lodash: '^4.0.0',
         zod: '^3.0.0',
       },
+      bundledDependencies: ['@test/lib-a', '@test/lib-b', '@test/lib-c'],
     })
 
-    // All three in-repo deps should be bundled in deps directory
-    expect(output).toHaveProperty('deps/__test__lib-a/dist/index.js')
-    expect(output).toHaveProperty('deps/__test__lib-b/dist/index.js')
-    expect(output).toHaveProperty('deps/__test__lib-c/dist/index.js')
+    // All three in-repo deps should be bundled under node_modules
+    expect(output).toHaveProperty('node_modules/@test/lib-a/dist/index.js')
+    expect(output).toHaveProperty('node_modules/@test/lib-b/dist/index.js')
+    expect(output).toHaveProperty('node_modules/@test/lib-c/dist/index.js')
 
     expect(stdout.trim()).toBe('A-B-C')
   })

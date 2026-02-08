@@ -4,12 +4,7 @@ import type { PackageJson } from './package-json.js'
 import type { PackageClosure } from './package-closure.js'
 import type { AbsolutePath } from './paths.js'
 
-export function rewritePackageJson(
-  closure: PackageClosure,
-  version: string | undefined,
-  outputDir: AbsolutePath,
-  depsDir: string
-) {
+export function rewritePackageJson(closure: PackageClosure, version: string | undefined, outputDir: AbsolutePath) {
   const subject = closure.runtimeMembers.find((at) => at.name === closure.subjectPackageName)
   if (!subject) {
     throw new Error(`Inconsistency in subject package name: "${closure.subjectPackageName}"`)
@@ -27,15 +22,24 @@ export function rewritePackageJson(
   }
 
   // Replace dependencies with flattened third-party deps (no workspace deps)
-  if (Object.keys(closure.allThirdPartyDeps).length > 0) {
-    rewritten.dependencies = closure.allThirdPartyDeps
+  const inRepoRuntimeDeps = Object.fromEntries(
+    closure.runtimeMembers
+      .filter((pkg) => pkg.name !== closure.subjectPackageName)
+      .map((pkg) => [pkg.name, pkg.packageJson.version ?? '*'])
+  )
+  const mergedDependencies = { ...closure.allThirdPartyDeps, ...inRepoRuntimeDeps }
+  if (Object.keys(mergedDependencies).length > 0) {
+    rewritten.dependencies = mergedDependencies
   }
 
-  // If the package has a files field and has in-repo dependencies, add deps/ to files
-  // Otherwise npm pack will exclude the deps/ directory from the tarball
-  const hasInRepoDeps = closure.runtimeMembers.length > 1
-  if (rewritten.files && hasInRepoDeps) {
-    rewritten.files = [...rewritten.files, depsDir]
+  const bundled = closure.runtimeMembers.filter((pkg) => pkg.name !== closure.subjectPackageName).map((pkg) => pkg.name)
+
+  const existingBundled = rewritten.bundledDependencies ?? rewritten.bundleDependencies ?? []
+  const mergedBundled = [...new Set([...existingBundled, ...bundled])]
+
+  if (mergedBundled.length > 0) {
+    rewritten.bundledDependencies = mergedBundled
+    delete rewritten.bundleDependencies
   }
 
   fs.writeFileSync(path.join(outputDir, 'package.json'), JSON.stringify(rewritten, null, 2) + '\n')
