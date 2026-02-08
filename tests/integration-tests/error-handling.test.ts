@@ -165,6 +165,7 @@ describe('error handling', () => {
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
+      dependencies: { '@test/lib': '0.9.9' },
       bundledDependencies: ['@test/lib'],
     })
 

@@ -22,8 +22,14 @@ export function rewritePackageJson(closure: PackageClosure, version: string | un
   }
 
   // Replace dependencies with flattened third-party deps (no workspace deps)
-  if (Object.keys(closure.allThirdPartyDeps).length > 0) {
-    rewritten.dependencies = closure.allThirdPartyDeps
+  const inRepoRuntimeDeps = Object.fromEntries(
+    closure.runtimeMembers
+      .filter((pkg) => pkg.name !== closure.subjectPackageName)
+      .map((pkg) => [pkg.name, pkg.packageJson.version ?? '*'])
+  )
+  const mergedDependencies = { ...closure.allThirdPartyDeps, ...inRepoRuntimeDeps }
+  if (Object.keys(mergedDependencies).length > 0) {
+    rewritten.dependencies = mergedDependencies
   }
 
   const bundled = closure.runtimeMembers.filter((pkg) => pkg.name !== closure.subjectPackageName).map((pkg) => pkg.name)
