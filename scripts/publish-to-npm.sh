@@ -50,7 +50,7 @@ echo "    Latest published version: $LATEST_VERSION"
 echo "==> Setting version and bumping minor..."
 cd "$PUBLISH_DIR"
 npm pkg set version="$LATEST_VERSION"
-NEW_VERSION=$(npm version minor --no-git-tag-version)
+NEW_VERSION=$(npm version patch --no-git-tag-version)
 NEW_VERSION="${NEW_VERSION#v}"  # Remove 'v' prefix if present
 echo "    New version: $NEW_VERSION"
 
