@@ -137,6 +137,94 @@ describe('npm publishing with Verdaccio', () => {
     ).toBe('Hello, World!')
   }, 60000)
 
+  it('publishes a package that uses computed dynamic import of an in-repo dependency', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/dynamic-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/dynamic-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `export async function run(name) {
+  const scope = '@test'
+  const pkg = 'dynamic-lib'
+  const lib = await import(scope + '/' + pkg)
+  return lib.greet(name)
+}`,
+      'packages/lib/package.json': {
+        name: '@test/dynamic-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '1.2.3',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConumser(
+        '@test/dynamic-app@1.2.3',
+        `import { run } from '@test/dynamic-app'; console.log(await run('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 60000)
+
+  it('publishes a CommonJS package with CommonJS in-repo dependency and works after install', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/cjs-app',
+        version: '1.0.0',
+        type: 'commonjs',
+        main: 'dist/index.cjs',
+        dependencies: { '@test/cjs-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.cjs': `const { greet } = require('@test/cjs-lib')
+module.exports = {
+  run(name) {
+    return greet(name)
+  }
+}`,
+      'packages/lib/package.json': {
+        name: '@test/cjs-lib',
+        version: '1.0.0',
+        type: 'commonjs',
+        main: 'dist/index.cjs',
+      },
+      'packages/lib/dist/index.cjs': `module.exports = {
+  greet(name) {
+    return 'Hi, ' + name + '!'
+  }
+}`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '5.6.7',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConumser(
+        '@test/cjs-app@5.6.7',
+        `const { run } = require('@test/cjs-app'); console.log(run('World'))`
+      )
+    ).toBe('Hi, World!')
+  }, 60000)
+
   it('includes deps in tarball when subject has files field and in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
