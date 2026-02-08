@@ -73,11 +73,11 @@ export interface MonocrateOptions {
   max?: boolean
 
   /**
-   * **WARNING: This option exists ONLY for testing purposes.** In production use, always
-   * leave this undefined to get a unique directory name. Setting this to a predictable
-   * value in production could cause name collisions with existing directories in your package.
+   * @deprecated No-op. Kept for backward compatibility with older tests/callers.
    *
-   * Suffix appended to the deps directory name to ensure uniqueness.
+   * Previously controlled suffix for the temporary deps directory used by import rewriting.
+   * The current assembly model copies in-repo packages into node_modules and does not use
+   * this option.
    */
   uniquenessSuffix?: string
 }

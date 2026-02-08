@@ -7,7 +7,6 @@ import { getFilesToPack } from './get-files-to-pack.js'
 import { AbsolutePath, RelativePath } from './paths.js'
 import type { PackageJson } from './package-json.js'
 import type { NpmClient } from './npm-client.js'
-import { manglePackageName } from './name-mangler.js'
 
 /**
  * Resolves an import specifier to a package-relative path using Node.js resolution semantics.
@@ -64,8 +63,7 @@ async function createPackageLocation(
 export async function collectPackageLocations(
   npmClient: NpmClient,
   closure: PackageClosure,
-  outputDir: AbsolutePath,
-  depsDir: string
+  outputDir: AbsolutePath
 ): Promise<PackageLocation[]> {
   // TODO(imaman): use promises()
   return Promise.all(
@@ -75,7 +73,7 @@ export async function collectPackageLocations(
         dep,
         dep.name === closure.subjectPackageName
           ? outputDir
-          : AbsolutePath.join(outputDir, RelativePath(depsDir), RelativePath(manglePackageName(dep.name)))
+          : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name))
       )
     )
   )

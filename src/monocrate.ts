@@ -1,4 +1,3 @@
-import * as crypto from 'node:crypto'
 import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -65,11 +64,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     await npmClient.whoami(cwd)
   }
 
-  // Compute deps directory name with uniqueness suffix to avoid collisions
-  const uniquenessSuffix = options.uniquenessSuffix ?? `-${crypto.randomUUID()}`
-  const depsDir = `deps${uniquenessSuffix}`
-
-  const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot, depsDir))
+  const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot))
   const a0 = assemblers.at(0)
   if (!a0) {
     throw new Error(`Inconsistency - could not find an assembler for the first package`)

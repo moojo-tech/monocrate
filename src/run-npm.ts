@@ -1,4 +1,7 @@
 import { x } from 'tinyexec'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import type { AbsolutePath } from './paths.js'
 
 export interface NpmOptionsBase {
@@ -71,12 +74,18 @@ export async function runNpm(
 > {
   const errorPolicy = options?.nonZeroExitCodePolicy ?? 'throw'
   const stdio = options?.stdio ?? 'inherit'
+  const npmCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-npm-cache-'))
+  const env = {
+    ...process.env,
+    npm_config_cache: npmCacheDir,
+    ...options?.env,
+  }
 
   const uc = options?.userconfig ? ['--userconfig', options.userconfig] : []
   const fullArgs = [subcommand, ...args, ...uc]
   const synopsis = `${cwd}$ npm ${fullArgs.map((a) => JSON.stringify(a)).join(' ')}`
   const proc = x('npm', fullArgs, {
-    nodeOptions: { env: options?.env, cwd, stdio },
+    nodeOptions: { env, cwd, stdio },
     throwOnError: false,
   })
   const result = await proc

@@ -29,6 +29,8 @@ export const PackageJson = z
     type: z.enum(['module', 'commonjs']).optional(),
     workspaces: z.union([z.array(z.string()), z.object({ packages: z.array(z.string()) })]).optional(),
     files: z.array(z.string()).optional(),
+    bundledDependencies: z.array(z.string()).optional(),
+    bundleDependencies: z.array(z.string()).optional(),
     monocrate: MonocrateConfig,
   })
   .loose()

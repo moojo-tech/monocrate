@@ -4,12 +4,7 @@ import type { PackageJson } from './package-json.js'
 import type { PackageClosure } from './package-closure.js'
 import type { AbsolutePath } from './paths.js'
 
-export function rewritePackageJson(
-  closure: PackageClosure,
-  version: string | undefined,
-  outputDir: AbsolutePath,
-  depsDir: string
-) {
+export function rewritePackageJson(closure: PackageClosure, version: string | undefined, outputDir: AbsolutePath) {
   const subject = closure.runtimeMembers.find((at) => at.name === closure.subjectPackageName)
   if (!subject) {
     throw new Error(`Inconsistency in subject package name: "${closure.subjectPackageName}"`)
@@ -31,11 +26,10 @@ export function rewritePackageJson(
     rewritten.dependencies = closure.allThirdPartyDeps
   }
 
-  // If the package has a files field and has in-repo dependencies, add deps/ to files
-  // Otherwise npm pack will exclude the deps/ directory from the tarball
-  const hasInRepoDeps = closure.runtimeMembers.length > 1
-  if (rewritten.files && hasInRepoDeps) {
-    rewritten.files = [...rewritten.files, depsDir]
+  const bundled = closure.runtimeMembers.filter((pkg) => pkg.name !== closure.subjectPackageName).map((pkg) => pkg.name)
+
+  if (bundled.length > 0) {
+    rewritten.bundledDependencies = bundled
   }
 
   fs.writeFileSync(path.join(outputDir, 'package.json'), JSON.stringify(rewritten, null, 2) + '\n')

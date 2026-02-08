@@ -109,7 +109,7 @@ describe('error handling', () => {
     ).rejects.toThrow(/Package "@test\/external" is located at .* which is outside the monorepo root/)
   })
 
-  it('throws when code imports an in-repo package not listed in dependencies', async () => {
+  it('does not bundle an in-repo package when it is imported but not listed in dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       // app imports @test/lib but does NOT list it in dependencies
@@ -122,21 +122,20 @@ export const message = greet();
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
     })
 
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow(
-      'Import of in-repo package "@test/lib" found in packages/app/dist/index.js, ' +
-        'but "@test/lib" is not listed in package.json dependencies'
-    )
+    const { outputDir } = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: 'packages/app',
+      monorepoRoot,
+      publish: false,
+      bump: '2.8.512',
+    })
+
+    const output = unfolderify(outputDir)
+    expect(output).not.toHaveProperty('node_modules/@test/lib/package.json')
+    expect(output['package.json']).not.toHaveProperty('bundledDependencies')
   })
 
-  it('throws when code imports an in-repo package not listed in dependencies (via re-export)', async () => {
+  it('does not bundle in-repo package for missing dependency (via re-export)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       // app re-exports from @test/lib but does NOT list it in dependencies
@@ -147,18 +146,19 @@ export const message = greet();
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
     })
 
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Import of in-repo package "@test/lib" found in packages/app/dist/index.js')
+    const { outputDir } = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: 'packages/app',
+      monorepoRoot,
+      publish: false,
+      bump: '2.8.512',
+    })
+
+    const output = unfolderify(outputDir)
+    expect(output).not.toHaveProperty('node_modules/@test/lib/package.json')
   })
 
-  it('throws when code imports an in-repo package not listed in dependencies (via dynamic import)', async () => {
+  it('does not bundle in-repo package for missing dependency (via dynamic import)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       // app dynamically imports @test/lib but does NOT list it in dependencies
@@ -170,15 +170,16 @@ export const message = lib.greet();
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
     })
 
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Import of in-repo package "@test/lib" found in packages/app/dist/index.js')
+    const { outputDir } = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: 'packages/app',
+      monorepoRoot,
+      publish: false,
+      bump: '2.8.512',
+    })
+
+    const output = unfolderify(outputDir)
+    expect(output).not.toHaveProperty('node_modules/@test/lib/package.json')
   })
 
   it('throws when workspaces field in package.json is malformed', async () => {
@@ -237,6 +238,7 @@ export const message = lib.greet();
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello!')

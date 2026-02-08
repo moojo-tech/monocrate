@@ -39,7 +39,7 @@ describe('.npmrc file handling', () => {
 
     expect(await runMonocrate(monorepoRoot, 'packages/app')).toMatchObject({
       output: {
-        'deps/lib/.npmrc': 'registry=https://lib.registry.com',
+        'node_modules/lib/.npmrc': 'registry=https://lib.registry.com',
       },
     })
   })
