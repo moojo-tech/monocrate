@@ -1,13 +1,24 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 
-const require = createRequire(import.meta.url)
-const pkg = require('../package.json') as { version: string }
+function findPackageJson(): string {
+  let dir = path.dirname(fileURLToPath(import.meta.url))
+  for (let i = 0; i < 2; i++) {
+    const candidate = path.join(dir, 'package.json')
+    if (fs.existsSync(candidate)) {
+      return candidate
+    }
+    dir = path.dirname(dir)
+  }
+  throw new Error('Could not find package.json')
+}
+
+const pkg = JSON.parse(fs.readFileSync(findPackageJson(), 'utf-8')) as { version: string }
 
 interface YargsArgs {
   _: string[]
