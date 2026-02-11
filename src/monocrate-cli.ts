@@ -8,7 +8,7 @@ import { monocrate } from './monocrate.js'
 
 function findPackageJson(): string {
   let dir = path.dirname(fileURLToPath(import.meta.url))
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     const candidate = path.join(dir, 'package.json')
     if (fs.existsSync(candidate)) {
       return candidate
