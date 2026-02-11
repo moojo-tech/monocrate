@@ -8,16 +8,7 @@ import type { PackageClosure } from './package-closure.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { AbsolutePath, RelativePath } from './paths.js'
 import type { NpmClient } from './npm-client.js'
-
-interface PackDirectory {
-  directory: AbsolutePath
-  cleanup: () => Promise<void>
-}
-
-export interface CollectPackageLocationsResult {
-  locations: PackageLocation[]
-  cleanup: () => Promise<void>
-}
+import type { TempDirRegistry } from './temp-dir-registry.js'
 
 async function findSingleTarballInDirectory(dir: AbsolutePath): Promise<AbsolutePath> {
   const entries = await fsPromises.readdir(dir, { withFileTypes: true })
@@ -58,95 +49,71 @@ function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
   return visit(rootDir)
 }
 
-async function packAndExtractDirectory(npmClient: NpmClient, packageDir: AbsolutePath): Promise<PackDirectory> {
-  const tempDir = AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-')))
+async function packAndExtractDirectory(
+  npmClient: NpmClient,
+  packageDir: AbsolutePath,
+  tempDirs: TempDirRegistry
+): Promise<AbsolutePath> {
+  const tempDir = tempDirs.record(AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-'))))
+  await npmClient.pack(packageDir, tempDir)
+  const tarball = await findSingleTarballInDirectory(tempDir)
+  await tar.x({ file: tarball, cwd: tempDir })
 
-  try {
-    await npmClient.pack(packageDir, tempDir)
-    const tarball = await findSingleTarballInDirectory(tempDir)
-    await tar.x({ file: tarball, cwd: tempDir })
-
-    const extracted = AbsolutePath.join(tempDir, RelativePath('package'))
-    const stats = await fsPromises.stat(extracted)
-    if (!stats.isDirectory()) {
-      throw new Error(`Expected ${extracted} to be a directory`)
-    }
-
-    return {
-      directory: extracted,
-      cleanup: async () => {
-        await fsPromises.rm(tempDir, { recursive: true, force: true })
-      },
-    }
-  } catch (error) {
-    await fsPromises.rm(tempDir, { recursive: true, force: true })
-    throw error
+  const extracted = AbsolutePath.join(tempDir, RelativePath('package'))
+  const stats = await fsPromises.stat(extracted)
+  if (!stats.isDirectory()) {
+    throw new Error(`Expected ${extracted} to be a directory`)
   }
+  return extracted
 }
 
 async function createPackageLocation(
   npmClient: NpmClient,
   pkg: MonorepoPackage,
   directoryInOutput: AbsolutePath,
-  includeNpmrc: boolean
-): Promise<{ location: PackageLocation; cleanup: () => Promise<void> }> {
-  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir)
+  includeNpmrc: boolean,
+  tempDirs: TempDirRegistry
+): Promise<PackageLocation> {
+  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir, tempDirs)
 
-  const filesToCopy = await listFilesRecursively(packed.directory)
+  const filesToCopy = await listFilesRecursively(packed)
 
   if (includeNpmrc) {
     // Include .npmrc for the subject package only (npm pack does not include config files).
     const npmrcPath = AbsolutePath.join(pkg.fromDir, RelativePath('.npmrc'))
     if (fs.existsSync(npmrcPath)) {
-      const extractedNpmrc = AbsolutePath.join(packed.directory, RelativePath('.npmrc'))
+      const extractedNpmrc = AbsolutePath.join(packed, RelativePath('.npmrc'))
       await fsPromises.copyFile(npmrcPath, extractedNpmrc)
       filesToCopy.push('.npmrc')
     }
   }
 
   return {
-    location: {
-      name: pkg.name,
-      fromDir: packed.directory,
-      toDir: directoryInOutput,
-      filesToCopy,
-      packageJson: pkg.packageJson,
-    },
-    cleanup: packed.cleanup,
+    name: pkg.name,
+    fromDir: packed,
+    toDir: directoryInOutput,
+    filesToCopy,
+    packageJson: pkg.packageJson,
   }
 }
 
 export async function collectPackageLocations(
   npmClient: NpmClient,
   closure: PackageClosure,
-  outputDir: AbsolutePath
-): Promise<CollectPackageLocationsResult> {
-  const cleanups: (() => Promise<void>)[] = []
-
-  try {
-    const locations = await Promise.all(
-      closure.runtimeMembers.map(async (dep) => {
-        const created = await createPackageLocation(
-          npmClient,
-          dep,
-          dep.name === closure.subjectPackageName
-            ? outputDir
-            : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name)),
-          dep.name === closure.subjectPackageName
-        )
-        cleanups.push(created.cleanup)
-        return created.location
-      })
+  outputDir: AbsolutePath,
+  tempDirs: TempDirRegistry
+): Promise<PackageLocation[]> {
+  return Promise.all(
+    closure.runtimeMembers.map(async (dep) =>
+      createPackageLocation(
+        npmClient,
+        dep,
+        dep.name === closure.subjectPackageName
+          ? outputDir
+          : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name)),
+        dep.name === closure.subjectPackageName,
+        tempDirs
+      )
     )
-
-    return {
-      locations,
-      cleanup: async () => {
-        await Promise.all(cleanups.map(async (cleanup) => cleanup()))
-      },
-    }
-  } catch (error) {
-    await Promise.all(cleanups.map(async (cleanup) => cleanup()))
-    throw error
-  }
+  )
 }
