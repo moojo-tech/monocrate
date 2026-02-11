@@ -96,7 +96,9 @@ describe('TempDirRegistry', () => {
 
       fs.rmSync(dir, { recursive: true, force: true })
 
-      expect(() => { registry.cleanup(); }).not.toThrow()
+      expect(() => {
+        registry.cleanup()
+      }).not.toThrow()
     })
 
     it('still removes remaining directories when some have already been deleted', () => {
@@ -116,7 +118,9 @@ describe('TempDirRegistry', () => {
     it('is a no-op when no directories have been recorded', () => {
       const registry = new TempDirRegistry()
 
-      expect(() => { registry.cleanup(); }).not.toThrow()
+      expect(() => {
+        registry.cleanup()
+      }).not.toThrow()
     })
 
     it('is a no-op when called a second time', () => {
@@ -127,7 +131,9 @@ describe('TempDirRegistry', () => {
       registry.cleanup()
       expect(fs.existsSync(dir)).toBe(false)
 
-      expect(() => { registry.cleanup(); }).not.toThrow()
+      expect(() => {
+        registry.cleanup()
+      }).not.toThrow()
     })
 
     it('does not remove directories that were not recorded', () => {
