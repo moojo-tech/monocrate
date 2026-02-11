@@ -4,9 +4,8 @@ import * as path from 'node:path'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
-import { publish } from './publish.js'
 import { parseVersionSpecifier } from './version-specifier.js'
-import { AbsolutePath } from './paths.js'
+import { AbsolutePath, RelativePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
@@ -16,6 +15,10 @@ import { TempDirRegistry } from './temp-dir-registry.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
+
+function npmTarballFileName(packageName: string, version: string): string {
+  return `${packageName.replace(/^@/, '').replace(/\//g, '-')}-${version}.tgz`
+}
 
 /**
  * Assembles a monorepo package and its in-repo dependencies for npm publishing.
@@ -60,7 +63,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
 
-  const npmClient = new NpmClient({ userconfig: options.npmrcPath })
+  const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirs)
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
@@ -86,24 +89,31 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       max = maxVersion(max, at.version)
     }
 
-    const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
+    const packagePlans = pairs.map((at) => {
+      const version = useMax ? max : at.version
+      const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(at.assembler.publishAs, version)))
+      return { assembler: at.assembler, version, tarballPath }
+    })
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
-    // Phase 1: Assemble all packages and publish with --tag pending
-    for (const { assembler, version } of resolvedPairs) {
-      const { compiletimeMembers } = await assembler.assemble(version)
+    // Phase 1: Assemble all packages and generate their final tarballs.
+    // If publishing is enabled, publish each tarball with --tag pending.
+    for (const { assembler, version, tarballPath } of packagePlans) {
+      const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
       for (const pkg of compiletimeMembers) {
         allPackagesForMirror.set(pkg.name, pkg)
       }
 
+      const outputDir = assembler.getOutputDir()
+
       if (options.publish) {
-        await publish(npmClient, assembler.getOutputDir(), 'pending')
+        await npmClient.publishTarball(tarballPath, outputDir, 'pending')
       }
     }
 
     // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
     if (options.publish) {
-      for (const { assembler, version } of resolvedPairs) {
+      for (const { assembler, version } of packagePlans) {
         await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
       }
     }
@@ -117,10 +127,11 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     return {
       outputDir: a0.getOutputDir(),
       resolvedVersion: useMax ? max : undefined,
-      summaries: resolvedPairs.map(({ assembler, version }) => ({
+      summaries: packagePlans.map(({ assembler, version, tarballPath }) => ({
         outputDir: assembler.getOutputDir(),
         packageName: assembler.pkgName,
         version,
+        tarballPath,
       })),
     }
   } finally {

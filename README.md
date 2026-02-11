@@ -44,7 +44,7 @@ npm run build
 # Publish
 npx monocrate packages/my-awesome-package --bump patch
 
-# Or: use --dry-run to do everything short of publishing
+# Or: use --dry-run to assemble and create the final tarball in cwd without publishing
 npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
 ```
 
@@ -217,7 +217,7 @@ monocrate <packages...> [options]
 |--------|-------|------|---------|-------------|
 | `--bump` | `-b` | `string` | `minor` | Version bump strategy: `patch`, `minor`, `major`, `package`, or explicit semver (e.g., `2.3.0`). Use `package` to read version from `package.json`. |
 | `--max` | | `boolean` | `false` | Use max version across all packages (unified versioning). When false, each package uses its own version. |
-| `--dry-run` | `-d` | `boolean` | `false` | Prepare the package without publishing to npm |
+| `--dry-run` | `-d` | `boolean` | `false` | Prepare package and final tarball without publishing to npm |
 | `--output-dir` | `-o` | `string` | (temp dir) | Directory where assembled package is written |
 | `--root` | `-r` | `string` | (auto) | Monorepo root directory (auto-detected if omitted) |
 | `--mirror-to` | `-m` | `string` | — | Mirror source files to a directory (for public repos) |
@@ -252,4 +252,4 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 |----------|------|-------------|
 | `outputDir` | `string` | Directory where the first package was assembled. |
 | `resolvedVersion` | `string \| undefined` | The unified resolved version (only set when `max: true`). |
-| `summaries` | `Array<{ packageName: string; outputDir: string; version: string }>` | Details for each assembled package, including its version. |
+| `summaries` | `Array<{ packageName: string; outputDir: string; version: string; tarballPath: string }>` | Details for each assembled package, including version and path to generated tarball. |

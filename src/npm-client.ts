@@ -1,7 +1,12 @@
+import * as fsPromises from 'node:fs/promises'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { z } from 'zod'
-import type { AbsolutePath } from './paths.js'
+import { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
+import { findSingleTarballInDirectory } from './tarball.js'
+import type { TempDirRegistry } from './temp-dir-registry.js'
 
 const NpmErrorResponse = z.object({
   error: z.object({
@@ -12,7 +17,10 @@ const NpmErrorResponse = z.object({
 })
 
 export class NpmClient {
-  constructor(private readonly npmOptions?: NpmOptionsBase) {}
+  constructor(
+    private readonly npmOptions: NpmOptionsBase | undefined,
+    private readonly tempDirs: TempDirRegistry
+  ) {}
 
   /**
    * Checks if the user is logged in to npm.
@@ -38,6 +46,11 @@ export class NpmClient {
   async publish(dir: AbsolutePath, tag?: string): Promise<void> {
     const args = tag ? ['--tag', tag] : []
     await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
+  }
+
+  async publishTarball(tarballPath: AbsolutePath, cwd: AbsolutePath, tag?: string): Promise<void> {
+    const args = tag ? [tarballPath, '--tag', tag] : [tarballPath]
+    await runNpm('publish', args, cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
@@ -77,11 +90,22 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, packDestination: AbsolutePath): Promise<void> {
-    await runNpm('pack', ['--pack-destination', packDestination], dir, {
+  async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath, options?: { ignoreScripts?: boolean }): Promise<void> {
+    const tempDir = this.tempDirs.record(
+      AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-')))
+    )
+    const args = options?.ignoreScripts
+      ? ['--ignore-scripts', '--pack-destination', tempDir]
+      : ['--pack-destination', tempDir]
+    await runNpm('pack', args, dir, {
       ...this.npmOptions,
       stdio: 'inherit',
       nonZeroExitCodePolicy: 'throw',
     })
+
+    const packedTarball = await findSingleTarballInDirectory(tempDir)
+    await fsPromises.mkdir(AbsolutePath.dirname(outputTarballPath), { recursive: true })
+    await fsPromises.rm(outputTarballPath, { force: true })
+    await fsPromises.copyFile(packedTarball, outputTarballPath)
   }
 }

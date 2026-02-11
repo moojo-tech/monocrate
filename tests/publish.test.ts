@@ -85,6 +85,42 @@ describe('npm publishing with Verdaccio', () => {
     ).toBe('Hello from mylib!')
   }, 60000)
 
+  it('dry-run creates a tarball that can be manually published and consumed', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/dry-lib/package.json': {
+        name: '@test/dry-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/dry-lib/dist/index.js': `export function hello() { return 'Hello from dry-run tarball!'; }`,
+    })
+
+    const result = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/dry-lib'),
+      monorepoRoot,
+      bump: '77.77.77',
+      publish: false,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected one package summary')
+    }
+
+    expect(summary.tarballPath).toBe(path.join(monorepoRoot, 'test-dry-lib-77.77.77.tgz'))
+
+    verdaccio.publishTarball(summary.tarballPath)
+
+    expect(verdaccio.runView('@test/dry-lib')).toMatchObject({ name: '@test/dry-lib', version: '77.77.77' })
+    expect(
+      verdaccio.runConumser(`@test/dry-lib@77.77.77`, `import { hello } from '@test/dry-lib'; console.log(hello())`)
+    ).toBe('Hello from dry-run tarball!')
+  }, 60000)
+
   it('publishes a simple non-scoped package', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
