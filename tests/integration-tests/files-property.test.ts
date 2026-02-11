@@ -225,8 +225,8 @@ console.log('Hello from bin');
         main: 'dist/index.js',
         files: ['dist'],
         scripts: {
-          prepack: 'bash -c "mkdir -p dist && printf \\"console.log(\'packed\');\\\\n\\" > dist/index.js"',
-          postpack: 'bash -c "printf \\"console.log(\'reverted\');\\\\n\\" > dist/index.js"',
+          prepack: 'bash -c "mkdir -p dist && echo \\"console.log(\'packed\');\\" > dist/index.js"',
+          postpack: 'bash -c "echo \\"console.log(\'reverted\');\\" > dist/index.js"',
         },
       },
       'packages/app/dist/index.js': `console.log('original');
