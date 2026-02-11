@@ -89,14 +89,17 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       max = maxVersion(max, at.version)
     }
 
-    const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
+    const packagePlans = pairs.map((at) => {
+      const version = useMax ? max : at.version
+      const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(at.assembler.publishAs, version)))
+      return { assembler: at.assembler, version, tarballPath }
+    })
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
     const summaries: { packageName: string; outputDir: string; version: string; tarballPath: AbsolutePath }[] = []
 
     // Phase 1: Assemble all packages and generate their final tarballs.
     // If publishing is enabled, publish each tarball with --tag pending.
-    for (const { assembler, version } of resolvedPairs) {
-      const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(assembler.publishAs, version)))
+    for (const { assembler, version, tarballPath } of packagePlans) {
       const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
       for (const pkg of compiletimeMembers) {
         allPackagesForMirror.set(pkg.name, pkg)
@@ -117,7 +120,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
     // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
     if (options.publish) {
-      for (const { assembler, version } of resolvedPairs) {
+      for (const { assembler, version } of packagePlans) {
         await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
       }
     }
