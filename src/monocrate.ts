@@ -67,7 +67,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   }
 
   try {
-    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot, tempDirs))
+    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, cwd, outputRoot, tempDirs))
     const a0 = assemblers.at(0)
     if (!a0) {
       throw new Error(`Inconsistency - could not find an assembler for the first package`)

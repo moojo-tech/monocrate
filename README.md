@@ -44,7 +44,7 @@ npm run build
 # Publish
 npx monocrate packages/my-awesome-package --bump patch
 
-# Or: use --dry-run to assemble and create the final tarball without publishing
+# Or: use --dry-run to assemble and create the final tarball in cwd without publishing
 npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
 ```
 

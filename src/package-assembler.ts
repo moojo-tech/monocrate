@@ -1,5 +1,4 @@
 import * as fsPromises from 'node:fs/promises'
-import * as path from 'node:path'
 import { collectPackageLocations } from './collect-package-locations.js'
 import { FileCopier } from './file-copier.js'
 import { resolveVersion } from './resolve-version.js'
@@ -12,6 +11,10 @@ import type { NpmClient } from './npm-client.js'
 import type { TempDirRegistry } from './temp-dir-registry.js'
 import { findSingleTarballInDirectory } from './tarball.js'
 
+function npmTarballFileName(packageName: string, version: string): string {
+  return `${packageName.replace(/^@/, '').replace('/', '-')}-${version}.tgz`
+}
+
 export class PackageAssembler {
   readonly pkgName
   readonly publishAs
@@ -21,6 +24,7 @@ export class PackageAssembler {
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
+    private readonly cwd: AbsolutePath,
     private readonly outputRoot: AbsolutePath,
     private readonly tempDirs: TempDirRegistry
   ) {
@@ -42,12 +46,24 @@ export class PackageAssembler {
     return await resolveVersion(this.npmClient, this.fromDir, this.pkgName, versionSpecifier, packageJsonVersion)
   }
 
-  private async createFinalTarball(outputDir: AbsolutePath): Promise<AbsolutePath> {
-    const tarballRoot = AbsolutePath.join(this.outputRoot, RelativePath('monocrate-final-tarballs'))
-    await fsPromises.mkdir(tarballRoot, { recursive: true })
-    const packDestination = AbsolutePath(await fsPromises.mkdtemp(path.join(tarballRoot, 'monocrate-final-pack-')))
-    await this.npmClient.pack(outputDir, packDestination)
-    return findSingleTarballInDirectory(packDestination)
+  private async createFinalTarball(outputDir: AbsolutePath, version: string): Promise<AbsolutePath> {
+    const tarballFileName = npmTarballFileName(this.publishAs, version)
+    const tarballPath = AbsolutePath.join(this.cwd, RelativePath(tarballFileName))
+
+    // Keep output deterministic: avoid stale tarball from a previous run.
+    await fsPromises.rm(tarballPath, { force: true })
+    await this.npmClient.pack(outputDir, this.cwd)
+
+    const tarballExists = await fsPromises
+      .stat(tarballPath)
+      .then((stats) => stats.isFile())
+      .catch(() => false)
+    if (!tarballExists) {
+      const found = await findSingleTarballInDirectory(this.cwd).catch(() => undefined)
+      const foundSuffix = found ? ` Found tarball: ${found}` : ''
+      throw new Error(`Expected packed tarball at ${tarballPath}.${foundSuffix}`)
+    }
+    return tarballPath
   }
 
   async assemble(
@@ -62,7 +78,15 @@ export class PackageAssembler {
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
     rewritePackageJson(closure, newVersion, outputDir)
-    const tarballPath = await this.createFinalTarball(outputDir)
+    const versionFromPackageJson = this.explorer.getPackage(closure.subjectPackageName).packageJson.version
+    if (!newVersion && !versionFromPackageJson) {
+      throw new Error(`Package "${closure.subjectPackageName}" must have a version in package.json`)
+    }
+    const resolvedVersion = newVersion ?? versionFromPackageJson
+    if (!resolvedVersion) {
+      throw new Error(`Inconsistency: could not determine version for "${closure.subjectPackageName}"`)
+    }
+    const tarballPath = await this.createFinalTarball(outputDir, resolvedVersion)
 
     return { compiletimeMembers: closure.compiletimeMembers, tarballPath }
   }
