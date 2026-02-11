@@ -22,6 +22,7 @@ const pkg = JSON.parse(fs.readFileSync(findPackageJson(), 'utf-8')) as { version
 
 interface YargsArgs {
   _: string[]
+  packages?: string[]
   'output-dir'?: string
   root?: string
   bump?: string
@@ -35,22 +36,23 @@ export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
     .version(pkg.version)
-    .usage(
+    .command(
+      '$0 <packages...>',
       `From monorepo to npm in one command.
 
-Point at your packages. That's it.
-
-Usage: $0 <packages...> [options]`
+Point at your packages. That's it.`,
+      (yargs) =>
+        yargs.positional('packages', {
+          describe: 'Package directories to publish',
+          type: 'string',
+          array: true,
+          demandOption: true,
+        })
     )
     .example('$0 pkg/foo --bump patch', 'Bump to next patch and publish')
     .example('$0 libs/a libs/b', 'Multi-package (defaults to minor bump)')
     .example('$0 pkg/foo --dry-run', 'Prepare without publishing')
     .example('$0 pkg/foo --bump package', 'Use version from package.json')
-    .positional('packages', {
-      describe: 'Package directories to publish',
-      type: 'string',
-      array: true,
-    })
     .options({
       bump: {
         alias: 'b',
@@ -91,15 +93,11 @@ Usage: $0 <packages...> [options]`
     .strict()
     .help()
     .option('help', { hidden: true })
-    .option('version', { hidden: true })
 
   void Promise.resolve(parser.parse())
     .then(async (argv) => {
       const args = argv as YargsArgs
-      const packages = args._
-      if (packages.length === 0) {
-        throw new Error('At least one package directory must be specified. Try: monocrate <package-dir>')
-      }
+      const packages = args.packages ?? args._
       const options: MonocrateOptions = {
         pathToSubjectPackages: packages,
         outputRoot: args['output-dir'],
