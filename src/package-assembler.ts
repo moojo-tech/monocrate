@@ -41,14 +41,18 @@ export class PackageAssembler {
   async assemble(newVersion: string | undefined): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir)
-    const packageMap = new Map(locations.map((at) => [at.name, at] as const))
+    const collected = await collectPackageLocations(this.npmClient, closure, outputDir)
 
-    await fsPromises.mkdir(outputDir, { recursive: true })
-    await new FileCopier(packageMap).copy()
+    try {
+      const packageMap = new Map(collected.locations.map((at) => [at.name, at] as const))
+      await fsPromises.mkdir(outputDir, { recursive: true })
+      await new FileCopier(packageMap).copy()
 
-    // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
-    rewritePackageJson(closure, newVersion, outputDir)
+      // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
+      rewritePackageJson(closure, newVersion, outputDir)
+    } finally {
+      await collected.cleanup()
+    }
 
     return { compiletimeMembers: closure.compiletimeMembers }
   }

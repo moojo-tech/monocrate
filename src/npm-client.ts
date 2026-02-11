@@ -1,3 +1,5 @@
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { z } from 'zod'
 import type { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
@@ -14,6 +16,17 @@ const NpmErrorResponse = z.object({
 export class NpmClient {
   constructor(private readonly npmOptions?: NpmOptionsBase) {}
 
+  private withDefaultEnv() {
+    const defaultCache = path.join(os.tmpdir(), 'monocrate-npm-cache')
+    return {
+      ...this.npmOptions,
+      env: {
+        ...this.npmOptions?.env,
+        npm_config_cache: this.npmOptions?.env?.npm_config_cache ?? defaultCache,
+      },
+    }
+  }
+
   /**
    * Checks if the user is logged in to npm.
    * @param cwd - The working directory for the npm command
@@ -22,7 +35,7 @@ export class NpmClient {
    */
   async whoami(cwd: AbsolutePath): Promise<string> {
     const { ok, stdout } = await runNpm('whoami', [], cwd, {
-      ...this.npmOptions,
+      ...this.withDefaultEnv(),
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
     })
@@ -37,11 +50,11 @@ export class NpmClient {
 
   async publish(dir: AbsolutePath, tag?: string): Promise<void> {
     const args = tag ? ['--tag', tag] : []
-    await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
+    await runNpm('publish', args, dir, { ...this.withDefaultEnv(), stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
-    await runNpm('dist-tag', ['add', packageNameAtVersion, tag], cwd, { ...this.npmOptions, stdio: 'inherit' })
+    await runNpm('dist-tag', ['add', packageNameAtVersion, tag], cwd, { ...this.withDefaultEnv(), stdio: 'inherit' })
   }
 
   /**
@@ -51,7 +64,7 @@ export class NpmClient {
    */
   async viewVersion(packageName: string, cwd: AbsolutePath): Promise<string | undefined> {
     const { ok, stdout } = await runNpm('view', ['-s', '--json', packageName, 'version'], cwd, {
-      ...this.npmOptions,
+      ...this.withDefaultEnv(),
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
     })
@@ -77,17 +90,34 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, options?: { dryRun?: boolean }) {
-    const { stdout, ok } = await runNpm('pack', ['--json', ...(options?.dryRun ? ['--dry-run'] : [])], dir, {
-      ...this.npmOptions,
+  async pack(dir: AbsolutePath, options?: { dryRun?: boolean; packDestination?: AbsolutePath }) {
+    const args = ['--json']
+    if (options?.dryRun) {
+      args.push('--dry-run')
+    }
+    if (options?.packDestination) {
+      args.push('--pack-destination', options.packDestination)
+    }
+
+    const { stdout, stderr, ok } = await runNpm('pack', args, dir, {
+      ...this.withDefaultEnv(),
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
     })
 
     if (!ok) {
-      const parsed = NpmErrorResponse.safeParse(JSON.parse(stdout))
+      const candidate = stdout.trim() === '' ? stderr : stdout
+      let decoded: unknown
+      try {
+        decoded = JSON.parse(candidate)
+      } catch {
+        const detail = candidate.trim() === '' ? '<No Further Details>' : candidate
+        throw new Error(`The 'npm pack' command failed: ${detail}`)
+      }
+
+      const parsed = NpmErrorResponse.safeParse(decoded)
       if (!parsed.success) {
-        throw new Error(`Error response of 'npm pack' could not be parsed: ${stdout}`)
+        throw new Error(`Error response of 'npm pack' could not be parsed: ${candidate}`)
       }
 
       const code = parsed.data.error.code ?? 'UNKNOWN'
@@ -95,25 +125,34 @@ export class NpmClient {
       throw new Error(`The 'npm pack' command failed (code: ${code}): ${detail}`)
     }
 
+    let decoded: unknown
+    try {
+      decoded = JSON.parse(stdout)
+    } catch {
+      throw new Error(`Response of 'npm pack' could not be parsed as JSON: ${stdout}`)
+    }
+
     const parsed = z
       .array(
         z.object({
-          id: z.string(),
-          name: z.string(),
-          version: z.string(),
-          size: z.number(),
-          unpackedSize: z.number(),
-          shasum: z.string(),
-          integrity: z.string(),
+          id: z.string().optional(),
+          name: z.string().optional(),
+          version: z.string().optional(),
+          size: z.number().optional(),
+          unpackedSize: z.number().optional(),
+          shasum: z.string().optional(),
+          integrity: z.string().optional(),
           filename: z.string(),
-          files: z.array(
-            z.object({
-              path: z.string(),
-            })
-          ),
+          files: z
+            .array(
+              z.object({
+                path: z.string(),
+              })
+            )
+            .optional(),
         })
       )
-      .safeParse(JSON.parse(stdout))
+      .safeParse(decoded)
     if (!parsed.success) {
       throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
     }

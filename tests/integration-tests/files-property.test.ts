@@ -215,6 +215,33 @@ console.log('Hello from bin');
     expect(pkgJson.files).toEqual(['dist', 'bin'])
   })
 
+  it('copies the packed payload produced by npm scripts', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { name, workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        files: ['dist'],
+        scripts: {
+          prepack:
+            "node -e \"require('node:fs').mkdirSync('dist',{recursive:true});require('node:fs').writeFileSync('dist/index.js',\\\"console.log(\\'packed\\');\\\\n\\\")\"",
+          postpack:
+            "node -e \"require('node:fs').writeFileSync('dist/index.js',\\\"console.log(\\'reverted\\');\\\\n\\\")\"",
+        },
+      },
+      'packages/app/dist/index.js': `console.log('original');
+`,
+    })
+
+    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+
+    expect(output['dist/index.js']).toBe(`console.log('packed');
+`)
+    expect(stdout.trim()).toBe('packed')
+  })
+
   it('adds bundledDependencies when subject has in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
