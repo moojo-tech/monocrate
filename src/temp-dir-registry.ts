@@ -1,4 +1,4 @@
-import * as fsPromises from 'node:fs/promises'
+import * as fs from 'node:fs'
 import type { AbsolutePath } from './paths.js'
 
 export class TempDirRegistry {
@@ -9,13 +9,11 @@ export class TempDirRegistry {
     return directory
   }
 
-  async cleanup(): Promise<void> {
+  cleanup(): void {
     const all = [...this.directories]
     this.directories.clear()
-    await Promise.all(
-      all.map(async (directory) => {
-        await fsPromises.rm(directory, { recursive: true, force: true })
-      })
-    )
+    for (const directory of all) {
+      fs.rmSync(directory, { recursive: true, force: true })
+    }
   }
 }

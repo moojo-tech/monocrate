@@ -124,6 +124,6 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       })),
     }
   } finally {
-    await tempDirs.cleanup()
+    tempDirs.cleanup()
   }
 }
