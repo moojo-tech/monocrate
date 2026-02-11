@@ -1,5 +1,6 @@
+import * as fsPromises from 'node:fs/promises'
 import { z } from 'zod'
-import type { AbsolutePath } from './paths.js'
+import { AbsolutePath, RelativePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
 
@@ -77,59 +78,27 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, options?: { dryRun?: boolean; packDestination?: AbsolutePath }) {
-    const args = ['--json']
-    if (options?.dryRun) {
-      args.push('--dry-run')
-    }
-    if (options?.packDestination) {
-      args.push('--pack-destination', options.packDestination)
-    }
-
-    const { stdout, stderr, ok } = await runNpm('pack', args, dir, {
+  async pack(dir: AbsolutePath, packDestination: AbsolutePath): Promise<AbsolutePath> {
+    await runNpm('pack', ['--pack-destination', packDestination], dir, {
       ...this.npmOptions,
-      stdio: 'pipe',
-      nonZeroExitCodePolicy: 'return',
+      stdio: 'inherit',
+      nonZeroExitCodePolicy: 'throw',
     })
 
-    if (!ok) {
-      const candidate = stdout.trim() === '' ? stderr : stdout
-      const detail = candidate.trim() === '' ? '<No Further Details>' : candidate
-      throw new Error(`The 'npm pack' command failed: ${detail}`)
-    }
-
-    let decoded: unknown
-    try {
-      decoded = JSON.parse(stdout)
-    } catch {
-      throw new Error(`Response of 'npm pack' could not be parsed as JSON: ${stdout}`)
-    }
-
-    const parsed = z
-      .array(
-        z.object({
-          id: z.string().optional(),
-          name: z.string().optional(),
-          version: z.string().optional(),
-          size: z.number().optional(),
-          unpackedSize: z.number().optional(),
-          shasum: z.string().optional(),
-          integrity: z.string().optional(),
-          filename: z.string(),
-          files: z
-            .array(
-              z.object({
-                path: z.string(),
-              })
-            )
-            .optional(),
-        })
+    const entries = await fsPromises.readdir(packDestination, { withFileTypes: true })
+    const tarballs = entries.flatMap((entry) => (entry.isFile() && entry.name.endsWith('.tgz') ? [entry.name] : []))
+    if (tarballs.length !== 1) {
+      const found = tarballs.length === 0 ? '<none>' : tarballs.join(', ')
+      throw new Error(
+        `Expected exactly one .tgz file after npm pack in ${packDestination}, found ${String(tarballs.length)}: ${found}`
       )
-      .safeParse(decoded)
-    if (!parsed.success) {
-      throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
     }
 
-    return parsed.data
+    const onlyTarball = tarballs.at(0)
+    if (!onlyTarball) {
+      throw new Error(`Inconsistency: expected one tarball in ${packDestination}`)
+    }
+
+    return AbsolutePath.join(packDestination, RelativePath(onlyTarball))
   }
 }

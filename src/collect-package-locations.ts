@@ -43,23 +43,6 @@ function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
   return visit(rootDir)
 }
 
-async function moveFile(source: AbsolutePath, destination: AbsolutePath): Promise<void> {
-  try {
-    await fsPromises.rename(source, destination)
-  } catch (error) {
-    const isExdev =
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error.code === 'EXDEV' || error.code === 'EPERM')
-    if (!isExdev) {
-      throw error
-    }
-    await fsPromises.copyFile(source, destination)
-    await fsPromises.unlink(source)
-  }
-}
-
 async function packAndExtractDirectory(
   npmClient: NpmClient,
   packageDir: AbsolutePath,
@@ -69,20 +52,8 @@ async function packAndExtractDirectory(
   const tempDir = AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), `monocrate-pack-${safeName}-`)))
 
   try {
-    const packOutput = await npmClient.pack(packageDir)
-    if (packOutput.length !== 1) {
-      throw new Error(`Expected npm pack to return a single element array`)
-    }
-
-    const element = packOutput.at(0)
-    if (element === undefined) {
-      throw new Error('npm pack returned empty output')
-    }
-
-    const sourceTarball = AbsolutePath.join(packageDir, RelativePath(element.filename))
-    const tempTarball = AbsolutePath.join(tempDir, RelativePath(element.filename))
-    await moveFile(sourceTarball, tempTarball)
-    await x('tar', ['-xzf', tempTarball, '-C', tempDir], { throwOnError: true })
+    const tarball = await npmClient.pack(packageDir, tempDir)
+    await x('tar', ['-xzf', tarball, '-C', tempDir], { throwOnError: true })
 
     const extracted = AbsolutePath.join(tempDir, RelativePath('package'))
     const stats = await fsPromises.stat(extracted)
