@@ -5,7 +5,7 @@ import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
 import { parseVersionSpecifier } from './version-specifier.js'
-import { AbsolutePath } from './paths.js'
+import { AbsolutePath, RelativePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
@@ -15,6 +15,10 @@ import { TempDirRegistry } from './temp-dir-registry.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
+
+function npmTarballFileName(packageName: string, version: string): string {
+  return `${packageName.replace(/^@/, '').replace(/\//g, '-')}-${version}.tgz`
+}
 
 /**
  * Assembles a monorepo package and its in-repo dependencies for npm publishing.
@@ -67,7 +71,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   }
 
   try {
-    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, cwd, outputRoot, tempDirs))
+    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot, tempDirs))
     const a0 = assemblers.at(0)
     if (!a0) {
       throw new Error(`Inconsistency - could not find an assembler for the first package`)
@@ -92,7 +96,8 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     // Phase 1: Assemble all packages and generate their final tarballs.
     // If publishing is enabled, publish each tarball with --tag pending.
     for (const { assembler, version } of resolvedPairs) {
-      const { compiletimeMembers, tarballPath } = await assembler.assemble(version)
+      const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(assembler.publishAs, version)))
+      const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
       for (const pkg of compiletimeMembers) {
         allPackagesForMirror.set(pkg.name, pkg)
       }
