@@ -124,6 +124,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       })),
     }
   } finally {
-    tempDirs.cleanup()
+    try {
+      tempDirs.cleanup()
+    } catch {
+      // Best-effort cleanup only: temp directory cleanup failure must not mask the main operation result.
+    }
   }
 }
