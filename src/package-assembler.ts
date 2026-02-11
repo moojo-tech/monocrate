@@ -41,19 +41,7 @@ export class PackageAssembler {
   }
 
   private async createFinalTarball(outputDir: AbsolutePath, tarballPath: AbsolutePath): Promise<AbsolutePath> {
-    const packDestination = AbsolutePath.dirname(tarballPath)
-
-    // Keep output deterministic: avoid stale tarball from a previous run.
-    await fsPromises.rm(tarballPath, { force: true })
-    await this.npmClient.pack(outputDir, packDestination)
-
-    const tarballExists = await fsPromises
-      .stat(tarballPath)
-      .then((stats) => stats.isFile())
-      .catch(() => false)
-    if (!tarballExists) {
-      throw new Error(`Expected packed tarball at ${tarballPath}`)
-    }
+    await this.npmClient.pack(outputDir, tarballPath)
     return tarballPath
   }
 

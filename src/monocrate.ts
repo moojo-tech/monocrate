@@ -63,7 +63,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
 
-  const npmClient = new NpmClient({ userconfig: options.npmrcPath })
+  const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirs)
 
   // Check npm login status early before any heavy operations
   if (options.publish) {

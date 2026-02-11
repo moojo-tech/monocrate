@@ -9,7 +9,6 @@ import type { MonorepoPackage } from './repo-explorer.js'
 import { AbsolutePath, RelativePath } from './paths.js'
 import type { NpmClient } from './npm-client.js'
 import type { TempDirRegistry } from './temp-dir-registry.js'
-import { findSingleTarballInDirectory } from './tarball.js'
 
 function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
   async function visit(dir: AbsolutePath): Promise<string[]> {
@@ -41,8 +40,8 @@ async function packAndExtractDirectory(
   tempDirs: TempDirRegistry
 ): Promise<AbsolutePath> {
   const tempDir = tempDirs.record(AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-'))))
-  await npmClient.pack(packageDir, tempDir)
-  const tarball = await findSingleTarballInDirectory(tempDir)
+  const tarball = AbsolutePath.join(tempDir, RelativePath('package.tgz'))
+  await npmClient.pack(packageDir, tarball)
   await tar.x({ file: tarball, cwd: tempDir })
 
   const extracted = AbsolutePath.join(tempDir, RelativePath('package'))
