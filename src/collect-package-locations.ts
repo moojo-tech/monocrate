@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as fsPromises from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { x } from 'tinyexec'
+import * as tar from 'tar'
 import type { PackageLocation } from './package-location.js'
 import type { PackageClosure } from './package-closure.js'
 import type { MonorepoPackage } from './repo-explorer.js'
@@ -69,7 +69,7 @@ async function packAndExtractDirectory(
   try {
     await npmClient.pack(packageDir, tempDir)
     const tarball = await findSingleTarballInDirectory(tempDir)
-    await x('tar', ['-xzf', tarball, '-C', tempDir], { throwOnError: true })
+    await tar.x({ file: tarball, cwd: tempDir })
 
     const extracted = AbsolutePath.join(tempDir, RelativePath('package'))
     const stats = await fsPromises.stat(extracted)
