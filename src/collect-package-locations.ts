@@ -58,13 +58,8 @@ function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
   return visit(rootDir)
 }
 
-async function packAndExtractDirectory(
-  npmClient: NpmClient,
-  packageDir: AbsolutePath,
-  packageName: string
-): Promise<PackDirectory> {
-  const safeName = packageName.replaceAll('/', '-')
-  const tempDir = AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), `monocrate-pack-${safeName}-`)))
+async function packAndExtractDirectory(npmClient: NpmClient, packageDir: AbsolutePath): Promise<PackDirectory> {
+  const tempDir = AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-')))
 
   try {
     await npmClient.pack(packageDir, tempDir)
@@ -95,7 +90,7 @@ async function createPackageLocation(
   directoryInOutput: AbsolutePath,
   includeNpmrc: boolean
 ): Promise<{ location: PackageLocation; cleanup: () => Promise<void> }> {
-  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir, pkg.name)
+  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir)
 
   const filesToCopy = await listFilesRecursively(packed.directory)
 
