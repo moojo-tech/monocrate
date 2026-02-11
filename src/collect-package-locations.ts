@@ -19,6 +19,21 @@ export interface CollectPackageLocationsResult {
   cleanup: () => Promise<void>
 }
 
+async function findSingleTarballInDirectory(dir: AbsolutePath): Promise<AbsolutePath> {
+  const entries = await fsPromises.readdir(dir, { withFileTypes: true })
+  const tarballs = entries.flatMap((entry) => (entry.isFile() && entry.name.endsWith('.tgz') ? [entry.name] : []))
+  if (tarballs.length !== 1) {
+    const found = tarballs.length === 0 ? '<none>' : tarballs.join(', ')
+    throw new Error(`Expected exactly one .tgz file in ${dir}, found ${String(tarballs.length)}: ${found}`)
+  }
+
+  const onlyTarball = tarballs.at(0)
+  if (!onlyTarball) {
+    throw new Error(`Inconsistency: expected one tarball in ${dir}`)
+  }
+  return AbsolutePath.join(dir, RelativePath(onlyTarball))
+}
+
 function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
   async function visit(dir: AbsolutePath): Promise<string[]> {
     const entries = await fsPromises.readdir(dir, { withFileTypes: true })
@@ -52,7 +67,8 @@ async function packAndExtractDirectory(
   const tempDir = AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), `monocrate-pack-${safeName}-`)))
 
   try {
-    const tarball = await npmClient.pack(packageDir, tempDir)
+    await npmClient.pack(packageDir, tempDir)
+    const tarball = await findSingleTarballInDirectory(tempDir)
     await x('tar', ['-xzf', tarball, '-C', tempDir], { throwOnError: true })
 
     const extracted = AbsolutePath.join(tempDir, RelativePath('package'))

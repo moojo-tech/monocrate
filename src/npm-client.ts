@@ -1,6 +1,5 @@
-import * as fsPromises from 'node:fs/promises'
 import { z } from 'zod'
-import { AbsolutePath, RelativePath } from './paths.js'
+import type { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
 
@@ -78,27 +77,11 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, packDestination: AbsolutePath): Promise<AbsolutePath> {
+  async pack(dir: AbsolutePath, packDestination: AbsolutePath): Promise<void> {
     await runNpm('pack', ['--pack-destination', packDestination], dir, {
       ...this.npmOptions,
       stdio: 'inherit',
       nonZeroExitCodePolicy: 'throw',
     })
-
-    const entries = await fsPromises.readdir(packDestination, { withFileTypes: true })
-    const tarballs = entries.flatMap((entry) => (entry.isFile() && entry.name.endsWith('.tgz') ? [entry.name] : []))
-    if (tarballs.length !== 1) {
-      const found = tarballs.length === 0 ? '<none>' : tarballs.join(', ')
-      throw new Error(
-        `Expected exactly one .tgz file after npm pack in ${packDestination}, found ${String(tarballs.length)}: ${found}`
-      )
-    }
-
-    const onlyTarball = tarballs.at(0)
-    if (!onlyTarball) {
-      throw new Error(`Inconsistency: expected one tarball in ${packDestination}`)
-    }
-
-    return AbsolutePath.join(packDestination, RelativePath(onlyTarball))
   }
 }
