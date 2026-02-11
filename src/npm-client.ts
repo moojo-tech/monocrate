@@ -90,11 +90,14 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath): Promise<void> {
+  async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath, options?: { ignoreScripts?: boolean }): Promise<void> {
     const tempDir = this.tempDirs.record(
       AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-')))
     )
-    await runNpm('pack', ['--pack-destination', tempDir], dir, {
+    const args = options?.ignoreScripts
+      ? ['--ignore-scripts', '--pack-destination', tempDir]
+      : ['--pack-destination', tempDir]
+    await runNpm('pack', args, dir, {
       ...this.npmOptions,
       stdio: 'inherit',
       nonZeroExitCodePolicy: 'throw',
