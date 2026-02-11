@@ -77,47 +77,11 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, options?: { dryRun?: boolean }) {
-    const { stdout, ok } = await runNpm('pack', ['--json', ...(options?.dryRun ? ['--dry-run'] : [])], dir, {
+  async pack(dir: AbsolutePath, packDestination: AbsolutePath): Promise<void> {
+    await runNpm('pack', ['--pack-destination', packDestination], dir, {
       ...this.npmOptions,
-      stdio: 'pipe',
-      nonZeroExitCodePolicy: 'return',
+      stdio: 'inherit',
+      nonZeroExitCodePolicy: 'throw',
     })
-
-    if (!ok) {
-      const parsed = NpmErrorResponse.safeParse(JSON.parse(stdout))
-      if (!parsed.success) {
-        throw new Error(`Error response of 'npm pack' could not be parsed: ${stdout}`)
-      }
-
-      const code = parsed.data.error.code ?? 'UNKNOWN'
-      const detail = parsed.data.error.detail ?? parsed.data.error.summary ?? '<No Further Details>'
-      throw new Error(`The 'npm pack' command failed (code: ${code}): ${detail}`)
-    }
-
-    const parsed = z
-      .array(
-        z.object({
-          id: z.string(),
-          name: z.string(),
-          version: z.string(),
-          size: z.number(),
-          unpackedSize: z.number(),
-          shasum: z.string(),
-          integrity: z.string(),
-          filename: z.string(),
-          files: z.array(
-            z.object({
-              path: z.string(),
-            })
-          ),
-        })
-      )
-      .safeParse(JSON.parse(stdout))
-    if (!parsed.success) {
-      throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
-    }
-
-    return parsed.data
   }
 }

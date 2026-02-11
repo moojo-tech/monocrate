@@ -8,6 +8,7 @@ import { AbsolutePath } from './paths.js'
 import type { RepoExplorer, MonorepoPackage } from './repo-explorer.js'
 import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
+import type { TempDirRegistry } from './temp-dir-registry.js'
 
 export class PackageAssembler {
   readonly pkgName
@@ -18,7 +19,8 @@ export class PackageAssembler {
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath
+    private readonly outputRoot: AbsolutePath,
+    private readonly tempDirs: TempDirRegistry
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
@@ -41,9 +43,8 @@ export class PackageAssembler {
   async assemble(newVersion: string | undefined): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir)
+    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirs)
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
-
     await fsPromises.mkdir(outputDir, { recursive: true })
     await new FileCopier(packageMap).copy()
 

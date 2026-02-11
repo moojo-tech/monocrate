@@ -12,6 +12,7 @@ import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
+import { TempDirRegistry } from './temp-dir-registry.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
@@ -23,6 +24,8 @@ export type { MonocrateResult } from './monocrate-result.js'
  * @throws Error if assembly or publishing fails
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
+  const tempDirs = new TempDirRegistry()
+
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
@@ -64,59 +67,67 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     await npmClient.whoami(cwd)
   }
 
-  const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot))
-  const a0 = assemblers.at(0)
-  if (!a0) {
-    throw new Error(`Inconsistency - could not find an assembler for the first package`)
-  }
-
-  const pairs = await Promise.all(
-    assemblers.map(async (a) => ({ assembler: a, version: await a.computeNewVersion(versionSpecifier) }))
-  )
-
-  let max = pairs.at(0)?.version
-  if (!max) {
-    throw new Error('Inconsistency - no versions computed')
-  }
-  for (const at of pairs) {
-    max = maxVersion(max, at.version)
-  }
-
-  const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
-  const allPackagesForMirror = new Map<string, MonorepoPackage>()
-
-  // Phase 1: Assemble all packages and publish with --tag pending
-  for (const { assembler, version } of resolvedPairs) {
-    const { compiletimeMembers } = await assembler.assemble(version)
-    for (const pkg of compiletimeMembers) {
-      allPackagesForMirror.set(pkg.name, pkg)
+  try {
+    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot, tempDirs))
+    const a0 = assemblers.at(0)
+    if (!a0) {
+      throw new Error(`Inconsistency - could not find an assembler for the first package`)
     }
 
-    if (options.publish) {
-      await publish(npmClient, assembler.getOutputDir(), 'pending')
-    }
-  }
+    const pairs = await Promise.all(
+      assemblers.map(async (a) => ({ assembler: a, version: await a.computeNewVersion(versionSpecifier) }))
+    )
 
-  // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
-  if (options.publish) {
+    let max = pairs.at(0)?.version
+    if (!max) {
+      throw new Error('Inconsistency - no versions computed')
+    }
+    for (const at of pairs) {
+      max = maxVersion(max, at.version)
+    }
+
+    const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
+    const allPackagesForMirror = new Map<string, MonorepoPackage>()
+
+    // Phase 1: Assemble all packages and publish with --tag pending
     for (const { assembler, version } of resolvedPairs) {
-      await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+      const { compiletimeMembers } = await assembler.assemble(version)
+      for (const pkg of compiletimeMembers) {
+        allPackagesForMirror.set(pkg.name, pkg)
+      }
+
+      if (options.publish) {
+        await publish(npmClient, assembler.getOutputDir(), 'pending')
+      }
     }
-  }
 
-  // Mirror source files if mirrorTo is specified
-  if (options.mirrorTo) {
-    const mirrorDir = AbsolutePath(path.resolve(cwd, options.mirrorTo))
-    await mirrorSources([...allPackagesForMirror.values()], mirrorDir)
-  }
+    // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
+    if (options.publish) {
+      for (const { assembler, version } of resolvedPairs) {
+        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+      }
+    }
 
-  return {
-    outputDir: a0.getOutputDir(),
-    resolvedVersion: useMax ? max : undefined,
-    summaries: resolvedPairs.map(({ assembler, version }) => ({
-      outputDir: assembler.getOutputDir(),
-      packageName: assembler.pkgName,
-      version,
-    })),
+    // Mirror source files if mirrorTo is specified
+    if (options.mirrorTo) {
+      const mirrorDir = AbsolutePath(path.resolve(cwd, options.mirrorTo))
+      await mirrorSources([...allPackagesForMirror.values()], mirrorDir)
+    }
+
+    return {
+      outputDir: a0.getOutputDir(),
+      resolvedVersion: useMax ? max : undefined,
+      summaries: resolvedPairs.map(({ assembler, version }) => ({
+        outputDir: assembler.getOutputDir(),
+        packageName: assembler.pkgName,
+        version,
+      })),
+    }
+  } finally {
+    try {
+      tempDirs.cleanup()
+    } catch {
+      // Best-effort cleanup only: temp directory cleanup failure must not mask the main operation result.
+    }
   }
 }
