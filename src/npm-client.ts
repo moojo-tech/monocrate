@@ -94,22 +94,8 @@ export class NpmClient {
 
     if (!ok) {
       const candidate = stdout.trim() === '' ? stderr : stdout
-      let decoded: unknown
-      try {
-        decoded = JSON.parse(candidate)
-      } catch {
-        const detail = candidate.trim() === '' ? '<No Further Details>' : candidate
-        throw new Error(`The 'npm pack' command failed: ${detail}`)
-      }
-
-      const parsed = NpmErrorResponse.safeParse(decoded)
-      if (!parsed.success) {
-        throw new Error(`Error response of 'npm pack' could not be parsed: ${candidate}`)
-      }
-
-      const code = parsed.data.error.code ?? 'UNKNOWN'
-      const detail = parsed.data.error.detail ?? parsed.data.error.summary ?? '<No Further Details>'
-      throw new Error(`The 'npm pack' command failed (code: ${code}): ${detail}`)
+      const detail = candidate.trim() === '' ? '<No Further Details>' : candidate
+      throw new Error(`The 'npm pack' command failed: ${detail}`)
     }
 
     let decoded: unknown
