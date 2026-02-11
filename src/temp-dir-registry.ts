@@ -10,10 +10,12 @@ export class TempDirRegistry {
   }
 
   cleanup(): void {
-    const all = [...this.directories]
-    this.directories.clear()
-    for (const directory of all) {
+    for (const directory of [...this.directories]) {
+      if (!fs.existsSync(directory)) {
+        continue
+      }
       fs.rmSync(directory, { recursive: true, force: true })
+      this.directories.delete(directory)
     }
   }
 }
