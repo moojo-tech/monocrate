@@ -40,11 +40,6 @@ export class PackageAssembler {
     return await resolveVersion(this.npmClient, this.fromDir, this.pkgName, versionSpecifier, packageJsonVersion)
   }
 
-  private async createFinalTarball(outputDir: AbsolutePath, tarballPath: AbsolutePath): Promise<AbsolutePath> {
-    await this.npmClient.pack(outputDir, tarballPath)
-    return tarballPath
-  }
-
   async assemble(newVersion: string, tarballPath: AbsolutePath): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
@@ -55,7 +50,7 @@ export class PackageAssembler {
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
     rewritePackageJson(closure, newVersion, outputDir)
-    await this.createFinalTarball(outputDir, tarballPath)
+    await this.npmClient.pack(outputDir, tarballPath)
 
     return { compiletimeMembers: closure.compiletimeMembers }
   }
