@@ -40,6 +40,11 @@ export class NpmClient {
     await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
   }
 
+  async publishTarball(tarballPath: AbsolutePath, cwd: AbsolutePath, tag?: string): Promise<void> {
+    const args = tag ? [tarballPath, '--tag', tag] : [tarballPath]
+    await runNpm('publish', args, cwd, { ...this.npmOptions, stdio: 'inherit' })
+  }
+
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
     await runNpm('dist-tag', ['add', packageNameAtVersion, tag], cwd, { ...this.npmOptions, stdio: 'inherit' })
   }

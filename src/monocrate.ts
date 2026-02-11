@@ -97,7 +97,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       }
 
       if (options.publish) {
-        await publish(npmClient, assembler.getOutputDir(), 'pending')
+        await publish(npmClient, assembler.getOutputDir(), 'pending', tempDirs)
       }
     }
 
