@@ -225,10 +225,8 @@ console.log('Hello from bin');
         main: 'dist/index.js',
         files: ['dist'],
         scripts: {
-          prepack:
-            "node -e \"require('node:fs').mkdirSync('dist',{recursive:true});require('node:fs').writeFileSync('dist/index.js',\\\"console.log(\\'packed\\');\\\\n\\\")\"",
-          postpack:
-            "node -e \"require('node:fs').writeFileSync('dist/index.js',\\\"console.log(\\'reverted\\');\\\\n\\\")\"",
+          prepack: 'bash -c "mkdir -p dist && printf \\"console.log(\'packed\');\\\\n\\" > dist/index.js"',
+          postpack: 'bash -c "printf \\"console.log(\'reverted\');\\\\n\\" > dist/index.js"',
         },
       },
       'packages/app/dist/index.js': `console.log('original');

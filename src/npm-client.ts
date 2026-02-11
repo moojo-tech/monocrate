@@ -1,5 +1,3 @@
-import * as os from 'node:os'
-import * as path from 'node:path'
 import { z } from 'zod'
 import type { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
@@ -16,17 +14,6 @@ const NpmErrorResponse = z.object({
 export class NpmClient {
   constructor(private readonly npmOptions?: NpmOptionsBase) {}
 
-  private withDefaultEnv() {
-    const defaultCache = path.join(os.tmpdir(), 'monocrate-npm-cache')
-    return {
-      ...this.npmOptions,
-      env: {
-        ...this.npmOptions?.env,
-        npm_config_cache: this.npmOptions?.env?.npm_config_cache ?? defaultCache,
-      },
-    }
-  }
-
   /**
    * Checks if the user is logged in to npm.
    * @param cwd - The working directory for the npm command
@@ -35,7 +22,7 @@ export class NpmClient {
    */
   async whoami(cwd: AbsolutePath): Promise<string> {
     const { ok, stdout } = await runNpm('whoami', [], cwd, {
-      ...this.withDefaultEnv(),
+      ...this.npmOptions,
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
     })
@@ -50,11 +37,11 @@ export class NpmClient {
 
   async publish(dir: AbsolutePath, tag?: string): Promise<void> {
     const args = tag ? ['--tag', tag] : []
-    await runNpm('publish', args, dir, { ...this.withDefaultEnv(), stdio: 'inherit' })
+    await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
-    await runNpm('dist-tag', ['add', packageNameAtVersion, tag], cwd, { ...this.withDefaultEnv(), stdio: 'inherit' })
+    await runNpm('dist-tag', ['add', packageNameAtVersion, tag], cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
   /**
@@ -64,7 +51,7 @@ export class NpmClient {
    */
   async viewVersion(packageName: string, cwd: AbsolutePath): Promise<string | undefined> {
     const { ok, stdout } = await runNpm('view', ['-s', '--json', packageName, 'version'], cwd, {
-      ...this.withDefaultEnv(),
+      ...this.npmOptions,
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
     })
@@ -100,7 +87,7 @@ export class NpmClient {
     }
 
     const { stdout, stderr, ok } = await runNpm('pack', args, dir, {
-      ...this.withDefaultEnv(),
+      ...this.npmOptions,
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
     })
