@@ -4,9 +4,8 @@ import * as path from 'node:path'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
-import { createFinalTarball, publishTarball } from './publish.js'
 import { parseVersionSpecifier } from './version-specifier.js'
-import { AbsolutePath, RelativePath } from './paths.js'
+import { AbsolutePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
@@ -88,19 +87,17 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
     const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
-    const summaries: { packageName: string; outputDir: string; version: string; tarballPath: string }[] = []
-    const tarballRoot = AbsolutePath.join(outputRoot, RelativePath('monocrate-final-tarballs'))
+    const summaries: { packageName: string; outputDir: string; version: string; tarballPath: AbsolutePath }[] = []
 
     // Phase 1: Assemble all packages and generate their final tarballs.
     // If publishing is enabled, publish each tarball with --tag pending.
     for (const { assembler, version } of resolvedPairs) {
-      const { compiletimeMembers } = await assembler.assemble(version)
+      const { compiletimeMembers, tarballPath } = await assembler.assemble(version)
       for (const pkg of compiletimeMembers) {
         allPackagesForMirror.set(pkg.name, pkg)
       }
 
       const outputDir = assembler.getOutputDir()
-      const tarballPath = await createFinalTarball(npmClient, outputDir, tarballRoot)
       summaries.push({
         outputDir,
         packageName: assembler.pkgName,
@@ -109,7 +106,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       })
 
       if (options.publish) {
-        await publishTarball(npmClient, tarballPath, outputDir, 'pending')
+        await npmClient.publishTarball(tarballPath, outputDir, 'pending')
       }
     }
 
