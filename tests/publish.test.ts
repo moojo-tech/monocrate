@@ -111,8 +111,6 @@ describe('npm publishing with Verdaccio', () => {
       throw new Error('Expected one package summary')
     }
 
-    expect(summary.tarballPath.endsWith('.tgz')).toBe(true)
-    expect(fs.existsSync(summary.tarballPath)).toBe(true)
     expect(summary.tarballPath).toBe(path.join(monorepoRoot, 'test-dry-lib-77.77.77.tgz'))
 
     verdaccio.publishTarball(summary.tarballPath)
