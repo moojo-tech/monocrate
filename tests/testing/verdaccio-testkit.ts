@@ -79,6 +79,12 @@ export class VerdaccioTestkit {
     execSync(`npm publish --registry=${this.get().url}`, { cwd: dir, stdio: 'pipe' })
   }
 
+  publishTarball(tarballPath: string) {
+    execSync(`npm publish ${JSON.stringify(tarballPath)} --userconfig ${JSON.stringify(this.get().npmrcPath)}`, {
+      stdio: 'pipe',
+    })
+  }
+
   runConumser(depToInstall: string, ...jsSourceCode: string[]) {
     const fileName = `dist/index.js`
     const dir = folderify({

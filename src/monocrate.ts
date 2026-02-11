@@ -4,9 +4,9 @@ import * as path from 'node:path'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
-import { publish } from './publish.js'
+import { createFinalTarball, publishTarball } from './publish.js'
 import { parseVersionSpecifier } from './version-specifier.js'
-import { AbsolutePath } from './paths.js'
+import { AbsolutePath, RelativePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
@@ -88,16 +88,28 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
     const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
+    const summaries: { packageName: string; outputDir: string; version: string; tarballPath: string }[] = []
+    const tarballRoot = AbsolutePath.join(outputRoot, RelativePath('monocrate-final-tarballs'))
 
-    // Phase 1: Assemble all packages and publish with --tag pending
+    // Phase 1: Assemble all packages and generate their final tarballs.
+    // If publishing is enabled, publish each tarball with --tag pending.
     for (const { assembler, version } of resolvedPairs) {
       const { compiletimeMembers } = await assembler.assemble(version)
       for (const pkg of compiletimeMembers) {
         allPackagesForMirror.set(pkg.name, pkg)
       }
 
+      const outputDir = assembler.getOutputDir()
+      const tarballPath = await createFinalTarball(npmClient, outputDir, tarballRoot)
+      summaries.push({
+        outputDir,
+        packageName: assembler.pkgName,
+        version,
+        tarballPath,
+      })
+
       if (options.publish) {
-        await publish(npmClient, assembler.getOutputDir(), 'pending', tempDirs)
+        await publishTarball(npmClient, tarballPath, outputDir, 'pending')
       }
     }
 
@@ -117,11 +129,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     return {
       outputDir: a0.getOutputDir(),
       resolvedVersion: useMax ? max : undefined,
-      summaries: resolvedPairs.map(({ assembler, version }) => ({
-        outputDir: assembler.getOutputDir(),
-        packageName: assembler.pkgName,
-        version,
-      })),
+      summaries,
     }
   } finally {
     try {
