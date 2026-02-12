@@ -77,19 +77,20 @@ function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
 }
 
 async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, packDestination?: string): Promise<void> {
+  const cwd = process.cwd()
   const options: MonocrateOptions = {
     pathToSubjectPackages: args.packages,
     packDestination,
     monorepoRoot: args.root,
     bump: args.bump,
     publish,
-    cwd: process.cwd(),
+    cwd,
     mirrorTo: args['mirror-to'],
     max: args.max,
   }
   const result = await monocrate(options)
   if (args['output-json']) {
-    const outputFilePath = path.resolve(process.cwd(), args['output-json'])
+    const outputFilePath = path.resolve(cwd, args['output-json'])
     fs.writeFileSync(outputFilePath, JSON.stringify(result, undefined, 2) + '\n')
     return
   }
