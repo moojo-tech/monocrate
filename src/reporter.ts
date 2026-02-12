@@ -27,7 +27,9 @@ function formatEvent(event: ReporterEvent): string {
     case 'npmLogin':
       return `📍 login     ${event.username}`
     case 'closure':
-      return `📍 closure   ${event.packageName}  ${String(event.inRepoDeps.length)} in-repo deps`
+      return event.inRepoDeps.length === 0
+        ? `📍 closure   ${event.packageName} no in-repo deps`
+        : `📍 closure   ${event.packageName} ${String(event.inRepoDeps.length)} in-repo deps`
     case 'version':
       return `📍 version   ${event.packageName} ${event.version}`
     case 'assemble':
