@@ -46,7 +46,7 @@ describe('optional output directory', () => {
     })
 
     const specifiedPackDestination = createTempDir('monocrate-explicit-output-')
-    const { outputDir } = await monocrate({
+    await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       packDestination: specifiedPackDestination,
@@ -55,7 +55,7 @@ describe('optional output directory', () => {
       bump: '2.8.512',
     })
 
-    expect(outputDir.startsWith(specifiedPackDestination)).toBe(true)
-    expect(outputDir).toBe(path.join(specifiedPackDestination, 'packages/app'))
+    const dir = unfolderify(specifiedPackDestination)
+    expect(Object.keys(dir)).toEqual(['test-app-2.8.512.tgz'])
   })
 })

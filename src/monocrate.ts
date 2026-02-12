@@ -46,9 +46,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
   const workDir = AbsolutePath(await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-')))
   const packDestination = AbsolutePath(
-    options.packDestination
-      ? path.resolve(cwd, options.packDestination)
-      : await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-'))
+    options.packDestination ? path.resolve(cwd, options.packDestination) : AbsolutePath(options.cwd)
   )
 
   // Validate bump argument before any side effects (defaults to 'minor')
