@@ -21,9 +21,8 @@ function findPackageJson(): string {
 
 const pkg = JSON.parse(fs.readFileSync(findPackageJson(), 'utf-8')) as { version: string }
 
-interface YargsArgs {
+interface CommonYargsArgs {
   packages: string[]
-  'pack-destination'?: string
   root?: string
   bump?: string
   report?: string
@@ -31,10 +30,14 @@ interface YargsArgs {
   max: boolean
 }
 
-function withCommandOptions(parser: Argv): Argv<YargsArgs> {
+interface PackYargsArgs extends CommonYargsArgs {
+  'pack-destination'?: string
+}
+
+function withCommonCommandOptions(parser: Argv, packageDescription: string): Argv<CommonYargsArgs> {
   return parser
     .positional('packages', {
-      describe: 'Package directories to publish',
+      describe: packageDescription,
       type: 'string',
       array: true,
       demandOption: true,
@@ -43,11 +46,6 @@ function withCommandOptions(parser: Argv): Argv<YargsArgs> {
       alias: 'b',
       type: 'string',
       description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
-    })
-    .option('pack-destination', {
-      alias: 'o',
-      type: 'string',
-      description: 'Directory where assembled package is written',
     })
     .option('root', {
       alias: 'r',
@@ -70,10 +68,18 @@ function withCommandOptions(parser: Argv): Argv<YargsArgs> {
     })
 }
 
-async function runCommand(args: Arguments<YargsArgs>, publish: boolean): Promise<void> {
+function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
+  return withCommonCommandOptions(parser, 'Package directories to create tarballs for').option('pack-destination', {
+    alias: 'o',
+    type: 'string',
+    description: 'Directory where assembled package is written',
+  })
+}
+
+async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, outputRoot?: string): Promise<void> {
   const options: MonocrateOptions = {
     pathToSubjectPackages: args.packages,
-    outputRoot: args['pack-destination'],
+    outputRoot,
     monorepoRoot: args.root,
     bump: args.bump,
     publish,
@@ -95,17 +101,16 @@ export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
     .version(pkg.version)
-    .command<YargsArgs>(
+    .command<PackYargsArgs>(
       'pack <packages...>',
       `Assemble one or more packages into publishable output without publishing.`,
-      (yargs) =>
-        withCommandOptions(yargs).positional('packages', { describe: 'Package directories to create tarballs for' }),
-      async (args) => runCommand(args, false)
+      (yargs) => withPackCommandOptions(yargs),
+      async (args) => runCommand(args, false, args['pack-destination'])
     )
-    .command<YargsArgs>(
+    .command<CommonYargsArgs>(
       'publish <packages...>',
       `Assemble one or more packages and publish them to npm.`,
-      (yargs) => withCommandOptions(yargs),
+      (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
       async (args) => runCommand(args, true)
     )
     .demandCommand(1)
