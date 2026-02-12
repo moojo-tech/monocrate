@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
+import type { Arguments, Argv } from 'yargs'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 
@@ -20,110 +21,110 @@ function findPackageJson(): string {
 
 const pkg = JSON.parse(fs.readFileSync(findPackageJson(), 'utf-8')) as { version: string }
 
-interface YargsArgs {
-  _: string[]
-  packages?: string[]
-  'pack-destination'?: string
+interface CommonYargsArgs {
+  packages: string[]
   root?: string
   bump?: string
   report?: string
   'mirror-to'?: string
-  max?: boolean
+  max: boolean
+}
+
+interface PackYargsArgs extends CommonYargsArgs {
+  'pack-destination'?: string
+}
+
+function withCommonCommandOptions(parser: Argv, packageDescription: string): Argv<CommonYargsArgs> {
+  return parser
+    .positional('packages', {
+      describe: packageDescription,
+      type: 'string',
+      array: true,
+      demandOption: true,
+    })
+    .option('bump', {
+      alias: 'b',
+      type: 'string',
+      description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
+    })
+    .option('root', {
+      alias: 'r',
+      type: 'string',
+      description: 'Monorepo root (auto-detected if omitted)',
+    })
+    .option('report', {
+      type: 'string',
+      description: 'Write report to file',
+    })
+    .option('mirror-to', {
+      alias: 'm',
+      type: 'string',
+      description: 'Mirror source files to directory',
+    })
+    .option('max', {
+      type: 'boolean',
+      description: 'Use max version across all packages (default: false)',
+      default: false,
+    })
+}
+
+function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
+  return withCommonCommandOptions(parser, 'Package directories to create tarballs for').option('pack-destination', {
+    alias: 'o',
+    type: 'string',
+    description: 'Directory to write tarballs to',
+  })
+}
+
+async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, outputRoot?: string): Promise<void> {
+  const options: MonocrateOptions = {
+    pathToSubjectPackages: args.packages,
+    outputRoot,
+    monorepoRoot: args.root,
+    bump: args.bump,
+    publish,
+    cwd: process.cwd(),
+    mirrorTo: args['mirror-to'],
+    max: args.max,
+  }
+  const result = await monocrate(options)
+  const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
+  if (args.report) {
+    const outputFilePath = path.resolve(process.cwd(), args.report)
+    fs.writeFileSync(outputFilePath, output)
+    return
+  }
+  console.log(output)
 }
 
 export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
     .version(pkg.version)
-    .command(
+    .command<PackYargsArgs>(
       'pack <packages...>',
-      `Assemble one or more packages into publishable output without publishing.`,
-      (yargs) =>
-        yargs.positional('packages', {
-          describe: 'Package directories to assemble',
-          type: 'string',
-          array: true,
-          demandOption: true,
-        })
+      `Create publish-ready tarball(s) without publishing to npm.`,
+      (yargs) => withPackCommandOptions(yargs),
+      async (args) => runCommand(args, false, args['pack-destination'])
     )
-    .command('publish <packages...>', `Assemble one or more packages and publish them to npm.`, (yargs) =>
-      yargs.positional('packages', {
-        describe: 'Package directories to publish',
-        type: 'string',
-        array: true,
-        demandOption: true,
-      })
+    .command<CommonYargsArgs>(
+      'publish <packages...>',
+      `Publish one or more packages to npm.`,
+      (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
+      async (args) => runCommand(args, true)
     )
     .demandCommand(1)
     .strictCommands()
     .example('$0 publish pkg/foo --bump patch', 'Bump to next patch and publish')
     .example('$0 publish libs/a libs/b', 'Multi-package publish (defaults to minor bump)')
-    .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Assemble without publishing')
+    .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Create tarballs without publishing')
     .example('$0 publish pkg/foo --bump package', 'Use version from package.json and publish')
-    .options({
-      bump: {
-        alias: 'b',
-        type: 'string' as const,
-        description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
-      },
-      'pack-destination': {
-        alias: 'o',
-        type: 'string' as const,
-        description: 'Directory where assembled package is written',
-      },
-      root: {
-        alias: 'r',
-        type: 'string' as const,
-        description: 'Monorepo root (auto-detected if omitted)',
-      },
-      report: {
-        type: 'string' as const,
-        description: 'Write report to file',
-      },
-      'mirror-to': {
-        alias: 'm',
-        type: 'string' as const,
-        description: 'Mirror source files to directory',
-      },
-      max: {
-        type: 'boolean' as const,
-        description: 'Use max version across all packages (default: false)',
-        default: false,
-      },
-    })
     .strict()
     .help()
     .option('help', { hidden: true })
 
-  void Promise.resolve(parser.parse())
-    .then(async (argv) => {
-      const args = argv as YargsArgs
-      const packages = args.packages ?? args._
-      const command = args._[0]
-      if (command !== 'pack' && command !== 'publish') {
-        throw new Error(`Expected command to be "pack" or "publish", got ${String(command)}`)
-      }
-      const options: MonocrateOptions = {
-        pathToSubjectPackages: packages,
-        outputRoot: args['pack-destination'],
-        monorepoRoot: args.root,
-        bump: args.bump,
-        publish: command === 'publish',
-        cwd: process.cwd(),
-        mirrorTo: args['mirror-to'],
-        max: args.max,
-      }
-      const result = await monocrate(options)
-      const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
-      if (args.report) {
-        const outputFilePath = path.resolve(process.cwd(), args.report)
-        fs.writeFileSync(outputFilePath, output)
-      } else {
-        console.log(output)
-      }
-    })
-    .catch((error: unknown) => {
-      console.error('Fatal error:', error instanceof Error ? error.stack : error)
-      process.exit(1)
-    })
+  void parser.parseAsync().catch((error: unknown) => {
+    console.error('Fatal error:', error instanceof Error ? error.stack : error)
+    process.exit(1)
+  })
 }
