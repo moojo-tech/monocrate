@@ -16,33 +16,33 @@ export function createSilentReporter(): Reporter {
   return () => {}
 }
 
+function formatEvent(event: ReporterEvent): string {
+  if (event.type === 'monorepoRoot') {
+    return `📍 root      ${event.root}`
+  }
+  if (event.type === 'npmLogin') {
+    return `📍 login     ${event.username}`
+  }
+  if (event.type === 'closure') {
+    return `📍 closure   ${event.packageName} -> ${event.inRepoDeps.join(' -> ')}`
+  }
+  if (event.type === 'version') {
+    return `📍 version   ${event.packageName} ${event.version}`
+  }
+  if (event.type === 'assemble') {
+    return `📍 assemble  ${event.packageName}@${event.version}`
+  }
+  if (event.type === 'publish') {
+    return `📡 publish   ${event.packageName}@${event.version}`
+  }
+  if (event.type === 'tagLatest') {
+    return `🏷️  latest    ${event.packageName}@${event.version}`
+  }
+  return `📦 pack      ${path.basename(event.tarballPath)}`
+}
+
 export function createConsoleReporter(): Reporter {
   return (event) => {
-    switch (event.type) {
-    case 'monorepoRoot':
-      console.log(`📍 root      ${event.root}`)
-      break
-    case 'npmLogin':
-      console.log(`📍 login     ${event.username}`)
-      break
-    case 'closure':
-      console.log(`📍 closure   ${event.packageName} -> ${event.inRepoDeps.join(' -> ')}`)
-      break
-    case 'version':
-      console.log(`📍 version   ${event.packageName} ${event.version}`)
-      break
-    case 'assemble':
-      console.log(`📍 assemble  ${event.packageName}@${event.version}`)
-      break
-    case 'publish':
-      console.log(`📡 publish   ${event.packageName}@${event.version}`)
-      break
-    case 'tagLatest':
-      console.log(`🏷️  latest    ${event.packageName}@${event.version}`)
-      break
-    case 'pack':
-      console.log(`📦 pack      ${path.basename(event.tarballPath)}`)
-      break
-    }
+    console.log(formatEvent(event))
   }
 }
