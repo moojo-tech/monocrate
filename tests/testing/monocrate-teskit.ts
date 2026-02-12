@@ -6,12 +6,26 @@ import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
 import fs from 'node:fs'
+import * as tar from 'tar'
+import { TempDirRegistry } from '../../src/temp-dir-registry.js'
+import { AbsolutePath } from '../../src/paths.js'
 
 export class MonocreateTeskit {
-  async shutdown() {}
+  private readonly tempDirs = new TempDirRegistry()
+
+  shutdown() {
+    this.tempDirs.cleanup()
+  }
 
   async monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
-    return monocrate(options)
+    const result = await monocrate(options)
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected at least one package summary')
+    }
+    const tempDir = this.tempDirs.record(AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-teskit-'))))
+    await tar.x({ file: summary.tarballPath, cwd: tempDir })
+    return { ...result, outputDir: path.join(tempDir, 'package') }
   }
 }
 
