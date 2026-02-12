@@ -12,33 +12,35 @@ export type ReporterEvent =
 
 export type Reporter = (event: ReporterEvent) => void
 
+function shouldNeverHappen(n: never): never {
+  throw new Error(`Unexpected event: ${JSON.stringify(n)}`)
+}
+
 export function createSilentReporter(): Reporter {
   return () => {}
 }
 
 function formatEvent(event: ReporterEvent): string {
-  if (event.type === 'monorepoRoot') {
-    return `📍 root      ${event.root}`
+  switch (event.type) {
+    case 'monorepoRoot':
+      return `📍 root      ${event.root}`
+    case 'npmLogin':
+      return `📍 login     ${event.username}`
+    case 'closure':
+      return `📍 closure   ${event.packageName} -> ${event.inRepoDeps.join(' -> ')}`
+    case 'version':
+      return `📍 version   ${event.packageName} ${event.version}`
+    case 'assemble':
+      return `📍 assemble  ${event.packageName}@${event.version}`
+    case 'publish':
+      return `📡 publish   ${event.packageName}@${event.version}`
+    case 'tagLatest':
+      return `🏷️  latest    ${event.packageName}@${event.version}`
+    case 'pack':
+      return `📦 pack      ${path.basename(event.tarballPath)}`
+    default:
+      shouldNeverHappen(event)
   }
-  if (event.type === 'npmLogin') {
-    return `📍 login     ${event.username}`
-  }
-  if (event.type === 'closure') {
-    return `📍 closure   ${event.packageName} -> ${event.inRepoDeps.join(' -> ')}`
-  }
-  if (event.type === 'version') {
-    return `📍 version   ${event.packageName} ${event.version}`
-  }
-  if (event.type === 'assemble') {
-    return `📍 assemble  ${event.packageName}@${event.version}`
-  }
-  if (event.type === 'publish') {
-    return `📡 publish   ${event.packageName}@${event.version}`
-  }
-  if (event.type === 'tagLatest') {
-    return `🏷️  latest    ${event.packageName}@${event.version}`
-  }
-  return `📦 pack      ${path.basename(event.tarballPath)}`
 }
 
 export function createConsoleReporter(): Reporter {
