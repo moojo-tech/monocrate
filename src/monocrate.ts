@@ -43,10 +43,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   if (!cwdExists) {
     throw new Error(`cwd does not exist: ${cwd}`)
   }
+
+  const workDir = AbsolutePath(await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-')))
   const packDestination = AbsolutePath(
-    options.packDestination
-      ? path.resolve(cwd, options.packDestination)
-      : await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-'))
+    options.packDestination ? path.resolve(cwd, options.packDestination) : AbsolutePath(options.cwd)
   )
 
   // Validate bump argument before any side effects (defaults to 'minor')
@@ -77,9 +77,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   }
 
   try {
-    const assemblers = sourceDirs.map(
-      (at) => new PackageAssembler(npmClient, explorer, at, packDestination, tempDirs, report)
-    )
+    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirs, report))
     const a0 = assemblers.at(0)
     if (!a0) {
       throw new Error(`Inconsistency - could not find an assembler for the first package`)
@@ -99,7 +97,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
     const packagePlans = pairs.map((at) => {
       const version = useMax ? max : at.version
-      const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(at.assembler.publishAs, version)))
+      const tarballPath = AbsolutePath.join(
+        packDestination,
+        RelativePath(npmTarballFileName(at.assembler.publishAs, version))
+      )
       report({ type: 'version', packageName: at.assembler.publishAs, version })
       return { assembler: at.assembler, version, tarballPath }
     })
