@@ -99,7 +99,7 @@ export class NpmClient {
       : ['--pack-destination', tempDir]
     await runNpm('pack', args, dir, {
       ...this.npmOptions,
-      stdio: 'inherit',
+      stdio: 'pipe',
       nonZeroExitCodePolicy: 'throw',
     })
 
