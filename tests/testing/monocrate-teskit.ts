@@ -17,7 +17,7 @@ export class MonocreateTeskit {
     this.tempDirs.cleanup()
   }
 
-  async monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
+  async monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
     const result = await monocrate(options)
     const summary = result.summaries.at(0)
     if (!summary) {
@@ -68,13 +68,18 @@ export async function runMonocrate(
   sourcePackage: string,
   { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
 ) {
-  const { outputDir } = await monocrate({
+  const result = await monocrate({
     cwd: monorepoRoot,
     pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
     monorepoRoot,
     bump,
     publish: false,
   })
+  const summary = result.summaries.at(0)
+  if (!summary) {
+    throw new Error('Expected at least one package summary')
+  }
+  const outputDir = summary.outputDir
 
   let stdout = ''
   let stderr = ''

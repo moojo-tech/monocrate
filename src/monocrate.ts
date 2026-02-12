@@ -78,10 +78,6 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
   try {
     const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirs, report))
-    const a0 = assemblers.at(0)
-    if (!a0) {
-      throw new Error(`Inconsistency - could not find an assembler for the first package`)
-    }
 
     const pairs = await Promise.all(
       assemblers.map(async (a) => ({ assembler: a, version: await a.computeNewVersion(versionSpecifier) }))
@@ -139,7 +135,6 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     }
 
     return {
-      outputDir: a0.getOutputDir(),
       resolvedVersion: useMax ? max : undefined,
       summaries: packagePlans.map(({ assembler, version, tarballPath }) => ({
         outputDir: assembler.getOutputDir(),
