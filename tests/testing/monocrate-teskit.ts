@@ -10,7 +10,7 @@ import * as tar from 'tar'
 import { TempDirRegistry } from '../../src/temp-dir-registry.js'
 import { AbsolutePath } from '../../src/paths.js'
 
-export class MonocreateTeskit {
+export class MonocrateTeskit {
   private readonly tempDirs = new TempDirRegistry()
 
   shutdown() {

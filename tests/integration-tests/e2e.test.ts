@@ -2,12 +2,12 @@ import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocreateTeskit, pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('monocrate e2e', () => {
-  const teskit = new MonocreateTeskit()
+  const teskit = new MonocrateTeskit()
   afterAll(() => {
     teskit.shutdown()
   })

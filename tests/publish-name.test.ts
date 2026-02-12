@@ -2,12 +2,12 @@ import * as path from 'node:path'
 import { describe, expect, test, beforeAll, afterAll } from 'vitest'
 import { monocrate } from '../src/monocrate.js'
 import { folderify } from './testing/folderify.js'
-import { MonocreateTeskit, pj } from './testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from './testing/monocrate-teskit.js'
 import { unfolderify } from './testing/unfolderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
 describe('publishName feature', () => {
-  const teskit = new MonocreateTeskit()
+  const teskit = new MonocrateTeskit()
   afterAll(() => {
     teskit.shutdown()
   })

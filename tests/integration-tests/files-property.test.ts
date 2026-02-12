@@ -1,12 +1,12 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocreateTeskit, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('files property support', () => {
-  const teskit = new MonocreateTeskit()
+  const teskit = new MonocrateTeskit()
   afterAll(() => {
     teskit.shutdown()
   })
