@@ -17,7 +17,7 @@ export class MonocreateTeskit {
     this.tempDirs.cleanup()
   }
 
-  async monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
+  async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
     const result = await monocrate(options)
     const summary = result.summaries.at(0)
     if (!summary) {

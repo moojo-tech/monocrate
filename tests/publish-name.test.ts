@@ -20,7 +20,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
@@ -42,7 +42,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
@@ -115,14 +115,14 @@ describe('publishName feature', () => {
       'packages/package-b/dist/index.js': 'export const b = "b";\n',
     })
 
-    const { outputDir: outputDir1 } = await teskit.monocrateFoo({
+    const { outputDir: outputDir1 } = await teskit.pack({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-a'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const { outputDir: outputDir2 } = await teskit.monocrateFoo({
+    const { outputDir: outputDir2 } = await teskit.pack({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-b'),
       monorepoRoot: repoDir,
@@ -150,7 +150,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,

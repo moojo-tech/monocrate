@@ -29,7 +29,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -62,7 +62,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -205,7 +205,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -264,7 +264,7 @@ console.log('Hello from bin');
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
