@@ -1,12 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { monocrateFoo, pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocreateTeskit, pj, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('monocrate e2e', () => {
+  const teskit = new MonocreateTeskit()
+  afterAll(() => teskit.shutdown())
   it('assembles a simple package with an in-repo dependency', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -434,7 +436,7 @@ export declare const bar: typeof foo;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -463,7 +465,7 @@ export const bar = 'bar';
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -491,7 +493,7 @@ export const bar = foo;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -522,7 +524,7 @@ export const helper = foo + '-helper';
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -551,7 +553,7 @@ export const bar = foo + util;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -594,7 +596,7 @@ export declare const bar: typeof foo;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -626,7 +628,7 @@ export const result = helper;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -660,7 +662,7 @@ export const result = helper;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -686,7 +688,7 @@ export const foo = b.foo;
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,

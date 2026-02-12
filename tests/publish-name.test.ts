@@ -2,11 +2,13 @@ import * as path from 'node:path'
 import { describe, expect, test, beforeAll, afterAll } from 'vitest'
 import { monocrate } from '../src/monocrate.js'
 import { folderify } from './testing/folderify.js'
-import { monocrateFoo, pj } from './testing/monocrate-teskit.js'
+import { MonocreateTeskit, pj } from './testing/monocrate-teskit.js'
 import { unfolderify } from './testing/unfolderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
 describe('publishName feature', () => {
+  const teskit = new MonocreateTeskit()
+  afterAll(() => teskit.shutdown())
   test('uses publishName when specified in monocrate config', async () => {
     const repoDir = folderify({
       'package.json': { name: 'root', workspaces: ['packages/*'] },
@@ -16,7 +18,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
@@ -38,7 +40,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
@@ -111,14 +113,14 @@ describe('publishName feature', () => {
       'packages/package-b/dist/index.js': 'export const b = "b";\n',
     })
 
-    const { outputDir: outputDir1 } = await monocrateFoo({
+    const { outputDir: outputDir1 } = await teskit.monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-a'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const { outputDir: outputDir2 } = await monocrateFoo({
+    const { outputDir: outputDir2 } = await teskit.monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-b'),
       monorepoRoot: repoDir,
@@ -146,7 +148,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,

@@ -8,9 +8,11 @@ import os from 'node:os'
 import fs from 'node:fs'
 
 export class MonocreateTeskit {
-  async start() {}
-
   async shutdown() {}
+
+  async monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
+    return monocrate(options)
+  }
 }
 
 export function createTempDir(prefix = 'monocrate-testing-'): string {
@@ -72,8 +74,4 @@ export async function runMonocrate(
   }
   const output = unfolderify(outputDir)
   return { stdout, stderr, output }
-}
-
-export async function monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
-  return monocrate(options)
 }

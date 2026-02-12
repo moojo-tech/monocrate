@@ -1,11 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { monocrateFoo, pj } from '../testing/monocrate-teskit.js'
+import { MonocreateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('package.json transformation', () => {
+  const teskit = new MonocreateTeskit()
+  afterAll(() => teskit.shutdown())
   it('preserves exports field in package.json', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -24,7 +26,7 @@ describe('package.json transformation', () => {
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -57,7 +59,7 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -88,7 +90,7 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
