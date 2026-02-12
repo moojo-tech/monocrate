@@ -43,6 +43,8 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   if (!cwdExists) {
     throw new Error(`cwd does not exist: ${cwd}`)
   }
+
+  const assemblyDir = AbsolutePath(await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-')))
   const packDestination = AbsolutePath(
     options.packDestination
       ? path.resolve(cwd, options.packDestination)
@@ -78,7 +80,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
   try {
     const assemblers = sourceDirs.map(
-      (at) => new PackageAssembler(npmClient, explorer, at, packDestination, tempDirs, report)
+      (at) => new PackageAssembler(npmClient, explorer, at, assemblyDir, tempDirs, report)
     )
     const a0 = assemblers.at(0)
     if (!a0) {
@@ -99,7 +101,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
     const packagePlans = pairs.map((at) => {
       const version = useMax ? max : at.version
-      const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(at.assembler.publishAs, version)))
+      const tarballPath = AbsolutePath.join(
+        packDestination,
+        RelativePath(npmTarballFileName(at.assembler.publishAs, version))
+      )
       report({ type: 'version', packageName: at.assembler.publishAs, version })
       return { assembler: at.assembler, version, tarballPath }
     })
