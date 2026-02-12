@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { monocrateFoo, pj, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -434,7 +434,7 @@ export declare const bar: typeof foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -463,7 +463,7 @@ export const bar = 'bar';
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -491,7 +491,7 @@ export const bar = foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -522,7 +522,7 @@ export const helper = foo + '-helper';
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -551,7 +551,7 @@ export const bar = foo + util;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -594,7 +594,7 @@ export declare const bar: typeof foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -626,7 +626,7 @@ export const result = helper;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -660,7 +660,7 @@ export const result = helper;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
@@ -686,7 +686,7 @@ export const foo = b.foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
