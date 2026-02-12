@@ -26,14 +26,14 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     // Files from `files` property should be copied
     expect(output).toHaveProperty('dist/index.js')
@@ -59,14 +59,14 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     expect(output).toHaveProperty('dist/index.js')
     expect(output).toHaveProperty('types.d.ts')
@@ -202,14 +202,14 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const pkgJson = output['package.json'] as Record<string, unknown>
 
     expect(pkgJson.files).toEqual(['dist', 'bin'])
@@ -261,14 +261,14 @@ console.log('Hello from bin');
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '1.0.0',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     expect(output['package.json']).toEqual({
       files: ['dist'],
       main: 'dist/index.js',

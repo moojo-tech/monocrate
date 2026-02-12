@@ -434,14 +434,14 @@ export declare const bar: typeof foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     // Verify imports stay untouched
     expect(output['dist/index.js']).toContain("from '@myorg/b'")
@@ -463,14 +463,14 @@ export const bar = 'bar';
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     // Verify export declarations keep package specifiers unchanged
     const indexJs = output['dist/index.js'] as string
@@ -491,14 +491,14 @@ export const bar = foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const indexJs = output['dist/index.js'] as string
 
     // Third-party imports should be unchanged
@@ -522,14 +522,14 @@ export const helper = foo + '-helper';
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     expect(output['dist/index.js']).toContain("from '@myorg/b'")
     expect(output['dist/utils/helper.js']).toContain("from '@myorg/b'")
@@ -551,14 +551,14 @@ export const bar = foo + util;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const indexJs = output['dist/index.js'] as string
 
     // Both imports should remain package-based
@@ -594,14 +594,14 @@ export declare const bar: typeof foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     // Verify root structure
     expect(output).toHaveProperty('package.json')
@@ -626,14 +626,14 @@ export const result = helper;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const indexJs = output['dist/index.js'] as string
 
     // Self-import should stay unchanged
@@ -660,14 +660,14 @@ export const result = helper;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const indexJs = output['dist/index.js'] as string
 
     // Subpath import should stay unchanged
@@ -686,14 +686,14 @@ export const foo = b.foo;
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/a',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const indexJs = output['dist/index.js'] as string
 
     // Dynamic import should stay unchanged

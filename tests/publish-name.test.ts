@@ -16,14 +16,14 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     expect(output['package.json']).toMatchObject({
       name: '@published/my-package',
@@ -38,14 +38,14 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     expect(output['package.json']).toMatchObject({
       name: '@workspace/my-package',
@@ -111,22 +111,22 @@ describe('publishName feature', () => {
       'packages/package-b/dist/index.js': 'export const b = "b";\n',
     })
 
-    const { outputDir: outputDir1 } = await monocrate({
+    const { packDestination: packDestination1 } = await monocrate({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-a'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const { outputDir: outputDir2 } = await monocrate({
+    const { packDestination: packDestination2 } = await monocrate({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-b'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const output1 = unfolderify(outputDir1)
-    const output2 = unfolderify(outputDir2)
+    const output1 = unfolderify(packDestination1)
+    const output2 = unfolderify(packDestination2)
 
     expect(output1['package.json']).toMatchObject({
       name: '@published/package-a',
@@ -146,14 +146,14 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
 
     expect(output['package.json']).toMatchObject({
       description: 'Test package',

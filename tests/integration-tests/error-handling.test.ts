@@ -16,7 +16,7 @@ describe('error handling', () => {
       // No dist directory created - npm pack will still succeed with just package.json
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       monorepoRoot,
@@ -24,7 +24,7 @@ describe('error handling', () => {
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     // npm pack always includes package.json
     expect(output).toHaveProperty('package.json')
     // dist won't exist since it wasn't created

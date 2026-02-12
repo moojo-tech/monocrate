@@ -127,10 +127,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     }
 
     return {
-      outputDir: a0.getOutputDir(),
+      packDestination: a0.getOutputDir(),
       resolvedVersion: useMax ? max : undefined,
       summaries: packagePlans.map(({ assembler, version, tarballPath }) => ({
-        outputDir: assembler.getOutputDir(),
+        packDestination: assembler.getOutputDir(),
         packageName: assembler.pkgName,
         version,
         tarballPath,

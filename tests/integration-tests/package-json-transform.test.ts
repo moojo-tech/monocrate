@@ -25,14 +25,14 @@ describe('package.json transformation', () => {
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '2.8.512',
     })
 
-    const pkgJson = unfolderify(outputDir)['package.json'] as Record<string, unknown>
+    const pkgJson = unfolderify(packDestination)['package.json'] as Record<string, unknown>
 
     expect(pkgJson.exports).toEqual({
       '.': {
@@ -58,14 +58,14 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const pkgJson = output['package.json'] as Record<string, unknown>
 
     expect(pkgJson.description).toBe('Test package')
@@ -89,14 +89,14 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: '2.8.512',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     const pkgJson = output['package.json'] as Record<string, unknown>
 
     expect(pkgJson.peerDependencies).toEqual({ react: '>=17.0.0' })

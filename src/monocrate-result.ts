@@ -1,8 +1,8 @@
 export interface MonocrateResult {
   /**
-   * The output directory path where the assembly of the first package was created.
+   * The directory path where the assembly of the first package was created.
    */
-  outputDir: string
+  packDestination: string
   /**
    * The unified version for all packages. Only set when using unified versioning (--max).
    * When using individual versioning (the default), this is undefined and each package's version
@@ -12,5 +12,5 @@ export interface MonocrateResult {
   /**
    * Details about each individual package that was assembled/published.
    */
-  summaries: { packageName: string; outputDir: string; version: string; tarballPath: string }[]
+  summaries: { packageName: string; packDestination: string; version: string; tarballPath: string }[]
 }

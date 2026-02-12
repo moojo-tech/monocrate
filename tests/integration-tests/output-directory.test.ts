@@ -9,7 +9,7 @@ import { createTempDir, pj } from '../testing/monocrate-teskit.js'
 const name = 'root-package'
 
 describe('optional output directory', () => {
-  it('creates a temp directory when outputDir is not provided', async () => {
+  it('creates a temp directory when packDestination is not provided', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': pj('@test/app'),
@@ -25,11 +25,11 @@ describe('optional output directory', () => {
     })
 
     // Verify a temp directory was created
-    expect(result.outputDir).toContain('monocrate-')
-    expect(fs.existsSync(result.outputDir)).toBe(true)
+    expect(result.packDestination).toContain('monocrate-')
+    expect(fs.existsSync(result.packDestination)).toBe(true)
 
     // Verify the assembly was created there
-    expect(unfolderify(result.outputDir)['package.json']).toEqual({
+    expect(unfolderify(result.packDestination)['package.json']).toEqual({
       name: '@test/app',
       version: '2.8.512',
       type: 'module',
@@ -46,7 +46,7 @@ describe('optional output directory', () => {
     })
 
     const specifiedPackDestination = createTempDir('monocrate-explicit-output-')
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       packDestination: specifiedPackDestination,
@@ -55,7 +55,7 @@ describe('optional output directory', () => {
       bump: '2.8.512',
     })
 
-    expect(outputDir.startsWith(specifiedPackDestination)).toBe(true)
-    expect(outputDir).toBe(path.join(specifiedPackDestination, 'packages/app'))
+    expect(packDestination.startsWith(specifiedPackDestination)).toBe(true)
+    expect(packDestination).toBe(path.join(specifiedPackDestination, 'packages/app'))
   })
 })

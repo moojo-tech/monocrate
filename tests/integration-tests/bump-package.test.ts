@@ -18,14 +18,14 @@ describe('--bump package option', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrate({
+    const { packDestination } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
       bump: 'package',
     })
 
-    const output = unfolderify(outputDir)
+    const output = unfolderify(packDestination)
     expect(output).toMatchObject({ 'package.json': { version: '3.5.7' } })
   })
 

@@ -51,7 +51,7 @@ export async function runMonocrate(
   sourcePackage: string,
   { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
 ) {
-  const { outputDir } = await monocrate({
+  const { packDestination } = await monocrate({
     cwd: monorepoRoot,
     pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
     monorepoRoot,
@@ -62,13 +62,13 @@ export async function runMonocrate(
   let stdout = ''
   let stderr = ''
   try {
-    stdout = execSync(`node --enable-source-maps ${path.join(outputDir, entryPoint)}`, {
+    stdout = execSync(`node --enable-source-maps ${path.join(packDestination, entryPoint)}`, {
       encoding: 'utf-8',
       stdio: 'pipe',
     })
   } catch (error) {
     stderr = (error as { stderr?: string }).stderr ?? stderr
   }
-  const output = unfolderify(outputDir)
+  const output = unfolderify(packDestination)
   return { stdout, stderr, output }
 }
