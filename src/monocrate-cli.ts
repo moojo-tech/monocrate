@@ -6,6 +6,7 @@ import { hideBin } from 'yargs/helpers'
 import type { Arguments, Argv } from 'yargs'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
+import { createConsoleReporter } from './reporter.js'
 
 function findPackageJson(): string {
   let dir = path.dirname(fileURLToPath(import.meta.url))
@@ -87,15 +88,13 @@ async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, pa
     cwd,
     mirrorTo: args['mirror-to'],
     max: args.max,
+    reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
   if (args['output-json']) {
     const outputFilePath = path.resolve(cwd, args['output-json'])
     fs.writeFileSync(outputFilePath, JSON.stringify(result, undefined, 2) + '\n')
-    return
   }
-  const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
-  console.log(output)
 }
 
 export function monocrateCli(): void {
