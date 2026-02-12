@@ -244,7 +244,7 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 | `cwd`                   | `string`             | Yes      | —          | Base directory for resolving relative paths.                                         |
 | `bump`                  | `string`             | No       | `"minor"`  | Version specifier: `"patch"`, `"minor"`, `"major"`, `"package"`, or explicit semver. |
 | `max`                   | `boolean`            | No       | `false`    | Use max version across all packages (unified versioning).                            |
-| `outputRoot`            | `string`             | No       | (temp dir) | Output directory for the assembled package.                                          |
+| `packDestination`       | `string`             | No       | (temp dir) | Output directory for the assembled package.                                          |
 | `monorepoRoot`          | `string`             | No       | (auto)     | Monorepo root directory; auto-detected if omitted.                                   |
 | `mirrorTo`              | `string`             | No       | —          | Mirror source files to this directory.                                               |
 | `npmrcPath`             | `string`             | No       | —          | Path to `.npmrc` file for npm authentication.                                        |

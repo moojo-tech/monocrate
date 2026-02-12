@@ -76,10 +76,10 @@ function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   })
 }
 
-async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, outputRoot?: string): Promise<void> {
+async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, packDestination?: string): Promise<void> {
   const options: MonocrateOptions = {
     pathToSubjectPackages: args.packages,
-    outputRoot,
+    packDestination,
     monorepoRoot: args.root,
     bump: args.bump,
     publish,
