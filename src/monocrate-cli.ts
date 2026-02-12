@@ -20,33 +20,15 @@ function findPackageJson(): string {
 
 const pkg = JSON.parse(fs.readFileSync(findPackageJson(), 'utf-8')) as { version: string }
 
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined
-}
-
-function readBoolean(value: unknown, fallback: boolean): boolean {
-  return typeof value === 'boolean' ? value : fallback
-}
-
-function readPackages(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    throw new Error('Expected packages to be an array')
-  }
-  const packages: string[] = []
-  for (const item of value) {
-    if (typeof item !== 'string') {
-      throw new Error('Expected all package paths to be strings')
-    }
-    packages.push(item)
-  }
-  return packages
-}
-
-function readCommand(value: unknown): 'pack' | 'publish' {
-  if (value === 'pack' || value === 'publish') {
-    return value
-  }
-  throw new Error(`Expected command to be "pack" or "publish", got ${String(value)}`)
+interface YargsArgs {
+  _: string[]
+  packages?: string[]
+  'pack-destination'?: string
+  root?: string
+  bump?: string
+  report?: string
+  'mirror-to'?: string
+  max?: boolean
 }
 
 export function monocrateCli(): void {
@@ -115,23 +97,26 @@ export function monocrateCli(): void {
 
   void Promise.resolve(parser.parse())
     .then(async (argv) => {
-      const packages = readPackages(argv.packages)
-      const command = readCommand(argv._[0])
+      const args = argv as YargsArgs
+      const packages = args.packages ?? args._
+      const command = args._[0]
+      if (command !== 'pack' && command !== 'publish') {
+        throw new Error(`Expected command to be "pack" or "publish", got ${String(command)}`)
+      }
       const options: MonocrateOptions = {
         pathToSubjectPackages: packages,
-        outputRoot: readOptionalString(argv['pack-destination']),
-        monorepoRoot: readOptionalString(argv.root),
-        bump: readOptionalString(argv.bump),
+        outputRoot: args['pack-destination'],
+        monorepoRoot: args.root,
+        bump: args.bump,
         publish: command === 'publish',
         cwd: process.cwd(),
-        mirrorTo: readOptionalString(argv['mirror-to']),
-        max: readBoolean(argv.max, false),
+        mirrorTo: args['mirror-to'],
+        max: args.max,
       }
       const result = await monocrate(options)
       const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
-      const report = readOptionalString(argv.report)
-      if (report) {
-        const outputFilePath = path.resolve(process.cwd(), report)
+      if (args.report) {
+        const outputFilePath = path.resolve(process.cwd(), args.report)
         fs.writeFileSync(outputFilePath, output)
       } else {
         console.log(output)
