@@ -72,7 +72,7 @@ function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   return withCommonCommandOptions(parser, 'Package directories to create tarballs for').option('pack-destination', {
     alias: 'o',
     type: 'string',
-    description: 'Directory where assembled package is written',
+    description: 'Directory to write tarballs to',
   })
 }
 
@@ -103,13 +103,13 @@ export function monocrateCli(): void {
     .version(pkg.version)
     .command<PackYargsArgs>(
       'pack <packages...>',
-      `Assemble one or more packages into publishable output without publishing.`,
+      `Create publish-ready tarball(s) without publishing to npm.`,
       (yargs) => withPackCommandOptions(yargs),
       async (args) => runCommand(args, false, args['pack-destination'])
     )
     .command<CommonYargsArgs>(
       'publish <packages...>',
-      `Assemble one or more packages and publish them to npm.`,
+      `Publish one or more packages to npm.`,
       (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
       async (args) => runCommand(args, true)
     )
@@ -117,7 +117,7 @@ export function monocrateCli(): void {
     .strictCommands()
     .example('$0 publish pkg/foo --bump patch', 'Bump to next patch and publish')
     .example('$0 publish libs/a libs/b', 'Multi-package publish (defaults to minor bump)')
-    .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Assemble without publishing')
+    .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Create tarballs without publishing')
     .example('$0 publish pkg/foo --bump package', 'Use version from package.json and publish')
     .strict()
     .help()
