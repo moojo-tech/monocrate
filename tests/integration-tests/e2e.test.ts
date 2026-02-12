@@ -8,7 +8,9 @@ const name = 'root-package'
 
 describe('monocrate e2e', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('assembles a simple package with an in-repo dependency', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },

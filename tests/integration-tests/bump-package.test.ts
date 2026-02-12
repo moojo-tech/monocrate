@@ -8,7 +8,9 @@ const name = 'root-package'
 
 describe('--bump package option', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('uses version from package.json when --bump package is specified', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },

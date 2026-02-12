@@ -7,7 +7,9 @@ const name = 'root-package'
 
 describe('package.json transformation', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('preserves exports field in package.json', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },

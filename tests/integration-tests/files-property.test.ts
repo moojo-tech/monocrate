@@ -7,7 +7,9 @@ const name = 'root-package'
 
 describe('files property support', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('uses files property to determine what to copy', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },

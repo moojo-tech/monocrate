@@ -10,7 +10,9 @@ const name = 'root-package'
 
 describe('error handling', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('handles package with no dist directory (npm pack includes only package.json)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },

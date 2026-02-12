@@ -8,7 +8,9 @@ import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
 describe('publishName feature', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   test('uses publishName when specified in monocrate config', async () => {
     const repoDir = folderify({
       'package.json': { name: 'root', workspaces: ['packages/*'] },

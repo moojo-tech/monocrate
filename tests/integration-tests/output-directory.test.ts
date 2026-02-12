@@ -10,7 +10,9 @@ const name = 'root-package'
 
 describe('optional output directory', () => {
   const teskit = new MonocreateTeskit()
-  afterAll(() => teskit.shutdown())
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('creates a temp directory when outputDir is not provided', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
