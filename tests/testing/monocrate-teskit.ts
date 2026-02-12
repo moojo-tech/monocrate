@@ -6,11 +6,27 @@ import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
 import fs from 'node:fs'
+import * as tar from 'tar'
+import { TempDirRegistry } from '../../src/temp-dir-registry.js'
+import { AbsolutePath } from '../../src/paths.js'
 
 export class MonocreateTeskit {
-  async start() {}
+  private readonly tempDirs = new TempDirRegistry()
 
-  async shutdown() {}
+  shutdown() {
+    this.tempDirs.cleanup()
+  }
+
+  async monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
+    const result = await monocrate(options)
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected at least one package summary')
+    }
+    const tempDir = this.tempDirs.record(AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-teskit-'))))
+    await tar.x({ file: summary.tarballPath, cwd: tempDir })
+    return { ...result, outputDir: path.join(tempDir, 'package') }
+  }
 }
 
 export function createTempDir(prefix = 'monocrate-testing-'): string {
@@ -72,8 +88,4 @@ export async function runMonocrate(
   }
   const output = unfolderify(outputDir)
   return { stdout, stderr, output }
-}
-
-export async function monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
-  return monocrate(options)
 }

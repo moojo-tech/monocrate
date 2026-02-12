@@ -1,14 +1,18 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { createTempDir, monocrateFoo, pj } from '../testing/monocrate-teskit.js'
+import { createTempDir, MonocreateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('optional output directory', () => {
+  const teskit = new MonocreateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('creates a temp directory when outputDir is not provided', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -16,7 +20,7 @@ describe('optional output directory', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const result = await monocrateFoo({
+    const result = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,

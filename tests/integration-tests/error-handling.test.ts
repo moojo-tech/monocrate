@@ -1,14 +1,18 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { monocrateFoo, pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocreateTeskit, pj, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('error handling', () => {
+  const teskit = new MonocreateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('handles package with no dist directory (npm pack includes only package.json)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -16,7 +20,7 @@ describe('error handling', () => {
       // No dist directory created - npm pack will still succeed with just package.json
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       monorepoRoot,

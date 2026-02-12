@@ -1,11 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { monocrateFoo, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocreateTeskit, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('files property support', () => {
+  const teskit = new MonocreateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('uses files property to determine what to copy', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -25,7 +29,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -58,7 +62,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -201,7 +205,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -260,7 +264,7 @@ console.log('Hello from bin');
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
     })
 
-    const { outputDir } = await monocrateFoo({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
