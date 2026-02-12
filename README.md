@@ -222,7 +222,7 @@ monocrate <command> <packages...> [options]
 | -------------------- | ----- | --------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--bump`             | `-b`  | `string`  | `minor`    | Version bump strategy: `patch`, `minor`, `major`, `package`, or explicit semver (e.g., `2.3.0`). Use `package` to read version from `package.json`. |
 | `--max`              |       | `boolean` | `false`    | Use max version across all packages (unified versioning). When false, each package uses its own version.                                            |
-| `--pack-destination` | `-o`  | `string`  | (temp dir) | Directory to write tarballs to (pack command only)                                                                                                 |
+| `--pack-destination` | `-d`  | `string`  | (temp dir) | Directory to write tarballs to (pack command only)                                                                                                 |
 | `--root`             | `-r`  | `string`  | (auto)     | Monorepo root directory (auto-detected if omitted)                                                                                                  |
 | `--mirror-to`        | `-m`  | `string`  | —          | Mirror source files to a directory (for public repos)                                                                                               |
 | `--report`           |       | `string`  | —          | Write resolved version to a file instead of stdout                                                                                                  |

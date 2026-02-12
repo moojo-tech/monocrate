@@ -70,7 +70,7 @@ function withCommonCommandOptions(parser: Argv, packageDescription: string): Arg
 
 function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   return withCommonCommandOptions(parser, 'Package directories to create tarballs for').option('pack-destination', {
-    alias: 'o',
+    alias: 'd',
     type: 'string',
     description: 'Directory to write tarballs to',
   })
