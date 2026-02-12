@@ -40,7 +40,7 @@ export function monocrateCli(): void {
       `Assemble one or more packages into publishable output without publishing.`,
       (yargs) =>
         yargs.positional('packages', {
-          describe: 'Package directories to assemble',
+          describe: 'Package directories to create tarballs for',
           type: 'string',
           array: true,
           demandOption: true,
