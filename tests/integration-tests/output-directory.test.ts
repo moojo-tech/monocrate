@@ -20,7 +20,7 @@ describe('optional output directory', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const result = await teskit.pack({
+    const result = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,

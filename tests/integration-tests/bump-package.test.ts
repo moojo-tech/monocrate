@@ -23,7 +23,7 @@ describe('--bump package option', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await teskit.pack({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,

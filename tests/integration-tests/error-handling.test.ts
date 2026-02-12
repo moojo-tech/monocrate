@@ -20,7 +20,7 @@ describe('error handling', () => {
       // No dist directory created - npm pack will still succeed with just package.json
     })
 
-    const { outputDir } = await teskit.pack({
+    const { outputDir } = await teskit.monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       monorepoRoot,
