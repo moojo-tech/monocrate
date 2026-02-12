@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { monocrateFoo, pj, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -16,7 +16,7 @@ describe('error handling', () => {
       // No dist directory created - npm pack will still succeed with just package.json
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       monorepoRoot,

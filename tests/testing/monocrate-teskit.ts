@@ -1,6 +1,7 @@
 import { execSync } from 'child_process'
 import { unfolderify } from './unfolderify.js'
 import { monocrate } from '../../src/monocrate.js'
+import type { MonocrateOptions, MonocrateResult } from '../../src/monocrate.js'
 import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
@@ -71,4 +72,8 @@ export async function runMonocrate(
   }
   const output = unfolderify(outputDir)
   return { stdout, stderr, output }
+}
+
+export async function monocrateFoo(options: MonocrateOptions): Promise<MonocrateResult> {
+  return monocrate(options)
 }

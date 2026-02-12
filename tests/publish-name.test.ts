@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import { describe, expect, test, beforeAll, afterAll } from 'vitest'
 import { monocrate } from '../src/monocrate.js'
 import { folderify } from './testing/folderify.js'
-import { pj } from './testing/monocrate-teskit.js'
+import { monocrateFoo, pj } from './testing/monocrate-teskit.js'
 import { unfolderify } from './testing/unfolderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
@@ -16,7 +16,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
@@ -38,7 +38,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,
@@ -111,14 +111,14 @@ describe('publishName feature', () => {
       'packages/package-b/dist/index.js': 'export const b = "b";\n',
     })
 
-    const { outputDir: outputDir1 } = await monocrate({
+    const { outputDir: outputDir1 } = await monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-a'),
       monorepoRoot: repoDir,
       publish: false,
     })
 
-    const { outputDir: outputDir2 } = await monocrate({
+    const { outputDir: outputDir2 } = await monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/package-b'),
       monorepoRoot: repoDir,
@@ -146,7 +146,7 @@ describe('publishName feature', () => {
       'packages/my-package/dist/index.js': 'export const foo = "bar";\n',
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: repoDir,
       pathToSubjectPackages: path.join(repoDir, 'packages/my-package'),
       monorepoRoot: repoDir,

@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { pj } from '../testing/monocrate-teskit.js'
+import { monocrateFoo, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -25,7 +24,7 @@ describe('package.json transformation', () => {
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -58,7 +57,7 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -89,7 +88,7 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,

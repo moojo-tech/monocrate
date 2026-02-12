@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { runMonocrate } from '../testing/monocrate-teskit.js'
+import { monocrateFoo, runMonocrate } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -26,7 +25,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -59,7 +58,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -202,7 +201,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -261,7 +260,7 @@ console.log('Hello from bin');
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await monocrateFoo({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
