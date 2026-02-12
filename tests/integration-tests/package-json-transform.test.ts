@@ -28,7 +28,7 @@ describe('package.json transformation', () => {
 `,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -61,7 +61,7 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -92,7 +92,7 @@ describe('package.json transformation', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await teskit.monocrateFoo({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
