@@ -4,7 +4,7 @@
 [![CI](https://github.com/moojo-tech/monocrate/actions/workflows/ci.yml/badge.svg)](https://github.com/moojo-tech/monocrate/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-*Monorepos? Great. Publishing from a monorepo? Comically hard.*
+_Monorepos? Great. Publishing from a monorepo? Comically hard._
 
 ## The Problem
 
@@ -18,8 +18,8 @@ Now you want to publish it.
 
 ## The Solution
 
-[monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets monorepos. It produces a single 
-publishable directory containing everything needed from your package and its in-repo dependencies. 
+[monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets monorepos. It produces a single
+publishable directory containing everything needed from your package and its in-repo dependencies.
 
 - 📦 Consumers get a single package with exactly what they need
 - 🔒 Internal packages remain unpublished
@@ -30,7 +30,7 @@ The result: a standard npm package that looks like you had hand-crafted it for p
 ### Quickstart
 
 > **⚠️ ESM only** — monocrate only supports ES modules. If your monorepo uses CommonJS, you need to
-[migrate to ESM](https://nodejs.org/api/esm.html) first.
+> [migrate to ESM](https://nodejs.org/api/esm.html) first.
 
 ```bash
 # Install
@@ -42,15 +42,16 @@ pnpm add --save-dev monocrate
 npm run build
 
 # Publish
-npx monocrate packages/my-awesome-package --bump patch
+npx monocrate publish packages/my-awesome-package --bump patch
 
-# Or: use --dry-run to assemble and create the final tarball in cwd without publishing
-npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
+# Or: assemble without publishing
+npx monocrate pack packages/my-awesome-package --pack-destination /tmp/inspect --bump patch
 ```
 
 ### What Gets Published
 
 Given this monorepo structure:
+
 ```
 /path/to/my-monorepo/
 └── packages/
@@ -64,7 +65,8 @@ Given this monorepo structure:
             └── index.ts
 ```
 
-Running `npx monocrate packages/my-awesome-package` produces:
+Running `npx monocrate pack packages/my-awesome-package` produces:
+
 ```
 /tmp/monocrate-xxxxxx/
 └── packages/
@@ -83,17 +85,19 @@ The `deps/` directory is where in-repo dependencies are embedded. Each dependenc
 its package name, avoiding collisions regardless of where packages live in the monorepo.
 
 > **Note:** The actual directory name includes a randomized suffix (e.g., `deps-a1b2c3d4/`) to prevent conflicts with
-existing directories in your package.
+> existing directories in your package.
 
 For details on how `monocrate` assembles packages, see [The Assembly Process](docs/assembly-process.md).
 
 ### Supported Scope
 
 ⚠️ Important:
+
 - **ESM only** — CommonJS `require()` calls are not rewritten, which will cause runtime failures for consumers. Only use monocrate on ESM-compliant monorepos.
 - **peerDependencies and optionalDependencies** — preserved in the output `package.json`, not embedded. It's your responsibility to ensure these are published and available to consumers.
 
 `monocrate` validates (and rejects with a clear error):
+
 - **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; `await import(variable)` does not.
 - **Consistent third-party versions** — two in-repo packages cannot require different versions of the same dependency.
 - **Symlinks must stay within the monorepo** — packages symlinked from outside the monorepo root are not supported.
@@ -102,11 +106,11 @@ For details on how `monocrate` assembles packages, see [The Assembly Process](do
 
 The `--bump` flag determines the published version. There are three approaches:
 
-| `--bump` value | Source of truth | Example result |
-|----------------|-----------------|----------------|
-| `patch`/`minor`/`major` | npm registry | 1.2.3 → 1.2.4 |
-| `1.8.9` | CLI argument | 1.8.9 |
-| `package` | package.json | (whatever's in the file) |
+| `--bump` value          | Source of truth | Example result           |
+| ----------------------- | --------------- | ------------------------ |
+| `patch`/`minor`/`major` | npm registry    | 1.2.3 → 1.2.4            |
+| `1.8.9`                 | CLI argument    | 1.8.9                    |
+| `package`               | package.json    | (whatever's in the file) |
 
 When publishing multiple packages, see [Multiple Packages](#multiple-packages) for unified versioning with `--max`.
 
@@ -114,16 +118,16 @@ In all cases, your source `package.json` is never modified—the resolved versio
 
 ```bash
 # Registry-based: query npm, bump from latest (default is minor)
-npx monocrate packages/my-awesome-package              # bumps minor
-npx monocrate packages/my-awesome-package --bump patch
+npx monocrate publish packages/my-awesome-package              # bumps minor
+npx monocrate publish packages/my-awesome-package --bump patch
 
 # Explicit: use exact version
-npx monocrate packages/my-awesome-package --bump 2.3.0
+npx monocrate publish packages/my-awesome-package --bump 2.3.0
 
 # Package-based: read from package.json
 cd packages/my-awesome-package
 npm version minor --no-git-tag-version
-npx monocrate . --bump package
+npx monocrate publish . --bump package
 ```
 
 ## Programmatic API
@@ -138,19 +142,19 @@ const result = await monocrate({
   pathToSubjectPackages: ['packages/my-awesome-package'],
   publish: true,
   bump: 'minor',
-  cwd: process.cwd()
+  cwd: process.cwd(),
 })
 
 console.log(result.summaries[0].version) // '1.3.0'
 ```
 
-The above snippet is the programmatic equivalent of `npx monocrate packages/my-awesome-package --bump minor`.
+The above snippet is the programmatic equivalent of `npx monocrate publish packages/my-awesome-package --bump minor`.
 
 ## Advanced Features
 
 ### Custom Publish Name
 
-Sometimes your internal package name doesn't match the name you want on npm. Add a `monocrate.publishName` field to 
+Sometimes your internal package name doesn't match the name you want on npm. Add a `monocrate.publishName` field to
 your `package.json` to publish under a different name without renaming the package across your monorepo:
 
 ```json
@@ -168,7 +172,7 @@ Want to open-source your package while keeping your monorepo private? Use `--mir
 in-repo dependencies to a separate public repository:
 
 ```bash
-npx monocrate packages/my-awesome-package --mirror-to ../public-repo
+npx monocrate publish packages/my-awesome-package --mirror-to ../public-repo
 ```
 
 This way, your public repo stays in sync with what you publish—all necessary packages included. Contributors can
@@ -181,18 +185,18 @@ Requires a clean working tree. Only committed files (from `git HEAD`) are mirror
 If you have several public packages in your monorepo, publish them in one go by listing multiple directories:
 
 ```bash
-npx monocrate packages/lib-a packages/lib-b --bump patch
+npx monocrate publish packages/lib-a packages/lib-b --bump patch
 ```
 
 By default, each package will be published with its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
 is at `2.0.0`, a patch bump publishes them at `1.0.1` and `2.0.1` respectively.
 
-You can also publish all specified packages at the same version (unified versioning, à la AWS SDK v3), by using the 
+You can also publish all specified packages at the same version (unified versioning, à la AWS SDK v3), by using the
 `--max` flag. This applies the bump to the maximum version and publishes all packages at that version.
 
 ```bash
 # Now both will be published at 2.0.1 (the max)
-npx monocrate packages/lib-a packages/lib-b --bump patch --max
+npx monocrate publish packages/lib-a packages/lib-b --bump patch --max
 ```
 
 This is purely a stylistic choice; it doesn't affect correctness since in-repo dependencies are always embedded.
@@ -202,29 +206,28 @@ This is purely a stylistic choice; it doesn't affect correctness since in-repo d
 ### CLI
 
 ```
-monocrate <packages...> [options]
+monocrate <command> <packages...> [options]
 ```
 
 **Arguments**
 
-| Argument | Description |
-|----------|-------------|
-| `packages` | One or more package directories to publish (required) |
+| Argument   | Description                                                |
+| ---------- | ---------------------------------------------------------- |
+| `command`  | `pack` (assemble only) or `publish` (assemble and publish) |
+| `packages` | One or more package directories to process (required)      |
 
 **Options**
 
-| Option | Alias | Type | Default | Description |
-|--------|-------|------|---------|-------------|
-| `--bump` | `-b` | `string` | `minor` | Version bump strategy: `patch`, `minor`, `major`, `package`, or explicit semver (e.g., `2.3.0`). Use `package` to read version from `package.json`. |
-| `--max` | | `boolean` | `false` | Use max version across all packages (unified versioning). When false, each package uses its own version. |
-| `--dry-run` | `-d` | `boolean` | `false` | Prepare package and final tarball without publishing to npm |
-| `--output-dir` | `-o` | `string` | (temp dir) | Directory where assembled package is written |
-| `--root` | `-r` | `string` | (auto) | Monorepo root directory (auto-detected if omitted) |
-| `--mirror-to` | `-m` | `string` | — | Mirror source files to a directory (for public repos) |
-| `--report` | | `string` | — | Write resolved version to a file instead of stdout |
-| `--help` | | | | Show help |
-| `--version` | | | | Show version number |
-
+| Option               | Alias | Type      | Default    | Description                                                                                                                                         |
+| -------------------- | ----- | --------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--bump`             | `-b`  | `string`  | `minor`    | Version bump strategy: `patch`, `minor`, `major`, `package`, or explicit semver (e.g., `2.3.0`). Use `package` to read version from `package.json`. |
+| `--max`              |       | `boolean` | `false`    | Use max version across all packages (unified versioning). When false, each package uses its own version.                                            |
+| `--pack-destination` | `-o`  | `string`  | (temp dir) | Directory where assembled package is written                                                                                                        |
+| `--root`             | `-r`  | `string`  | (auto)     | Monorepo root directory (auto-detected if omitted)                                                                                                  |
+| `--mirror-to`        | `-m`  | `string`  | —          | Mirror source files to a directory (for public repos)                                                                                               |
+| `--report`           |       | `string`  | —          | Write resolved version to a file instead of stdout                                                                                                  |
+| `--help`             |       |           |            | Show help                                                                                                                                           |
+| `--version`          |       |           |            | Show version number                                                                                                                                 |
 
 ### API
 
@@ -234,22 +237,22 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 
 **`MonocrateOptions`**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `pathToSubjectPackages` | `string \| string[]` | Yes | — | Package directories to assemble. Relative paths resolved from `cwd`. |
-| `publish` | `boolean` | Yes | — | Whether to publish to npm after assembly. |
-| `cwd` | `string` | Yes | — | Base directory for resolving relative paths. |
-| `bump` | `string` | No | `"minor"` | Version specifier: `"patch"`, `"minor"`, `"major"`, `"package"`, or explicit semver. |
-| `max` | `boolean` | No | `false` | Use max version across all packages (unified versioning). |
-| `outputRoot` | `string` | No | (temp dir) | Output directory for the assembled package. |
-| `monorepoRoot` | `string` | No | (auto) | Monorepo root directory; auto-detected if omitted. |
-| `mirrorTo` | `string` | No | — | Mirror source files to this directory. |
-| `npmrcPath` | `string` | No | — | Path to `.npmrc` file for npm authentication. |
+| Property                | Type                 | Required | Default    | Description                                                                          |
+| ----------------------- | -------------------- | -------- | ---------- | ------------------------------------------------------------------------------------ |
+| `pathToSubjectPackages` | `string \| string[]` | Yes      | —          | Package directories to assemble. Relative paths resolved from `cwd`.                 |
+| `publish`               | `boolean`            | Yes      | —          | Whether to publish to npm after assembly.                                            |
+| `cwd`                   | `string`             | Yes      | —          | Base directory for resolving relative paths.                                         |
+| `bump`                  | `string`             | No       | `"minor"`  | Version specifier: `"patch"`, `"minor"`, `"major"`, `"package"`, or explicit semver. |
+| `max`                   | `boolean`            | No       | `false`    | Use max version across all packages (unified versioning).                            |
+| `outputRoot`            | `string`             | No       | (temp dir) | Output directory for the assembled package.                                          |
+| `monorepoRoot`          | `string`             | No       | (auto)     | Monorepo root directory; auto-detected if omitted.                                   |
+| `mirrorTo`              | `string`             | No       | —          | Mirror source files to this directory.                                               |
+| `npmrcPath`             | `string`             | No       | —          | Path to `.npmrc` file for npm authentication.                                        |
 
 **`MonocrateResult`**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `outputDir` | `string` | Directory where the first package was assembled. |
-| `resolvedVersion` | `string \| undefined` | The unified resolved version (only set when `max: true`). |
-| `summaries` | `Array<{ packageName: string; outputDir: string; version: string; tarballPath: string }>` | Details for each assembled package, including version and path to generated tarball. |
+| Property          | Type                                                                                      | Description                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `outputDir`       | `string`                                                                                  | Directory where the first package was assembled.                                     |
+| `resolvedVersion` | `string \| undefined`                                                                     | The unified resolved version (only set when `max: true`).                            |
+| `summaries`       | `Array<{ packageName: string; outputDir: string; version: string; tarballPath: string }>` | Details for each assembled package, including version and path to generated tarball. |

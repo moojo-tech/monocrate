@@ -23,12 +23,11 @@ const pkg = JSON.parse(fs.readFileSync(findPackageJson(), 'utf-8')) as { version
 interface YargsArgs {
   _: string[]
   packages?: string[]
-  'output-dir'?: string
+  'pack-destination'?: string
   root?: string
   bump?: string
   report?: string
   'mirror-to'?: string
-  'dry-run'?: boolean
   max?: boolean
 }
 
@@ -37,32 +36,40 @@ export function monocrateCli(): void {
     .scriptName('monocrate')
     .version(pkg.version)
     .command(
-      '$0 <packages...>',
-      `From monorepo to npm in one command.
-
-Point at your packages. That's it.`,
+      'pack <packages...>',
+      `Assemble one or more packages into publishable output without publishing.`,
       (yargs) =>
         yargs.positional('packages', {
-          describe: 'Package directories to publish',
+          describe: 'Package directories to assemble',
           type: 'string',
           array: true,
           demandOption: true,
         })
     )
-    .example('$0 pkg/foo --bump patch', 'Bump to next patch and publish')
-    .example('$0 libs/a libs/b', 'Multi-package (defaults to minor bump)')
-    .example('$0 pkg/foo --dry-run', 'Prepare without publishing')
-    .example('$0 pkg/foo --bump package', 'Use version from package.json')
+    .command('publish <packages...>', `Assemble one or more packages and publish them to npm.`, (yargs) =>
+      yargs.positional('packages', {
+        describe: 'Package directories to publish',
+        type: 'string',
+        array: true,
+        demandOption: true,
+      })
+    )
+    .demandCommand(1)
+    .strictCommands()
+    .example('$0 publish pkg/foo --bump patch', 'Bump to next patch and publish')
+    .example('$0 publish libs/a libs/b', 'Multi-package publish (defaults to minor bump)')
+    .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Assemble without publishing')
+    .example('$0 publish pkg/foo --bump package', 'Use version from package.json and publish')
     .options({
       bump: {
         alias: 'b',
         type: 'string' as const,
         description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
       },
-      'output-dir': {
+      'pack-destination': {
         alias: 'o',
         type: 'string' as const,
-        description: 'Output directory',
+        description: 'Directory where assembled package is written',
       },
       root: {
         alias: 'r',
@@ -78,12 +85,6 @@ Point at your packages. That's it.`,
         type: 'string' as const,
         description: 'Mirror source files to directory',
       },
-      'dry-run': {
-        alias: 'd',
-        type: 'boolean' as const,
-        description: 'Prepare without publishing',
-        default: false,
-      },
       max: {
         type: 'boolean' as const,
         description: 'Use max version across all packages (default: false)',
@@ -98,12 +99,16 @@ Point at your packages. That's it.`,
     .then(async (argv) => {
       const args = argv as YargsArgs
       const packages = args.packages ?? args._
+      const command = args._[0]
+      if (command !== 'pack' && command !== 'publish') {
+        throw new Error(`Expected command to be "pack" or "publish", got ${String(command)}`)
+      }
       const options: MonocrateOptions = {
         pathToSubjectPackages: packages,
-        outputRoot: args['output-dir'],
+        outputRoot: args['pack-destination'],
         monorepoRoot: args.root,
         bump: args.bump,
-        publish: !args['dry-run'],
+        publish: command === 'publish',
         cwd: process.cwd(),
         mirrorTo: args['mirror-to'],
         max: args.max,
