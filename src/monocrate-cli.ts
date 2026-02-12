@@ -70,16 +70,16 @@ function withCommonCommandOptions(parser: Argv, packageDescription: string): Arg
 
 function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   return withCommonCommandOptions(parser, 'Package directories to create tarballs for').option('pack-destination', {
-    alias: 'o',
+    alias: 'd',
     type: 'string',
     description: 'Directory to write tarballs to',
   })
 }
 
-async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, outputRoot?: string): Promise<void> {
+async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, packDestination?: string): Promise<void> {
   const options: MonocrateOptions = {
     pathToSubjectPackages: args.packages,
-    outputRoot,
+    packDestination,
     monorepoRoot: args.root,
     bump: args.bump,
     publish,

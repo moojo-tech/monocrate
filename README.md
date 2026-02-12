@@ -222,7 +222,7 @@ monocrate <command> <packages...> [options]
 | -------------------- | ----- | --------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--bump`             | `-b`  | `string`  | `minor`    | Version bump strategy: `patch`, `minor`, `major`, `package`, or explicit semver (e.g., `2.3.0`). Use `package` to read version from `package.json`. |
 | `--max`              |       | `boolean` | `false`    | Use max version across all packages (unified versioning). When false, each package uses its own version.                                            |
-| `--pack-destination` | `-o`  | `string`  | (temp dir) | Directory to write tarballs to (pack command only)                                                                                                 |
+| `--pack-destination` | `-d`  | `string`  | (temp dir) | Directory to write tarballs to (pack command only)                                                                                                 |
 | `--root`             | `-r`  | `string`  | (auto)     | Monorepo root directory (auto-detected if omitted)                                                                                                  |
 | `--mirror-to`        | `-m`  | `string`  | —          | Mirror source files to a directory (for public repos)                                                                                               |
 | `--report`           |       | `string`  | —          | Write resolved version to a file instead of stdout                                                                                                  |
@@ -244,7 +244,7 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 | `cwd`                   | `string`             | Yes      | —          | Base directory for resolving relative paths.                                         |
 | `bump`                  | `string`             | No       | `"minor"`  | Version specifier: `"patch"`, `"minor"`, `"major"`, `"package"`, or explicit semver. |
 | `max`                   | `boolean`            | No       | `false`    | Use max version across all packages (unified versioning).                            |
-| `outputRoot`            | `string`             | No       | (temp dir) | Output directory for the assembled package.                                          |
+| `packDestination`       | `string`             | No       | (temp dir) | Output directory for the assembled package.                                          |
 | `monorepoRoot`          | `string`             | No       | (auto)     | Monorepo root directory; auto-detected if omitted.                                   |
 | `mirrorTo`              | `string`             | No       | —          | Mirror source files to this directory.                                               |
 | `npmrcPath`             | `string`             | No       | —          | Path to `.npmrc` file for npm authentication.                                        |

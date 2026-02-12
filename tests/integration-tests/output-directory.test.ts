@@ -37,7 +37,7 @@ describe('optional output directory', () => {
     })
   })
 
-  it('uses provided outputRoot when specified', async () => {
+  it('uses provided packDestination when specified', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': pj('@test/app'),
@@ -45,17 +45,17 @@ describe('optional output directory', () => {
 `,
     })
 
-    const specifiedOutputRoot = createTempDir('monocrate-explicit-output-')
+    const specifiedPackDestination = createTempDir('monocrate-explicit-output-')
     const { outputDir } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
-      outputRoot: specifiedOutputRoot,
+      packDestination: specifiedPackDestination,
       monorepoRoot,
       publish: false,
       bump: '2.8.512',
     })
 
-    expect(outputDir.startsWith(specifiedOutputRoot)).toBe(true)
-    expect(outputDir).toBe(path.join(specifiedOutputRoot, 'packages/app'))
+    expect(outputDir.startsWith(specifiedPackDestination)).toBe(true)
+    expect(outputDir).toBe(path.join(specifiedPackDestination, 'packages/app'))
   })
 })

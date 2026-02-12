@@ -41,8 +41,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   if (!cwdExists) {
     throw new Error(`cwd does not exist: ${cwd}`)
   }
-  const outputRoot = AbsolutePath(
-    options.outputRoot ? path.resolve(cwd, options.outputRoot) : await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-'))
+  const packDestination = AbsolutePath(
+    options.packDestination
+      ? path.resolve(cwd, options.packDestination)
+      : await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-'))
   )
 
   // Validate bump argument before any side effects (defaults to 'minor')
@@ -71,7 +73,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   }
 
   try {
-    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot, tempDirs))
+    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, packDestination, tempDirs))
     const a0 = assemblers.at(0)
     if (!a0) {
       throw new Error(`Inconsistency - could not find an assembler for the first package`)

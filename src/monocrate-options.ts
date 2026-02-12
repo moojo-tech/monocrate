@@ -5,12 +5,12 @@ export interface MonocrateOptions {
    */
   pathToSubjectPackages: string[] | string
   /**
-   * Path to the output root directory where the assembly will be written.
+   * Path to the destination directory where tarballs will be written.
    * The actual output will be placed in a subdirectory named after the package.
    * Can be absolute or relative. Relative paths are resolved from the cwd option.
    * If not specified, a dedicated temp directory is created under the system temp directory.
    */
-  outputRoot?: string
+  packDestination?: string
   /**
    * Path to the monorepo root directory.
    * Can be absolute or relative. Relative paths are resolved from the cwd option.
