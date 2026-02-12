@@ -12,6 +12,7 @@ import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
 import { TempDirRegistry } from './temp-dir-registry.js'
+import { createSilentReporter } from './reporter.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
@@ -27,6 +28,7 @@ function npmTarballFileName(packageName: string, version: string): string {
  * @throws Error if assembly or publishing fails
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
+  const report = options.reporter ?? createSilentReporter()
   const tempDirs = new TempDirRegistry()
 
   // Determine whether to use unified max version or individual versions per package
@@ -64,16 +66,20 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     ? AbsolutePath(path.resolve(cwd, options.monorepoRoot))
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
+  report({ type: 'monorepoRoot', root: monorepoRoot })
 
   const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirs)
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
-    await npmClient.whoami(cwd)
+    const username = await npmClient.whoami(cwd)
+    report({ type: 'npmLogin', username })
   }
 
   try {
-    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, packDestination, tempDirs))
+    const assemblers = sourceDirs.map(
+      (at) => new PackageAssembler(npmClient, explorer, at, packDestination, tempDirs, report)
+    )
     const a0 = assemblers.at(0)
     if (!a0) {
       throw new Error(`Inconsistency - could not find an assembler for the first package`)
@@ -94,6 +100,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     const packagePlans = pairs.map((at) => {
       const version = useMax ? max : at.version
       const tarballPath = AbsolutePath.join(cwd, RelativePath(npmTarballFileName(at.assembler.publishAs, version)))
+      report({ type: 'version', packageName: at.assembler.publishAs, version })
       return { assembler: at.assembler, version, tarballPath }
     })
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
@@ -105,11 +112,14 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       for (const pkg of compiletimeMembers) {
         allPackagesForMirror.set(pkg.name, pkg)
       }
-
-      const outputDir = assembler.getOutputDir()
+      report({ type: 'assemble', packageName: assembler.publishAs, version })
 
       if (options.publish) {
+        const outputDir = assembler.getOutputDir()
         await npmClient.publishTarball(tarballPath, outputDir, 'pending')
+        report({ type: 'publish', packageName: assembler.publishAs, version })
+      } else {
+        report({ type: 'pack', packageName: assembler.publishAs, tarballPath })
       }
     }
 
@@ -117,6 +127,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     if (options.publish) {
       for (const { assembler, version } of packagePlans) {
         await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+        report({ type: 'tagLatest', packageName: assembler.publishAs, version })
       }
     }
 

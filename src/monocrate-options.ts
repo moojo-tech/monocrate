@@ -1,3 +1,5 @@
+import type { Reporter } from './reporter.js'
+
 export interface MonocrateOptions {
   /**
    * Paths to the directories of the various package to assemble. If a string, it is transformed to a single element array.
@@ -71,4 +73,10 @@ export interface MonocrateOptions {
    * and you want to preserve meaningful versioning per package.
    */
   max?: boolean
+
+  /**
+   * Reporter function called with semantic progress events during the pipeline.
+   * If not provided, a silent reporter is used (no output).
+   */
+  reporter?: Reporter
 }
