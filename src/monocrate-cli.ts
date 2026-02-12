@@ -25,7 +25,7 @@ interface CommonYargsArgs {
   packages: string[]
   root?: string
   bump?: string
-  report?: string
+  'output-json'?: string
   'mirror-to'?: string
   max: boolean
 }
@@ -52,9 +52,9 @@ function withCommonCommandOptions(parser: Argv, packageDescription: string): Arg
       type: 'string',
       description: 'Monorepo root (auto-detected if omitted)',
     })
-    .option('report', {
+    .option('output-json', {
       type: 'string',
-      description: 'Write report to file',
+      description: 'Write full result as JSON to file',
     })
     .option('mirror-to', {
       alias: 'm',
@@ -88,12 +88,12 @@ async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, pa
     max: args.max,
   }
   const result = await monocrate(options)
-  const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
-  if (args.report) {
-    const outputFilePath = path.resolve(process.cwd(), args.report)
-    fs.writeFileSync(outputFilePath, output)
+  if (args['output-json']) {
+    const outputFilePath = path.resolve(process.cwd(), args['output-json'])
+    fs.writeFileSync(outputFilePath, JSON.stringify(result, undefined, 2) + '\n')
     return
   }
+  const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
   console.log(output)
 }
 
