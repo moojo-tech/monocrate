@@ -107,13 +107,13 @@ The `MonocrateResult` type changes to support per-package versions:
 // With --max (default)
 {
   resolvedVersion: string        // unified version for all packages
-  summaries: [{ outputDir, packageName, version }]  // all versions are the same
+  summaries: [{ packageName, version, tarballPath }]  // all versions are the same
 }
 
 // With --max=false
 {
   resolvedVersion: undefined     // not set when using individual versions
-  summaries: [{ outputDir, packageName, version }]  // version per package
+  summaries: [{ packageName, version, tarballPath }]  // version per package
 }
 ```
 

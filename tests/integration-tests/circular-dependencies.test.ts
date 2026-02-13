@@ -1,11 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
-import { pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('circular dependency detection', () => {
+  const teskit = new MonocrateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('detects direct cycle (A → B → A)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -87,7 +91,7 @@ describe('circular dependency detection', () => {
     })
 
     // Should succeed because devDependencies are not checked for cycles
-    const { output } = await runMonocrate(monorepoRoot, 'packages/a')
+    const { output } = await teskit.run(monorepoRoot, 'packages/a')
     expect(output['package.json']).toHaveProperty('name', '@test/a')
   })
 
@@ -109,7 +113,7 @@ describe('circular dependency detection', () => {
     })
 
     // Diamond is not a cycle - should succeed
-    const { output } = await runMonocrate(monorepoRoot, 'packages/a')
+    const { output } = await teskit.run(monorepoRoot, 'packages/a')
     expect(output['package.json']).toHaveProperty('name', '@test/a')
   })
 

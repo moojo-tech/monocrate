@@ -254,4 +254,4 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 | Property          | Type                                                                                      | Description                                                                          |
 | ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `resolvedVersion` | `string \| undefined`                                                                     | The unified resolved version (only set when `max: true`).                            |
-| `summaries`       | `Array<{ packageName: string; outputDir: string; version: string; tarballPath: string }>` | Details for each assembled package, including version and path to generated tarball. |
+| `summaries`       | `Array<{ packageName: string; version: string; tarballPath: string }>` | Details for each assembled package, including version and path to generated tarball. |

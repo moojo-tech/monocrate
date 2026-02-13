@@ -1,7 +1,7 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocrateTeskit, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -98,7 +98,7 @@ console.log('Hello from bin');
       'packages/lib/src/index.ts': `// Source should not be copied`,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '3.9.27' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
 
     expect(output).toMatchObject({
       'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
@@ -138,7 +138,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     expect(output).toHaveProperty('dist/index.js')
     expect(output).toHaveProperty('dist/utils.js')
@@ -159,7 +159,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { entryPoint: 'lib/index.js' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { entryPoint: 'lib/index.js' })
 
     expect(output).toHaveProperty('lib/index.js')
     expect(stdout.trim()).toBe('Hello from lib')
@@ -180,7 +180,7 @@ console.log('Hello from bin');
       // docs and optional directories don't exist
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     // Should still work with just dist
     expect(output).toHaveProperty('dist/index.js')
@@ -236,7 +236,7 @@ console.log('Hello from bin');
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     expect(output['dist/index.js']).toBe(`console.log('packed');
 `)

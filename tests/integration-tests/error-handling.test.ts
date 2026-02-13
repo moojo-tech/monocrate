@@ -4,7 +4,7 @@ import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocrateTeskit, pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -162,7 +162,7 @@ describe('error handling', () => {
       'packages/lib/package.json': pj('@test/lib'),
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
     })
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     expect(output['package.json']).toEqual({
       name: '@test/app',

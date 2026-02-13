@@ -27,6 +27,44 @@ export class MonocrateTeskit {
     await tar.x({ file: summary.tarballPath, cwd: tempDir })
     return { ...result, outputDir: path.join(tempDir, 'package') }
   }
+
+  private extractTarball(tarballPath: string): string {
+    const tempDir = this.tempDirs.record(AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-teskit-'))))
+    tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
+    return path.join(tempDir, 'package')
+  }
+
+  async run(
+    monorepoRoot: string,
+    sourcePackage: string,
+    { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
+  ) {
+    const result = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
+      monorepoRoot,
+      bump,
+      publish: false,
+    })
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected at least one package summary')
+    }
+    const outputDir = this.extractTarball(summary.tarballPath)
+
+    let stdout = ''
+    let stderr = ''
+    try {
+      stdout = execSync(`node --enable-source-maps ${path.join(outputDir, entryPoint)}`, {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      })
+    } catch (error) {
+      stderr = (error as { stderr?: string }).stderr ?? stderr
+    }
+    const output = unfolderify(outputDir)
+    return { stdout, stderr, output }
+  }
 }
 
 export function createTempDir(prefix = 'monocrate-testing-'): string {
@@ -61,36 +99,4 @@ export function pj(
     name,
     ...version,
   }
-}
-
-export async function runMonocrate(
-  monorepoRoot: string,
-  sourcePackage: string,
-  { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
-) {
-  const result = await monocrate({
-    cwd: monorepoRoot,
-    pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
-    monorepoRoot,
-    bump,
-    publish: false,
-  })
-  const summary = result.summaries.at(0)
-  if (!summary) {
-    throw new Error('Expected at least one package summary')
-  }
-  const outputDir = summary.outputDir
-
-  let stdout = ''
-  let stderr = ''
-  try {
-    stdout = execSync(`node --enable-source-maps ${path.join(outputDir, entryPoint)}`, {
-      encoding: 'utf-8',
-      stdio: 'pipe',
-    })
-  } catch (error) {
-    stderr = (error as { stderr?: string }).stderr ?? stderr
-  }
-  const output = unfolderify(outputDir)
-  return { stdout, stderr, output }
 }
