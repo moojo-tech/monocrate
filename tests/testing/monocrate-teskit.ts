@@ -23,9 +23,7 @@ export class MonocrateTeskit {
     if (!summary) {
       throw new Error('Expected at least one package summary')
     }
-    const tempDir = this.tempDirs.record(AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-teskit-'))))
-    await tar.x({ file: summary.tarballPath, cwd: tempDir })
-    return { ...result, outputDir: path.join(tempDir, 'package') }
+    return { ...result, outputDir: this.extractTarball(summary.tarballPath) }
   }
 
   private extractTarball(tarballPath: string): string {
