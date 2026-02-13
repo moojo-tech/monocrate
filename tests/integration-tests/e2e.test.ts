@@ -2,7 +2,7 @@ import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocrateTeskit, pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -41,7 +41,7 @@ describe('monocrate e2e', () => {
       'packages/lib/dist/index.d.ts': `export declare function greet(name: string): string;`,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '4.256.16384' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '4.256.16384' })
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
@@ -110,7 +110,7 @@ describe('monocrate e2e', () => {
     })
 
     // Assemble only app-alpha
-    const alpha = await runMonocrate(monorepoRoot, 'packages/app-alpha', { bump: '4.16.64' })
+    const alpha = await teskit.run(monorepoRoot, 'packages/app-alpha', { bump: '4.16.64' })
 
     expect(alpha.output['package.json']).toEqual({
       name: '@test/app-alpha',
@@ -127,7 +127,7 @@ describe('monocrate e2e', () => {
     expect(alpha.stdout.trim()).toBe('Alpha: ALPHA')
 
     // Assemble only app-beta
-    const beta = await runMonocrate(monorepoRoot, 'packages/app-beta', { bump: '5.25.125' })
+    const beta = await teskit.run(monorepoRoot, 'packages/app-beta', { bump: '5.25.125' })
 
     expect(beta.output['package.json']).toEqual({
       name: '@test/app-beta',
@@ -220,7 +220,7 @@ export function fromLevel3() {
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '4.16.64' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '4.16.64' })
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
@@ -278,7 +278,7 @@ console.log(pnpmGreet());
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '9.81.729' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '9.81.729' })
 
     expect(output['package.json']).toEqual({
       name: '@test/pnpm-app',
@@ -334,7 +334,7 @@ console.log(greet('World'));
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '3.9.27' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
@@ -366,7 +366,7 @@ console.log(greet('World'));
       'packages/build-tool/dist/index.js': `export const build = 'build';`,
     })
 
-    const { output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '1.0.0' })
+    const { output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
 
     // lib (production dependency) should be included
     expect(output).toHaveProperty('node_modules/@test/lib/package.json')
@@ -406,7 +406,7 @@ throwError();
       'packages/lib/dist/index.js': libSource,
     })
 
-    const { stderr } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stderr } = await teskit.run(monorepoRoot, 'packages/app')
 
     // Verify the stack trace contains the error message and the line number in the output
     // The throw statement is on line 2 of the lib dist file
@@ -745,7 +745,7 @@ export const a = 'a-' + b;
 `,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     // Verify bundled dependency files keep imports as package names
     const libAIndex = output['node_modules/@myorg/lib-a/dist/index.js'] as string
@@ -781,7 +781,7 @@ export const a = 'a-' + b;
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '2.0.0' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '2.0.0' })
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
@@ -825,7 +825,7 @@ export const a = 'a-' + b;
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '3.0.0' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.0.0' })
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
@@ -888,7 +888,7 @@ console.log(a + '-' + b + '-' + c);
       'packages/lib-c/dist/index.js': `export const c = 'C';`,
     })
 
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app', { bump: '5.0.0' })
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '5.0.0' })
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
