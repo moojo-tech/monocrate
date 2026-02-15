@@ -7,7 +7,7 @@ import type { PackageClosure } from './package-closure.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { AbsolutePath, RelativePath } from './paths.js'
 import type { NpmClient } from './npm-client.js'
-import type { TempDirRegistry } from './temp-dir-registry.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
   async function visit(dir: AbsolutePath): Promise<string[]> {
@@ -36,9 +36,9 @@ function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
 async function packAndExtractDirectory(
   npmClient: NpmClient,
   packageDir: AbsolutePath,
-  tempDirs: TempDirRegistry
+  tempDirDispenser: TempDirDispenser
 ): Promise<AbsolutePath> {
-  const tempDir = tempDirs.create()
+  const tempDir = tempDirDispenser.create()
   const tarball = AbsolutePath.join(tempDir, RelativePath('package.tgz'))
   await npmClient.pack(packageDir, tarball)
   await tar.x({ file: tarball, cwd: tempDir })
@@ -56,9 +56,9 @@ async function createPackageLocation(
   pkg: MonorepoPackage,
   directoryInOutput: AbsolutePath,
   includeNpmrc: boolean,
-  tempDirs: TempDirRegistry
+  tempDirDispenser: TempDirDispenser
 ): Promise<PackageLocation> {
-  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir, tempDirs)
+  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir, tempDirDispenser)
 
   const filesToCopy = await listFilesRecursively(packed)
 
@@ -85,7 +85,7 @@ export async function collectPackageLocations(
   npmClient: NpmClient,
   closure: PackageClosure,
   outputDir: AbsolutePath,
-  tempDirs: TempDirRegistry
+  tempDirDispenser: TempDirDispenser
 ): Promise<PackageLocation[]> {
   return Promise.all(
     closure.runtimeMembers.map(async (dep) =>
@@ -96,7 +96,7 @@ export async function collectPackageLocations(
           ? outputDir
           : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name)),
         dep.name === closure.subjectPackageName,
-        tempDirs
+        tempDirDispenser
       )
     )
   )

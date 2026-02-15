@@ -4,7 +4,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { AbsolutePath } from './paths.js'
 
-export class TempDirRegistry {
+export class TempDirDispenser {
   private readonly prefix: string
   private root: AbsolutePath | undefined
 

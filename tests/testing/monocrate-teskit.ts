@@ -7,13 +7,13 @@ import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
 import fs from 'node:fs'
 import * as tar from 'tar'
-import { TempDirRegistry } from '../../src/temp-dir-registry.js'
+import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 
 export class MonocrateTeskit {
-  private readonly tempDirs = new TempDirRegistry()
+  private readonly tempDirDispenser = new TempDirDispenser()
 
   shutdown() {
-    this.tempDirs.cleanup()
+    this.tempDirDispenser.cleanup()
   }
 
   async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
@@ -26,7 +26,7 @@ export class MonocrateTeskit {
   }
 
   private extractTarball(tarballPath: string): string {
-    const tempDir = this.tempDirs.create()
+    const tempDir = this.tempDirDispenser.create()
     tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
     return path.join(tempDir, 'package')
   }

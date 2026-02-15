@@ -4,7 +4,7 @@ import { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
 import { findSingleTarballInDirectory } from './tarball.js'
-import type { TempDirRegistry } from './temp-dir-registry.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 const NpmErrorResponse = z.object({
   error: z.object({
@@ -17,7 +17,7 @@ const NpmErrorResponse = z.object({
 export class NpmClient {
   constructor(
     private readonly npmOptions: NpmOptionsBase | undefined,
-    private readonly tempDirs: TempDirRegistry
+    private readonly tempDirDispenser: TempDirDispenser
   ) {}
 
   /**
@@ -98,7 +98,7 @@ export class NpmClient {
   }
 
   async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath, options?: { ignoreScripts?: boolean }): Promise<void> {
-    const tempDir = this.tempDirs.create()
+    const tempDir = this.tempDirDispenser.create()
     const args = options?.ignoreScripts
       ? ['--ignore-scripts', '--pack-destination', tempDir]
       : ['--pack-destination', tempDir]
