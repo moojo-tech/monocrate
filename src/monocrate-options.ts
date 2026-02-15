@@ -75,6 +75,12 @@ export interface MonocrateOptions {
   max?: boolean
 
   /**
+   * Additional arguments to pass through to `npm publish`.
+   * These are appended verbatim to the npm publish command line.
+   */
+  npmPublishArgs?: string[]
+
+  /**
    * Reporter function called with semantic progress events during the pipeline.
    * If not provided, a silent reporter is used (no output).
    */

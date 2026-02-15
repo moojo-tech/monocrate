@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { Arguments, Argv } from 'yargs'
+import { z } from 'zod'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 import { createConsoleReporter } from './reporter.js'
@@ -77,7 +78,14 @@ function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   })
 }
 
-async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, packDestination?: string): Promise<void> {
+const NpmPassthroughArgs = z.array(z.string()).optional()
+
+async function runCommand(
+  args: Arguments<CommonYargsArgs>,
+  publish: boolean,
+  packDestination?: string,
+  npmPublishArgs?: string[]
+): Promise<void> {
   const cwd = process.cwd()
   const options: MonocrateOptions = {
     pathToSubjectPackages: args.packages,
@@ -88,6 +96,7 @@ async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, pa
     cwd,
     mirrorTo: args['mirror-to'],
     max: args.max,
+    npmPublishArgs,
     reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
@@ -101,6 +110,7 @@ export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
     .version(pkg.version)
+    .parserConfiguration({ 'populate--': true })
     .command<PackYargsArgs>(
       'pack <packages...>',
       `Create publish-ready tarball(s) without publishing to npm.`,
@@ -111,7 +121,13 @@ export function monocrateCli(): void {
       'publish <packages...>',
       `Publish one or more packages to npm.`,
       (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
-      async (args) => runCommand(args, true)
+      async (args) => {
+        const parsed = NpmPassthroughArgs.safeParse(args['--'])
+        if (!parsed.success) {
+          throw new Error(`Invalid passthrough args: ${parsed.error.message}`)
+        }
+        return runCommand(args, true, undefined, parsed.data)
+      }
     )
     .demandCommand(1)
     .strictCommands()
@@ -119,6 +135,7 @@ export function monocrateCli(): void {
     .example('$0 publish libs/a libs/b', 'Multi-package publish (defaults to minor bump)')
     .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Create tarballs without publishing')
     .example('$0 publish pkg/foo --bump package', 'Use version from package.json and publish')
+    .example('$0 publish pkg/foo -- --tag beta --access public', 'Passthrough args to npm publish')
     .strict()
     .help()
     .option('help', { hidden: true })
