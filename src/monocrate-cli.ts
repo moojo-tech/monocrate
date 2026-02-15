@@ -81,7 +81,7 @@ async function runCommand(
   args: Arguments<CommonYargsArgs>,
   publish: boolean,
   packDestination?: string,
-  npmPublishArgs?: string[]
+  npmPublishArgs?: unknown
 ): Promise<void> {
   const cwd = process.cwd()
   const options: MonocrateOptions = {
@@ -93,7 +93,7 @@ async function runCommand(
     cwd,
     mirrorTo: args['mirror-to'],
     max: args.max,
-    npmPublishArgs,
+    npmPublishArgs: Array.isArray(npmPublishArgs) ? npmPublishArgs : undefined,
     reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
@@ -118,10 +118,7 @@ export function monocrateCli(): void {
       'publish <packages...>',
       `Publish one or more packages to npm.`,
       (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
-      async (args) => {
-        const passthrough = args['--']
-        return runCommand(args, true, undefined, Array.isArray(passthrough) ? passthrough : undefined)
-      }
+      async (args) => runCommand(args, true, undefined, args['--'])
     )
     .demandCommand(1)
     .strictCommands()
