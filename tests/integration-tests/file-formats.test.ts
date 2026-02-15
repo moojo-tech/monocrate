@@ -38,9 +38,15 @@ console.log(helper());
 `,
       })
 
-      const { stdout } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
+      const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
 
       expect(stdout.trim()).toBe('Helper from .mjs!')
+
+      const libPkgJson = output['node_modules/@test/lib/package.json'] as Record<string, unknown>
+      expect(libPkgJson.exports).toEqual({
+        '.': './dist/index.js',
+        './utils': './dist/utils/helper.mjs',
+      })
     })
   })
 
