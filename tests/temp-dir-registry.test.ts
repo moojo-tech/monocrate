@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import { TempDirRegistry } from '../src/temp-dir-registry.js'
 import { AbsolutePath } from '../src/paths.js'
 import { folderify } from './testing/folderify.js'
@@ -37,6 +39,38 @@ describe('TempDirRegistry', () => {
       expect(fs.existsSync(dir2)).toBe(true)
 
       registry.cleanup()
+    })
+  })
+
+  describe('create', () => {
+    it('creates a directory that exists on disk', () => {
+      const registry = new TempDirRegistry()
+
+      const dir = registry.create('monocrate-test-')
+
+      expect(fs.existsSync(dir)).toBe(true)
+      expect(fs.statSync(dir).isDirectory()).toBe(true)
+
+      registry.cleanup()
+    })
+
+    it('creates a directory under os.tmpdir() with the given prefix', () => {
+      const registry = new TempDirRegistry()
+
+      const dir = registry.create('monocrate-test-')
+
+      expect(dir).toContain(path.join(os.tmpdir(), 'monocrate-test-'))
+
+      registry.cleanup()
+    })
+
+    it('is cleaned up by cleanup()', () => {
+      const registry = new TempDirRegistry()
+      const dir = registry.create('monocrate-test-')
+
+      registry.cleanup()
+
+      expect(fs.existsSync(dir)).toBe(false)
     })
   })
 

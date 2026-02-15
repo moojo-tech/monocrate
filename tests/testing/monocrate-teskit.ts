@@ -8,7 +8,6 @@ import os from 'node:os'
 import fs from 'node:fs'
 import * as tar from 'tar'
 import { TempDirRegistry } from '../../src/temp-dir-registry.js'
-import { AbsolutePath } from '../../src/paths.js'
 
 export class MonocrateTeskit {
   private readonly tempDirs = new TempDirRegistry()
@@ -27,7 +26,7 @@ export class MonocrateTeskit {
   }
 
   private extractTarball(tarballPath: string): string {
-    const tempDir = this.tempDirs.record(AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-teskit-'))))
+    const tempDir = this.tempDirs.create('monocrate-teskit-')
     tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
     return path.join(tempDir, 'package')
   }
