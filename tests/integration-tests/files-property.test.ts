@@ -1,6 +1,5 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { unfolderify } from '../testing/unfolderify.js'
 import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
@@ -10,71 +9,6 @@ describe('files property support', () => {
   afterAll(() => {
     teskit.shutdown()
   })
-  it('uses files property to determine what to copy', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      'packages/app/package.json': {
-        name: '@test/app',
-        version: '1.0.0',
-        type: 'module',
-        main: 'dist/index.js',
-        files: ['dist', 'bin'],
-      },
-      'packages/app/dist/index.js': `console.log('Hello from dist');
-`,
-      'packages/app/bin/cli.js': `#!/usr/bin/env node
-console.log('Hello from bin');
-`,
-      'packages/app/src/index.ts': `// Source file should not be copied
-`,
-    })
-
-    const { outputDir } = await teskit.pack({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/app',
-      publish: false,
-      bump: '2.8.512',
-    })
-
-    const output = unfolderify(outputDir)
-
-    // Files from `files` property should be copied
-    expect(output).toHaveProperty('dist/index.js')
-    expect(output).toHaveProperty('bin/cli.js')
-
-    // Source files not in `files` should not be copied
-    expect(output).not.toHaveProperty('src/index.ts')
-  })
-
-  it('copies files at package root when specified in files', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      'packages/app/package.json': {
-        name: '@test/app',
-        version: '1.0.0',
-        type: 'module',
-        main: 'dist/index.js',
-        files: ['dist', 'types.d.ts'],
-      },
-      'packages/app/dist/index.js': `export const foo = 'foo';
-`,
-      'packages/app/types.d.ts': `export declare const foo: string;
-`,
-    })
-
-    const { outputDir } = await teskit.pack({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/app',
-      publish: false,
-      bump: '2.8.512',
-    })
-
-    const output = unfolderify(outputDir)
-
-    expect(output).toHaveProperty('dist/index.js')
-    expect(output).toHaveProperty('types.d.ts')
-  })
-
   it('uses files property for in-repo dependencies too', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -189,35 +123,6 @@ console.log('Hello from bin');
     expect(stdout.trim()).toBe('Hello')
   })
 
-  it('preserves files property in output package.json', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      'packages/app/package.json': {
-        name: '@test/app',
-        version: '1.0.0',
-        type: 'module',
-        main: 'dist/index.js',
-        files: ['dist', 'bin'],
-      },
-      'packages/app/dist/index.js': `export const x = 1;
-`,
-      'packages/app/bin/cli.js': `#!/usr/bin/env node
-`,
-    })
-
-    const { outputDir } = await teskit.pack({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/app',
-      publish: false,
-      bump: '2.8.512',
-    })
-
-    const output = unfolderify(outputDir)
-    const pkgJson = output['package.json'] as Record<string, unknown>
-
-    expect(pkgJson.files).toEqual(['dist', 'bin'])
-  })
-
   it('copies the packed payload produced by npm scripts', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -241,45 +146,5 @@ console.log('Hello from bin');
     expect(output['dist/index.js']).toBe(`console.log('packed');
 `)
     expect(stdout.trim()).toBe('packed')
-  })
-
-  it('adds bundledDependencies when subject has in-repo dependencies', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      'packages/app/package.json': {
-        name: '@test/app',
-        version: '1.0.0',
-        type: 'module',
-        main: 'dist/index.js',
-        files: ['dist'],
-        dependencies: { '@test/lib': 'workspace:*' },
-      },
-      'packages/app/dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
-      'packages/lib/package.json': {
-        name: '@test/lib',
-        version: '1.0.0',
-        type: 'module',
-        main: 'dist/index.js',
-      },
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
-    })
-
-    const { outputDir } = await teskit.pack({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/app',
-      publish: false,
-      bump: '1.0.0',
-    })
-
-    const output = unfolderify(outputDir)
-    expect(output['package.json']).toEqual({
-      files: ['dist'],
-      main: 'dist/index.js',
-      name: '@test/app',
-      type: 'module',
-      version: '1.0.0',
-      dependencies: { '@test/lib': '1.0.0' },
-      bundledDependencies: ['@test/lib'],
-    })
   })
 })

@@ -118,9 +118,8 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       report({ type: 'assemble', packageName: assembler.publishAs, version })
 
       if (options.publish) {
-        const outputDir = assembler.getOutputDir()
         const tag = isSinglePackagePublish ? undefined : 'pending'
-        await npmClient.publishTarball(tarballPath, outputDir, tag, npmPublishArgs)
+        await npmClient.publishTarball(tarballPath, cwd, tag, npmPublishArgs)
         report({ type: 'publish', packageName: assembler.publishAs, version })
       } else {
         report({ type: 'pack', packageName: assembler.publishAs, tarballPath })
@@ -131,7 +130,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     // Skipped for single-package publishes since they publish directly to latest.
     if (options.publish && !isSinglePackagePublish) {
       for (const { assembler, version } of packagePlans) {
-        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', cwd)
         report({ type: 'tagLatest', packageName: assembler.publishAs, version })
       }
     }
