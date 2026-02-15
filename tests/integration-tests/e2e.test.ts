@@ -2,8 +2,107 @@ import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import fs from 'node:fs'
+import path from 'node:path'
+import { x } from 'tinyexec'
 
 const name = 'root-package'
+const packageWithImportedDeclarationsName = '@myorg/a'
+
+function installPackedPackageInConsumerProject(
+  consumerProjectRoot: string,
+  packageName: string,
+  packedPackageDir: string
+): void {
+  const installedPackageDir = path.join(consumerProjectRoot, 'node_modules', ...packageName.split('/'))
+  fs.mkdirSync(path.dirname(installedPackageDir), { recursive: true })
+  fs.cpSync(packedPackageDir, installedPackageDir, { recursive: true })
+}
+
+interface TypecheckResult {
+  exitCode: number
+  stdout: string
+  stderr: string
+}
+
+async function runTypecheck(projectRoot: string): Promise<TypecheckResult> {
+  const typeScriptCliPath = path.resolve(process.cwd(), 'node_modules', 'typescript', 'bin', 'tsc')
+  if (!fs.existsSync(typeScriptCliPath)) {
+    throw new Error(`TypeScript CLI not found at ${typeScriptCliPath}`)
+  }
+
+  const result = await x(process.execPath, [typeScriptCliPath, '--project', 'tsconfig.json', '--noEmit'], {
+    nodeOptions: {
+      cwd: projectRoot,
+      stdio: 'pipe',
+    },
+    throwOnError: false,
+  })
+
+  if (result.exitCode === undefined) {
+    throw new Error('TypeScript process terminated without an exit code')
+  }
+
+  return {
+    exitCode: result.exitCode,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  }
+}
+
+function getTypecheckOutput(result: TypecheckResult): string {
+  return [result.stderr, result.stdout].filter((part) => part.length > 0).join('\n')
+}
+
+function createConsumerProject(source: string): string {
+  return folderify({
+    'package.json': { name: 'consumer', private: true, type: 'module' },
+    'tsconfig.json': {
+      compilerOptions: {
+        target: 'ES2022',
+        module: 'NodeNext',
+        moduleResolution: 'NodeNext',
+        strict: true,
+        skipLibCheck: true,
+      },
+      include: ['src/index.ts'],
+    },
+    'src/index.ts': source,
+  })
+}
+
+async function packPackageWithImportedDeclarations(teskit: MonocrateTeskit): Promise<string> {
+  const monorepoRoot = folderify({
+    'package.json': { name, workspaces: ['packages/*'] },
+    'packages/a/package.json': pj(packageWithImportedDeclarationsName, undefined, {
+      dependencies: { '@myorg/b': '*', lodash: '^4.0.0' },
+      types: 'dist/index.d.ts',
+    }),
+    'packages/a/dist/index.js': `import { foo } from '@myorg/b';
+export const bar = foo;
+`,
+    'packages/a/dist/index.d.ts': `import { foo } from '@myorg/b';
+export declare const bar: typeof foo;
+`,
+    'packages/b/package.json': pj('@myorg/b', undefined, {
+      dependencies: { lodash: '^4.0.0' },
+      types: 'dist/index.d.ts',
+    }),
+    'packages/b/dist/index.js': `export const foo = 'foo';
+`,
+    'packages/b/dist/index.d.ts': `export declare const foo: string;
+`,
+  })
+
+  const { outputDir } = await teskit.pack({
+    cwd: monorepoRoot,
+    pathToSubjectPackages: 'packages/a',
+    publish: false,
+    bump: '2.8.512',
+  })
+
+  return outputDir
+}
 
 describe('monocrate e2e', () => {
   const teskit = new MonocrateTeskit()
@@ -414,31 +513,33 @@ throwError();
     expect(stderr).toContain('index.js:2')
   })
 
-  it('includes .d.ts files for in-repo dependencies with import specifiers intact', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      'packages/a/package.json': pj('@myorg/a', {
-        dependencies: { '@myorg/b': '*' },
-        types: 'dist/index.d.ts',
-      }),
-      'packages/a/dist/index.js': `import { foo } from '@myorg/b';
-console.log(foo);
-`,
-      'packages/a/dist/index.d.ts': `import { foo } from '@myorg/b';
-export declare const bar: typeof foo;
-`,
-      'packages/b/package.json': pj('@myorg/b', { types: 'dist/index.d.ts' }),
-      'packages/b/dist/index.js': `export const foo = 'foo';
-`,
-      'packages/b/dist/index.d.ts': `export declare const foo: string;
-`,
-    })
+  it('type-checks consumer code that relies on declarations imported from bundled in-repo dependencies', async () => {
+    const outputDir = await packPackageWithImportedDeclarations(teskit)
+    const consumerProjectRoot = createConsumerProject(`import { bar } from '@myorg/a';
+const upperCaseBar: string = bar.toUpperCase();
+void upperCaseBar;
+`)
 
-    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/a')
+    installPackedPackageInConsumerProject(consumerProjectRoot, packageWithImportedDeclarationsName, outputDir)
 
-    expect(stdout.trim()).toBe('foo')
-    expect(output['dist/index.d.ts']).toContain("from '@myorg/b'")
-    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.d.ts')
+    const result = await runTypecheck(consumerProjectRoot)
+    expect(result.exitCode).toBe(0)
+  })
+
+  it('fails type-checking when consumer code violates declaration types imported from bundled in-repo dependencies', async () => {
+    const outputDir = await packPackageWithImportedDeclarations(teskit)
+    const consumerProjectRoot = createConsumerProject(`import { bar } from '@myorg/a';
+const asNumber: number = bar;
+void asNumber;
+`)
+
+    installPackedPackageInConsumerProject(consumerProjectRoot, packageWithImportedDeclarationsName, outputDir)
+
+    const result = await runTypecheck(consumerProjectRoot)
+    expect(result.exitCode).not.toBe(0)
+    const errorMessage = getTypecheckOutput(result)
+    expect(errorMessage).toContain('src/index.ts(2,7): error TS2322:')
+    expect(errorMessage).toContain(`Type 'string' is not assignable to type 'number'.`)
   })
 
   it('re-exports from in-repo dependency resolve at runtime', async () => {
