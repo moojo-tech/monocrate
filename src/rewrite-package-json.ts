@@ -21,11 +21,16 @@ export function rewritePackageJson(closure: PackageClosure, version: string | un
     rewritten.version = version
   }
 
-  // Replace dependencies with flattened third-party deps (no workspace deps)
+  // In-repo deps use file: protocol versions pointing at their bundled location. This is
+  // critical for yarn v1 compatibility: yarn v1 tries to resolve all `dependencies` entries
+  // from the registry — even bundled ones — and fails when in-repo packages don't exist there.
+  // The file: protocol tells yarn v1 to resolve locally instead of hitting the registry.
+  // See: https://github.com/yarnpkg/yarn/issues/5998
+  // See: https://github.com/yarnpkg/yarn/issues/8436
   const inRepoRuntimeDeps = Object.fromEntries(
     closure.runtimeMembers
       .filter((pkg) => pkg.name !== closure.subjectPackageName)
-      .map((pkg) => [pkg.name, pkg.packageJson.version ?? '*'])
+      .map((pkg) => [pkg.name, `file:./node_modules/${pkg.name}`])
   )
   const mergedDependencies = { ...closure.allThirdPartyDeps, ...inRepoRuntimeDeps }
   if (Object.keys(mergedDependencies).length > 0) {

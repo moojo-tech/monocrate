@@ -278,7 +278,7 @@ console.log('Hello from bin');
       name: '@test/app',
       type: 'module',
       version: '1.0.0',
-      dependencies: { '@test/lib': '1.0.0' },
+      dependencies: { '@test/lib': 'file:./node_modules/@test/lib' },
       bundledDependencies: ['@test/lib'],
     })
   })

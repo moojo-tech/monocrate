@@ -50,7 +50,7 @@ describe('monocrate e2e', () => {
       main: 'dist/index.js',
       types: 'dist/index.d.ts',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': 'file:./node_modules/@test/lib',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
@@ -118,7 +118,7 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-alpha': '1.0.0',
+        '@test/lib-alpha': 'file:./node_modules/@test/lib-alpha',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
@@ -135,7 +135,7 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-beta': '2.0.0',
+        '@test/lib-beta': 'file:./node_modules/@test/lib-beta',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
@@ -228,10 +228,10 @@ export function fromLevel3() {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/level1': '1.0.0',
-        '@test/level2': '1.0.0',
-        '@test/level3': '1.0.0',
-        '@test/level4': '1.0.0',
+        '@test/level1': 'file:./node_modules/@test/level1',
+        '@test/level2': 'file:./node_modules/@test/level2',
+        '@test/level3': 'file:./node_modules/@test/level3',
+        '@test/level4': 'file:./node_modules/@test/level4',
         express: '^4.18.0',
         lodash: '^4.17.21',
         chalk: '^5.0.0',
@@ -286,7 +286,7 @@ console.log(pnpmGreet());
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/pnpm-lib': '1.0.0',
+        '@test/pnpm-lib': 'file:./node_modules/@test/pnpm-lib',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
@@ -342,7 +342,7 @@ console.log(greet('World'));
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': 'file:./node_modules/@test/lib',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
@@ -789,7 +789,7 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': 'file:./node_modules/@test/lib',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
@@ -833,7 +833,7 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': 'file:./node_modules/@test/lib',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
@@ -896,9 +896,9 @@ console.log(a + '-' + b + '-' + c);
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-a': '1.0.0',
-        '@test/lib-b': '2.0.0',
-        '@test/lib-c': '3.0.0',
+        '@test/lib-a': 'file:./node_modules/@test/lib-a',
+        '@test/lib-b': 'file:./node_modules/@test/lib-b',
+        '@test/lib-c': 'file:./node_modules/@test/lib-c',
         express: '^4.0.0',
         lodash: '^4.0.0',
         zod: '^3.0.0',
