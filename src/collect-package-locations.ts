@@ -38,7 +38,7 @@ async function packAndExtractDirectory(
   packageDir: AbsolutePath,
   tempDirs: TempDirRegistry
 ): Promise<AbsolutePath> {
-  const tempDir = tempDirs.create('monocrate-pack-')
+  const tempDir = tempDirs.create()
   const tarball = AbsolutePath.join(tempDir, RelativePath('package.tgz'))
   await npmClient.pack(packageDir, tarball)
   await tar.x({ file: tarball, cwd: tempDir })

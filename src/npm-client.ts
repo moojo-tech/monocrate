@@ -98,7 +98,7 @@ export class NpmClient {
   }
 
   async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath, options?: { ignoreScripts?: boolean }): Promise<void> {
-    const tempDir = this.tempDirs.create('monocrate-pack-')
+    const tempDir = this.tempDirs.create()
     const args = options?.ignoreScripts
       ? ['--ignore-scripts', '--pack-destination', tempDir]
       : ['--pack-destination', tempDir]
