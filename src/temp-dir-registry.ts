@@ -1,28 +1,36 @@
+import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { AbsolutePath } from './paths.js'
 
 export class TempDirRegistry {
-  private readonly directories = new Set<AbsolutePath>()
+  private readonly prefix: string
+  private root: AbsolutePath | undefined
 
-  private record(directory: AbsolutePath): AbsolutePath {
-    this.directories.add(directory)
-    return directory
+  constructor(prefix = 'monocrate-') {
+    this.prefix = prefix
   }
 
-  create(prefix: string): AbsolutePath {
-    const dir = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), prefix)))
-    return this.record(dir)
+  private getOrCreateRoot(): AbsolutePath {
+    this.root ??= AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), this.prefix)))
+    return this.root
+  }
+
+  create(): AbsolutePath {
+    const root = this.getOrCreateRoot()
+    const dir = AbsolutePath(path.join(root, crypto.randomUUID()))
+    fs.mkdirSync(dir)
+    return dir
   }
 
   cleanup(): void {
-    for (const directory of [...this.directories]) {
-      if (!fs.existsSync(directory)) {
-        continue
-      }
-      fs.rmSync(directory, { recursive: true, force: true })
-      this.directories.delete(directory)
+    if (this.root === undefined) {
+      return
     }
+    if (fs.existsSync(this.root)) {
+      fs.rmSync(this.root, { recursive: true, force: true })
+    }
+    this.root = undefined
   }
 }

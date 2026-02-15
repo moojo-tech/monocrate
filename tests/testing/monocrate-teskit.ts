@@ -26,7 +26,7 @@ export class MonocrateTeskit {
   }
 
   private extractTarball(tarballPath: string): string {
-    const tempDir = this.tempDirs.create('monocrate-teskit-')
+    const tempDir = this.tempDirs.create()
     tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
     return path.join(tempDir, 'package')
   }
