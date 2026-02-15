@@ -60,11 +60,8 @@ export class NpmClient {
     await runNpm('publish', args, cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
-  async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath, extraArgs: string[]): Promise<void> {
-    await runNpm('dist-tag', ['add', packageNameAtVersion, tag, ...extraArgs], cwd, {
-      ...this.npmOptions,
-      stdio: 'inherit',
-    })
+  async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
+    await runNpm('dist-tag', ['add', packageNameAtVersion, tag], cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
   /**

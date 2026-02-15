@@ -556,34 +556,6 @@ module.exports = {
     expect(viewResult['dist-tags'].latest).toBe('0.0.1')
   }, 60000)
 
-  it('forwards otp to both publish and dist-tag operations in multi-package publish', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { workspaces: ['packages/*'] },
-      'packages/otp-a/package.json': pj('otp-a', '1.0.0'),
-      'packages/otp-a/dist/index.js': `export const a = 'A'`,
-      'packages/otp-b/package.json': pj('otp-b', '1.0.0'),
-      'packages/otp-b/dist/index.js': `export const b = 'B'`,
-    })
-
-    await monocrate({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: ['packages/otp-a', 'packages/otp-b'],
-      monorepoRoot,
-      bump: '1.0.0',
-      publish: true,
-      npmrcPath: verdaccio.npmrcPath(),
-      otp: '123456',
-    })
-
-    const viewA = verdaccio.runView('otp-a')
-    const viewB = verdaccio.runView('otp-b')
-
-    // Both packages should have latest tag, proving both publish (phase 1)
-    // and dist-tag (phase 2) succeeded with the otp forwarded
-    expect(viewA['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
-    expect(viewB['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
-  }, 60000)
-
   it('does not move latest tag when second package fails to publish', async () => {
     // Pre-publish both packages so they have existing latest tags
     verdaccio.publishPackage('atomic-a', '1.0.0', `export const a = 'v1'`)

@@ -36,10 +36,6 @@ interface PackYargsArgs extends CommonYargsArgs {
   'pack-destination'?: string
 }
 
-interface PublishYargsArgs extends CommonYargsArgs {
-  otp?: string
-}
-
 function withCommonCommandOptions(parser: Argv, packageDescription: string): Argv<CommonYargsArgs> {
   return parser
     .positional('packages', {
@@ -88,8 +84,7 @@ async function runCommand(
   args: Arguments<CommonYargsArgs>,
   publish: boolean,
   packDestination?: string,
-  npmPublishArgs?: string[],
-  otp?: string
+  npmPublishArgs?: string[]
 ): Promise<void> {
   const cwd = process.cwd()
   const options: MonocrateOptions = {
@@ -102,7 +97,6 @@ async function runCommand(
     mirrorTo: args['mirror-to'],
     max: args.max,
     npmPublishArgs,
-    otp,
     reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
@@ -123,20 +117,16 @@ export function monocrateCli(): void {
       (yargs) => withPackCommandOptions(yargs),
       async (args) => runCommand(args, false, args['pack-destination'])
     )
-    .command<PublishYargsArgs>(
+    .command<CommonYargsArgs>(
       'publish <packages...>',
       `Publish one or more packages to npm.`,
-      (yargs) =>
-        withCommonCommandOptions(yargs, 'Package directories to publish').option('otp', {
-          type: 'string',
-          description: 'One-time password for npm 2FA (forwarded to all npm write operations)',
-        }),
+      (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
       async (args) => {
         const parsed = NpmPassthroughArgs.safeParse(args['--'])
         if (!parsed.success) {
           throw new Error(`Invalid passthrough args: ${parsed.error.message}`)
         }
-        return runCommand(args, true, undefined, parsed.data, args.otp)
+        return runCommand(args, true, undefined, parsed.data)
       }
     )
     .demandCommand(1)
