@@ -539,6 +539,7 @@ void asNumber;
     const result = await runTypecheck(consumerProjectRoot)
     expect(result.exitCode).not.toBe(0)
     const errorMessage = getTypecheckOutput(result)
+    expect(errorMessage).toContain('src/index.ts(2,7): error TS2322:')
     expect(errorMessage).toContain(`Type 'string' is not assignable to type 'number'.`)
   })
 
