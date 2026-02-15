@@ -96,7 +96,7 @@ export class VerdaccioTestkit {
   }
 
   yarnV1Install(dir: string, packageName: string) {
-    execSync(`npx yarn add ${packageName} --registry=${this.get().url}`, {
+    execSync(`npx yarn@1.22.22 add ${packageName} --registry=${this.get().url}`, {
       cwd: dir,
       stdio: 'pipe',
     })
