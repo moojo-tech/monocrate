@@ -1,6 +1,4 @@
 import * as fsPromises from 'node:fs/promises'
-import * as os from 'node:os'
-import * as path from 'node:path'
 import { z } from 'zod'
 import { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
@@ -100,9 +98,7 @@ export class NpmClient {
   }
 
   async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath, options?: { ignoreScripts?: boolean }): Promise<void> {
-    const tempDir = this.tempDirs.record(
-      AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-')))
-    )
+    const tempDir = this.tempDirs.create('monocrate-pack-')
     const args = options?.ignoreScripts
       ? ['--ignore-scripts', '--pack-destination', tempDir]
       : ['--pack-destination', tempDir]

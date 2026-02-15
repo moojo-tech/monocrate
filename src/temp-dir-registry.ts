@@ -1,5 +1,7 @@
 import * as fs from 'node:fs'
-import type { AbsolutePath } from './paths.js'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import { AbsolutePath } from './paths.js'
 
 export class TempDirRegistry {
   private readonly directories = new Set<AbsolutePath>()
@@ -7,6 +9,12 @@ export class TempDirRegistry {
   record(directory: AbsolutePath): AbsolutePath {
     this.directories.add(directory)
     return directory
+  }
+
+  create(prefix: string): AbsolutePath {
+    const dir = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), prefix)))
+    this.directories.add(dir)
+    return dir
   }
 
   cleanup(): void {

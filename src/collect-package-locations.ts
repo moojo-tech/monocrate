@@ -1,6 +1,5 @@
 import * as fs from 'node:fs'
 import * as fsPromises from 'node:fs/promises'
-import * as os from 'node:os'
 import * as path from 'node:path'
 import * as tar from 'tar'
 import type { PackageLocation } from './package-location.js'
@@ -39,7 +38,7 @@ async function packAndExtractDirectory(
   packageDir: AbsolutePath,
   tempDirs: TempDirRegistry
 ): Promise<AbsolutePath> {
-  const tempDir = tempDirs.record(AbsolutePath(await fsPromises.mkdtemp(path.join(os.tmpdir(), 'monocrate-pack-'))))
+  const tempDir = tempDirs.create('monocrate-pack-')
   const tarball = AbsolutePath.join(tempDir, RelativePath('package.tgz'))
   await npmClient.pack(packageDir, tarball)
   await tar.x({ file: tarball, cwd: tempDir })
