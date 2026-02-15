@@ -225,7 +225,7 @@ monocrate <command> <packages...> [options]
 | `--pack-destination` | `-d`  | `string`  | (temp dir) | Directory to write tarballs to (pack command only)                                                                                                 |
 | `--root`             | `-r`  | `string`  | (auto)     | Monorepo root directory (auto-detected if omitted)                                                                                                  |
 | `--mirror-to`        | `-m`  | `string`  | —          | Mirror source files to a directory (for public repos)                                                                                               |
-| `--report`           |       | `string`  | —          | Write resolved version to a file instead of stdout                                                                                                  |
+| `--result-file`      |       | `string`  | —          | Write full result as JSON to file                                                                                                                   |
 | `--help`             |       |           |            | Show help                                                                                                                                           |
 | `--version`          |       |           |            | Show version number                                                                                                                                 |
 
