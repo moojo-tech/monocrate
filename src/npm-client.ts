@@ -54,7 +54,10 @@ export class NpmClient {
     tag: string | undefined,
     extraArgs: string[]
   ): Promise<void> {
-    const args = tag ? [tarballPath, '--tag', tag, ...extraArgs] : [tarballPath, ...extraArgs]
+    const args = [tarballPath, ...extraArgs]
+    if (tag) {
+      args.push('--tag', tag)
+    }
     await runNpm('publish', args, cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
