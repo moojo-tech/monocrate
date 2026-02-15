@@ -77,7 +77,12 @@ function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   })
 }
 
-async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, packDestination?: string): Promise<void> {
+async function runCommand(
+  args: Arguments<CommonYargsArgs>,
+  publish: boolean,
+  packDestination?: string,
+  npmPublishArgs?: string[]
+): Promise<void> {
   const cwd = process.cwd()
   const options: MonocrateOptions = {
     pathToSubjectPackages: args.packages,
@@ -88,6 +93,7 @@ async function runCommand(args: Arguments<CommonYargsArgs>, publish: boolean, pa
     cwd,
     mirrorTo: args['mirror-to'],
     max: args.max,
+    npmPublishArgs,
     reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
@@ -101,6 +107,7 @@ export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
     .version(pkg.version)
+    .parserConfiguration({ 'populate--': true })
     .command<PackYargsArgs>(
       'pack <packages...>',
       `Create publish-ready tarball(s) without publishing to npm.`,
@@ -111,7 +118,11 @@ export function monocrateCli(): void {
       'publish <packages...>',
       `Publish one or more packages to npm.`,
       (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
-      async (args) => runCommand(args, true)
+      async (args) => {
+        const passthrough = args['--'] as string[] | undefined
+        const npmPublishArgs = passthrough && passthrough.length > 0 ? passthrough : undefined
+        return runCommand(args, true, undefined, npmPublishArgs)
+      }
     )
     .demandCommand(1)
     .strictCommands()
@@ -119,6 +130,7 @@ export function monocrateCli(): void {
     .example('$0 publish libs/a libs/b', 'Multi-package publish (defaults to minor bump)')
     .example('$0 pack pkg/foo --pack-destination /tmp/inspect', 'Create tarballs without publishing')
     .example('$0 publish pkg/foo --bump package', 'Use version from package.json and publish')
+    .example('$0 publish pkg/foo -- --tag beta --access public', 'Passthrough args to npm publish')
     .strict()
     .help()
     .option('help', { hidden: true })

@@ -102,8 +102,11 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     })
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
+    const isSinglePackagePublish = options.publish && packagePlans.length === 1
+
     // Phase 1: Assemble all packages and generate their final tarballs.
-    // If publishing is enabled, publish each tarball with --tag pending.
+    // If publishing multiple packages, publish each tarball with --tag pending (two-phase).
+    // If publishing a single package, publish directly to latest (single-phase).
     for (const { assembler, version, tarballPath } of packagePlans) {
       const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
       for (const pkg of compiletimeMembers) {
@@ -113,15 +116,17 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
       if (options.publish) {
         const outputDir = assembler.getOutputDir()
-        await npmClient.publishTarball(tarballPath, outputDir, 'pending')
+        const tag = isSinglePackagePublish ? undefined : 'pending'
+        await npmClient.publishTarball(tarballPath, outputDir, tag, options.npmPublishArgs)
         report({ type: 'publish', packageName: assembler.publishAs, version })
       } else {
         report({ type: 'pack', packageName: assembler.publishAs, tarballPath })
       }
     }
 
-    // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
-    if (options.publish) {
+    // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded).
+    // Skipped for single-package publishes since they publish directly to latest.
+    if (options.publish && !isSinglePackagePublish) {
       for (const { assembler, version } of packagePlans) {
         await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
         report({ type: 'tagLatest', packageName: assembler.publishAs, version })

@@ -480,29 +480,80 @@ module.exports = {
     ).toBe('81')
   }, 120000)
 
-  it('uses two-phase publishing: publishes with pending tag first, then moves latest tag', async () => {
+  it('single-package publish goes directly to latest without a pending tag', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
-      'packages/twophase/package.json': pj('twophase', '1.0.0'),
-      'packages/twophase/dist/index.js': `export const value = 'v1'`,
+      'packages/single/package.json': pj('single', '1.0.0'),
+      'packages/single/dist/index.js': `export const value = 'v1'`,
     })
 
     await monocrate({
       cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/twophase',
+      pathToSubjectPackages: 'packages/single',
       monorepoRoot,
       bump: '1.0.0',
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
     })
 
-    const viewResult = verdaccio.runView('twophase')
+    const viewResult = verdaccio.runView('single')
+
+    // Single-package publish should set latest directly, with no pending tag
+    expect(viewResult['dist-tags'].latest).toBe('1.0.0')
+    expect(viewResult['dist-tags'].pending).toBeUndefined()
+  }, 60000)
+
+  it('uses two-phase publishing for multi-package: publishes with pending tag first, then moves latest tag', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/twophase-a/package.json': pj('twophase-a', '1.0.0'),
+      'packages/twophase-a/dist/index.js': `export const a = 'A'`,
+      'packages/twophase-b/package.json': pj('twophase-b', '1.0.0'),
+      'packages/twophase-b/dist/index.js': `export const b = 'B'`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: ['packages/twophase-a', 'packages/twophase-b'],
+      monorepoRoot,
+      bump: '1.0.0',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    const viewA = verdaccio.runView('twophase-a')
+    const viewB = verdaccio.runView('twophase-b')
 
     // Both 'pending' and 'latest' tags should point to the published version
-    expect(viewResult['dist-tags']).toMatchObject({
-      pending: '1.0.0',
-      latest: '1.0.0',
+    expect(viewA['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
+    expect(viewB['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
+  }, 60000)
+
+  it('passes npmPublishArgs through to npm publish', async () => {
+    // Pre-publish so that a later publish with --tag beta does not auto-create latest
+    verdaccio.publishPackage('passthrough', '0.0.1', `export const value = 'v0'`)
+
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/passthrough/package.json': pj('passthrough', '1.0.0'),
+      'packages/passthrough/dist/index.js': `export const value = 'v1'`,
     })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: 'packages/passthrough',
+      monorepoRoot,
+      bump: '1.0.0',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+      npmPublishArgs: ['--tag', 'beta'],
+    })
+
+    const viewResult = verdaccio.runView('passthrough')
+
+    // The --tag beta passthrough should put the new version on beta, not latest
+    expect(viewResult['dist-tags'].beta).toBe('1.0.0')
+    expect(viewResult['dist-tags'].latest).toBe('0.0.1')
   }, 60000)
 
   it('does not move latest tag when second package fails to publish', async () => {

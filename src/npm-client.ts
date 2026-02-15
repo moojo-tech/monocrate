@@ -48,8 +48,16 @@ export class NpmClient {
     await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
   }
 
-  async publishTarball(tarballPath: AbsolutePath, cwd: AbsolutePath, tag?: string): Promise<void> {
+  async publishTarball(
+    tarballPath: AbsolutePath,
+    cwd: AbsolutePath,
+    tag: string | undefined,
+    extraArgs?: string[]
+  ): Promise<void> {
     const args = tag ? [tarballPath, '--tag', tag] : [tarballPath]
+    if (extraArgs) {
+      args.push(...extraArgs)
+    }
     await runNpm('publish', args, cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
