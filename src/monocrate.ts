@@ -11,7 +11,7 @@ import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
-import { TempDirRegistry } from './temp-dir-registry.js'
+import { TempDirDispenser } from './temp-dir-dispenser.js'
 import { createSilentReporter } from './reporter.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
@@ -29,7 +29,7 @@ function npmTarballFileName(packageName: string, version: string): string {
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
   const report = options.reporter ?? createSilentReporter()
-  const tempDirs = new TempDirRegistry()
+  const tempDirDispenser = new TempDirDispenser()
 
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
@@ -68,7 +68,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   const explorer = await RepoExplorer.create(monorepoRoot)
   report({ type: 'monorepoRoot', root: monorepoRoot })
 
-  const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirs)
+  const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirDispenser)
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
@@ -77,7 +77,9 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   }
 
   try {
-    const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirs, report))
+    const assemblers = sourceDirs.map(
+      (at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirDispenser, report)
+    )
 
     const pairs = await Promise.all(
       assemblers.map(async (a) => ({ assembler: a, version: await a.computeNewVersion(versionSpecifier) }))
@@ -150,7 +152,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     }
   } finally {
     try {
-      tempDirs.cleanup()
+      tempDirDispenser.cleanup()
     } catch {
       // Best-effort cleanup only: temp directory cleanup failure must not mask the main operation result.
     }

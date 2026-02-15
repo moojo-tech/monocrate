@@ -8,7 +8,7 @@ import { AbsolutePath } from './paths.js'
 import type { RepoExplorer, MonorepoPackage } from './repo-explorer.js'
 import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
-import type { TempDirRegistry } from './temp-dir-registry.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 import type { Reporter } from './reporter.js'
 
 export class PackageAssembler {
@@ -21,7 +21,7 @@ export class PackageAssembler {
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
     private readonly outputRoot: AbsolutePath,
-    private readonly tempDirs: TempDirRegistry,
+    private readonly tempDirDispenser: TempDirDispenser,
     private readonly report: Reporter
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
@@ -47,7 +47,7 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirs)
+    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirDispenser)
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
     await fsPromises.mkdir(outputDir, { recursive: true })
     await new FileCopier(packageMap).copy()
