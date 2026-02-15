@@ -104,7 +104,8 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     })
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
-    const npmPublishArgs = options.npmPublishArgs ?? []
+    const otpArgs = options.otp ? ['--otp', options.otp] : []
+    const npmPublishArgs = [...(options.npmPublishArgs ?? []), ...otpArgs]
     const isSinglePackagePublish = options.publish && packagePlans.length === 1
 
     // Phase 1: Assemble all packages and generate their final tarballs.
@@ -131,7 +132,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     // Skipped for single-package publishes since they publish directly to latest.
     if (options.publish && !isSinglePackagePublish) {
       for (const { assembler, version } of packagePlans) {
-        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir(), otpArgs)
         report({ type: 'tagLatest', packageName: assembler.publishAs, version })
       }
     }

@@ -81,6 +81,13 @@ export interface MonocrateOptions {
   npmPublishArgs?: string[]
 
   /**
+   * One-time password for npm two-factor authentication.
+   * When provided, this OTP is forwarded to all npm write operations (publish and dist-tag),
+   * bypassing npm's interactive web-based authentication prompts.
+   */
+  otp?: string
+
+  /**
    * Reporter function called with semantic progress events during the pipeline.
    * If not provided, a silent reporter is used (no output).
    */
