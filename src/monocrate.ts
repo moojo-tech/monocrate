@@ -102,6 +102,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     })
     const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
+    const npmPublishArgs = options.npmPublishArgs ?? []
     const isSinglePackagePublish = options.publish && packagePlans.length === 1
 
     // Phase 1: Assemble all packages and generate their final tarballs.
@@ -117,7 +118,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       if (options.publish) {
         const outputDir = assembler.getOutputDir()
         const tag = isSinglePackagePublish ? undefined : 'pending'
-        await npmClient.publishTarball(tarballPath, outputDir, tag, options.npmPublishArgs)
+        await npmClient.publishTarball(tarballPath, outputDir, tag, npmPublishArgs)
         report({ type: 'publish', packageName: assembler.publishAs, version })
       } else {
         report({ type: 'pack', packageName: assembler.publishAs, tarballPath })

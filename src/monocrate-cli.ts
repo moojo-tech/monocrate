@@ -120,8 +120,7 @@ export function monocrateCli(): void {
       (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
       async (args) => {
         const passthrough = args['--']
-        const npmPublishArgs = Array.isArray(passthrough) && passthrough.length > 0 ? passthrough : undefined
-        return runCommand(args, true, undefined, npmPublishArgs)
+        return runCommand(args, true, undefined, Array.isArray(passthrough) ? passthrough : undefined)
       }
     )
     .demandCommand(1)
