@@ -4,44 +4,8 @@ import path from 'node:path'
 import os from 'node:os'
 import { TempDirRegistry } from '../src/temp-dir-registry.js'
 import { AbsolutePath } from '../src/paths.js'
-import { folderify } from './testing/folderify.js'
-import { unfolderify } from './testing/unfolderify.js'
-
-function createPopulatedDir() {
-  return AbsolutePath(
-    folderify({
-      'a.txt': 'hello',
-      'sub/b.txt': 'world',
-    })
-  )
-}
 
 describe('TempDirRegistry', () => {
-  describe('record', () => {
-    it('returns the directory that was recorded', () => {
-      const registry = new TempDirRegistry()
-      const dir = createPopulatedDir()
-
-      expect(registry.record(dir)).toBe(dir)
-
-      registry.cleanup()
-    })
-
-    it('can record multiple directories', () => {
-      const registry = new TempDirRegistry()
-      const dir1 = createPopulatedDir()
-      const dir2 = createPopulatedDir()
-
-      registry.record(dir1)
-      registry.record(dir2)
-
-      expect(fs.existsSync(dir1)).toBe(true)
-      expect(fs.existsSync(dir2)).toBe(true)
-
-      registry.cleanup()
-    })
-  })
-
   describe('create', () => {
     it('creates a directory that exists on disk', () => {
       const registry = new TempDirRegistry()
@@ -75,24 +39,20 @@ describe('TempDirRegistry', () => {
   })
 
   describe('cleanup', () => {
-    it('removes a single recorded directory', () => {
+    it('removes a single directory', () => {
       const registry = new TempDirRegistry()
-      const dir = createPopulatedDir()
-      registry.record(dir)
+      const dir = registry.create('monocrate-test-')
 
       registry.cleanup()
 
       expect(fs.existsSync(dir)).toBe(false)
     })
 
-    it('removes all recorded directories', () => {
+    it('removes all created directories', () => {
       const registry = new TempDirRegistry()
-      const dir1 = createPopulatedDir()
-      const dir2 = createPopulatedDir()
-      const dir3 = createPopulatedDir()
-      registry.record(dir1)
-      registry.record(dir2)
-      registry.record(dir3)
+      const dir1 = registry.create('monocrate-test-')
+      const dir2 = registry.create('monocrate-test-')
+      const dir3 = registry.create('monocrate-test-')
 
       registry.cleanup()
 
@@ -103,20 +63,14 @@ describe('TempDirRegistry', () => {
 
     it('removes directories including all nested contents', () => {
       const registry = new TempDirRegistry()
-      const dir = AbsolutePath(
-        folderify({
-          'top.txt': 'top-level',
-          'a/b/c/deep.txt': 'deeply nested',
-          'a/sibling.txt': 'sibling',
-        })
-      )
-      registry.record(dir)
+      const dir = registry.create('monocrate-test-')
+      const deepDir = path.join(dir, 'a', 'b', 'c')
+      fs.mkdirSync(deepDir, { recursive: true })
+      fs.writeFileSync(path.join(dir, 'top.txt'), 'top-level')
+      fs.writeFileSync(path.join(deepDir, 'deep.txt'), 'deeply nested')
+      fs.writeFileSync(path.join(dir, 'a', 'sibling.txt'), 'sibling')
 
-      expect(unfolderify(dir)).toMatchObject({
-        'top.txt': 'top-level',
-        'a/b/c/deep.txt': 'deeply nested',
-        'a/sibling.txt': 'sibling',
-      })
+      expect(fs.existsSync(path.join(deepDir, 'deep.txt'))).toBe(true)
 
       registry.cleanup()
 
@@ -125,8 +79,7 @@ describe('TempDirRegistry', () => {
 
     it('skips directories that no longer exist', () => {
       const registry = new TempDirRegistry()
-      const dir = createPopulatedDir()
-      registry.record(dir)
+      const dir = registry.create('monocrate-test-')
 
       fs.rmSync(dir, { recursive: true, force: true })
 
@@ -137,10 +90,8 @@ describe('TempDirRegistry', () => {
 
     it('still removes remaining directories when some have already been deleted', () => {
       const registry = new TempDirRegistry()
-      const alreadyGone = createPopulatedDir()
-      const stillHere = createPopulatedDir()
-      registry.record(alreadyGone)
-      registry.record(stillHere)
+      const alreadyGone = registry.create('monocrate-test-')
+      const stillHere = registry.create('monocrate-test-')
 
       fs.rmSync(alreadyGone, { recursive: true, force: true })
 
@@ -149,7 +100,7 @@ describe('TempDirRegistry', () => {
       expect(fs.existsSync(stillHere)).toBe(false)
     })
 
-    it('is a no-op when no directories have been recorded', () => {
+    it('is a no-op when no directories have been created', () => {
       const registry = new TempDirRegistry()
 
       expect(() => {
@@ -159,8 +110,7 @@ describe('TempDirRegistry', () => {
 
     it('is a no-op when called a second time', () => {
       const registry = new TempDirRegistry()
-      const dir = createPopulatedDir()
-      registry.record(dir)
+      const dir = registry.create('monocrate-test-')
 
       registry.cleanup()
       expect(fs.existsSync(dir)).toBe(false)
@@ -170,39 +120,25 @@ describe('TempDirRegistry', () => {
       }).not.toThrow()
     })
 
-    it('does not remove directories that were not recorded', () => {
+    it('does not remove directories that were not created by the registry', () => {
       const registry = new TempDirRegistry()
-      const recorded = createPopulatedDir()
-      const unrecorded = createPopulatedDir()
-      registry.record(recorded)
+      const created = registry.create('monocrate-test-')
+      const unrelated = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-test-unrelated-')))
 
       registry.cleanup()
 
-      expect(fs.existsSync(recorded)).toBe(false)
-      expect(fs.existsSync(unrecorded)).toBe(true)
+      expect(fs.existsSync(created)).toBe(false)
+      expect(fs.existsSync(unrelated)).toBe(true)
 
-      fs.rmSync(unrecorded, { recursive: true, force: true })
+      fs.rmSync(unrelated, { recursive: true, force: true })
     })
 
-    it('handles recording the same directory twice', () => {
+    it('cleans up directories created after a previous cleanup', () => {
       const registry = new TempDirRegistry()
-      const dir = createPopulatedDir()
-      registry.record(dir)
-      registry.record(dir)
-
+      const first = registry.create('monocrate-test-')
       registry.cleanup()
 
-      expect(fs.existsSync(dir)).toBe(false)
-    })
-
-    it('cleans up directories recorded after a previous cleanup', () => {
-      const registry = new TempDirRegistry()
-      const first = createPopulatedDir()
-      registry.record(first)
-      registry.cleanup()
-
-      const second = createPopulatedDir()
-      registry.record(second)
+      const second = registry.create('monocrate-test-')
       registry.cleanup()
 
       expect(fs.existsSync(first)).toBe(false)

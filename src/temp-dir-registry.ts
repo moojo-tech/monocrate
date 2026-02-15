@@ -6,15 +6,14 @@ import { AbsolutePath } from './paths.js'
 export class TempDirRegistry {
   private readonly directories = new Set<AbsolutePath>()
 
-  record(directory: AbsolutePath): AbsolutePath {
+  private record(directory: AbsolutePath): AbsolutePath {
     this.directories.add(directory)
     return directory
   }
 
   create(prefix: string): AbsolutePath {
     const dir = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), prefix)))
-    this.directories.add(dir)
-    return dir
+    return this.record(dir)
   }
 
   cleanup(): void {
