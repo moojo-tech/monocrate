@@ -94,6 +94,23 @@ export class VerdaccioTestkit {
     this.runInstall(dir, depToInstall)
     return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
   }
+
+  yarnV1Install(dir: string, packageName: string) {
+    execSync(`yarn add ${packageName} --registry=${this.get().url}`, {
+      cwd: dir,
+      stdio: 'pipe',
+    })
+  }
+
+  runConsumerWithYarnV1(depToInstall: string, ...jsSourceCode: string[]) {
+    const fileName = `dist/index.js`
+    const dir = folderify({
+      'package.json': { name: 'na', version: '1.0.0' },
+      [fileName]: jsSourceCode.join('\n'),
+    })
+    this.yarnV1Install(dir, depToInstall)
+    return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
+  }
 }
 async function startVerdaccio(): Promise<VerdaccioServer> {
   const configDir = createTempDir('verdaccio-config-')
