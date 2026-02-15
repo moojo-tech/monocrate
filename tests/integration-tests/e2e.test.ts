@@ -1,7 +1,10 @@
-import { afterAll, describe, it, expect } from 'vitest'
+import { afterAll, beforeAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { execSync } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const name = 'root-package'
 
@@ -414,31 +417,75 @@ throwError();
     expect(stderr).toContain('index.js:2')
   })
 
-  it('includes .d.ts files for in-repo dependencies with import specifiers intact', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      'packages/a/package.json': pj('@myorg/a', {
-        dependencies: { '@myorg/b': '*' },
-        types: 'dist/index.d.ts',
-      }),
-      'packages/a/dist/index.js': `import { foo } from '@myorg/b';
-console.log(foo);
-`,
-      'packages/a/dist/index.d.ts': `import { foo } from '@myorg/b';
-export declare const bar: typeof foo;
-`,
-      'packages/b/package.json': pj('@myorg/b', { types: 'dist/index.d.ts' }),
-      'packages/b/dist/index.js': `export const foo = 'foo';
-`,
-      'packages/b/dist/index.d.ts': `export declare const foo: string;
-`,
+  describe('assembled .d.ts files type-check correctly with tsc', () => {
+    let outputDir = ''
+
+    beforeAll(async () => {
+      const monorepoRoot = folderify({
+        'package.json': { name, workspaces: ['packages/*'] },
+        'packages/a/package.json': pj('@myorg/a', {
+          dependencies: { '@myorg/b': '*' },
+          types: 'dist/index.d.ts',
+        }),
+        'packages/a/dist/index.js': `import { foo } from '@myorg/b';\nexport const bar = foo;\n`,
+        'packages/a/dist/index.d.ts': `import { foo } from '@myorg/b';\nexport declare const bar: typeof foo;\n`,
+        'packages/b/package.json': pj('@myorg/b', { types: 'dist/index.d.ts' }),
+        'packages/b/dist/index.js': `export const foo = 'foo';\n`,
+        'packages/b/dist/index.d.ts': `export declare const foo: string;\n`,
+      })
+
+      const result = await teskit.pack({
+        cwd: monorepoRoot,
+        pathToSubjectPackages: path.join(monorepoRoot, 'packages/a'),
+        monorepoRoot,
+        bump: '2.8.512',
+        publish: false,
+      })
+      outputDir = result.outputDir
     })
 
-    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/a')
+    function typecheck(consumerCode: string) {
+      const consumerDir = folderify({
+        'package.json': { type: 'module' },
+        'tsconfig.json': {
+          compilerOptions: {
+            target: 'ESNext',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            strict: true,
+            noEmit: true,
+          },
+          include: ['index.ts'],
+        },
+        'index.ts': consumerCode,
+      })
+      const packageDir = path.join(consumerDir, 'node_modules', '@myorg', 'a')
+      fs.mkdirSync(path.dirname(packageDir), { recursive: true })
+      fs.symlinkSync(outputDir, packageDir)
 
-    expect(stdout.trim()).toBe('foo')
-    expect(output['dist/index.d.ts']).toContain("from '@myorg/b'")
-    expect(output).toHaveProperty('node_modules/@myorg/b/dist/index.d.ts')
+      const tsc = path.resolve('node_modules/typescript/bin/tsc')
+      try {
+        execSync(`node ${tsc} --project ${path.join(consumerDir, 'tsconfig.json')}`, {
+          encoding: 'utf-8',
+          stdio: 'pipe',
+        })
+        return { exitCode: 0, output: '' }
+      } catch (error) {
+        const e = error as { status?: number; stdout?: string; stderr?: string }
+        return { exitCode: e.status ?? 1, output: (e.stdout ?? '') + (e.stderr ?? '') }
+      }
+    }
+
+    it('compiles when consumer uses exported types correctly', () => {
+      const { exitCode } = typecheck(`import { bar } from '@myorg/a';\nconst x: string = bar;\nconsole.log(x);\n`)
+      expect(exitCode).toBe(0)
+    })
+
+    it('rejects consumer code with a type error against exported types', () => {
+      const { exitCode, output } = typecheck(`import { bar } from '@myorg/a';\nconst x: number = bar;\n`)
+      expect(exitCode).not.toBe(0)
+      expect(output).toContain("Type 'string' is not assignable to type 'number'")
+    })
   })
 
   it('re-exports from in-repo dependency resolve at runtime', async () => {
