@@ -21,22 +21,15 @@ export function rewritePackageJson(closure: PackageClosure, version: string | un
     rewritten.version = version
   }
 
-  // Third-party deps go in dependencies
-  if (Object.keys(closure.allThirdPartyDeps).length > 0) {
-    rewritten.dependencies = { ...closure.allThirdPartyDeps }
-  }
-
-  // In-repo deps go in devDependencies. npm requires bundled packages to be declared in
-  // dependencies or devDependencies, but yarn v1 tries to resolve all dependencies entries from
-  // the registry — even bundled ones. Using devDependencies avoids this: yarn v1 ignores
-  // devDependencies of installed packages entirely, so no registry lookups occur.
+  // Replace dependencies with flattened third-party deps (no workspace deps)
   const inRepoRuntimeDeps = Object.fromEntries(
     closure.runtimeMembers
       .filter((pkg) => pkg.name !== closure.subjectPackageName)
       .map((pkg) => [pkg.name, pkg.packageJson.version ?? '*'])
   )
-  if (Object.keys(inRepoRuntimeDeps).length > 0) {
-    rewritten.devDependencies = inRepoRuntimeDeps
+  const mergedDependencies = { ...closure.allThirdPartyDeps, ...inRepoRuntimeDeps }
+  if (Object.keys(mergedDependencies).length > 0) {
+    rewritten.dependencies = mergedDependencies
   }
 
   const bundled = closure.runtimeMembers.filter((pkg) => pkg.name !== closure.subjectPackageName).map((pkg) => pkg.name)
