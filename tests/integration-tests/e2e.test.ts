@@ -3,9 +3,9 @@ import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
 import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
-import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+import { x } from 'tinyexec'
 
 const name = 'root-package'
 const packageWithImportedDeclarationsName = '@myorg/a'
@@ -20,43 +20,39 @@ function installPackedPackageInConsumerProject(
   fs.cpSync(packedPackageDir, installedPackageDir, { recursive: true })
 }
 
-function runTypecheck(projectRoot: string): void {
+interface TypecheckResult {
+  exitCode: number
+  stdout: string
+  stderr: string
+}
+
+async function runTypecheck(projectRoot: string): Promise<TypecheckResult> {
   const typeScriptCliPath = path.resolve(process.cwd(), 'node_modules', 'typescript', 'bin', 'tsc')
   if (!fs.existsSync(typeScriptCliPath)) {
     throw new Error(`TypeScript CLI not found at ${typeScriptCliPath}`)
   }
 
-  execFileSync(process.execPath, [typeScriptCliPath, '--project', 'tsconfig.json', '--noEmit'], {
-    cwd: projectRoot,
-    stdio: 'pipe',
-    encoding: 'utf8',
+  const result = await x(process.execPath, [typeScriptCliPath, '--project', 'tsconfig.json', '--noEmit'], {
+    nodeOptions: {
+      cwd: projectRoot,
+      stdio: 'pipe',
+    },
+    throwOnError: false,
   })
+
+  if (result.exitCode === undefined) {
+    throw new Error('TypeScript process terminated without an exit code')
+  }
+
+  return {
+    exitCode: result.exitCode,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  }
 }
 
-function getProcessErrorOutput(error: unknown): string {
-  const outputParts: string[] = []
-  if (error instanceof Error) {
-    outputParts.push(error.message)
-  }
-  if (typeof error === 'object' && error !== null) {
-    if ('stderr' in error) {
-      const stderr = error.stderr
-      if (typeof stderr === 'string') {
-        outputParts.push(stderr)
-      } else if (stderr instanceof Buffer) {
-        outputParts.push(stderr.toString('utf8'))
-      }
-    }
-    if ('stdout' in error) {
-      const stdout = error.stdout
-      if (typeof stdout === 'string') {
-        outputParts.push(stdout)
-      } else if (stdout instanceof Buffer) {
-        outputParts.push(stdout.toString('utf8'))
-      }
-    }
-  }
-  return outputParts.join('\n')
+function getTypecheckOutput(result: TypecheckResult): string {
+  return [result.stderr, result.stdout].filter((part) => part.length > 0).join('\n')
 }
 
 function createConsumerProject(source: string): string {
@@ -527,7 +523,8 @@ void upperCaseBar;
 
     installPackedPackageInConsumerProject(consumerProjectRoot, packageWithImportedDeclarationsName, outputDir)
 
-    expect(() => { runTypecheck(consumerProjectRoot); }).not.toThrow()
+    const result = await runTypecheck(consumerProjectRoot)
+    expect(result.exitCode).toBe(0)
   })
 
   it('fails type-checking when consumer code violates declaration types imported from bundled in-repo dependencies', async () => {
@@ -539,18 +536,9 @@ void asNumber;
 
     installPackedPackageInConsumerProject(consumerProjectRoot, packageWithImportedDeclarationsName, outputDir)
 
-    let compilationError: unknown = undefined
-    try {
-      runTypecheck(consumerProjectRoot)
-    } catch (error) {
-      compilationError = error
-    }
-
-    if (!compilationError) {
-      throw new Error('Expected tsc to fail when consumer code has a type error')
-    }
-
-    const errorMessage = getProcessErrorOutput(compilationError)
+    const result = await runTypecheck(consumerProjectRoot)
+    expect(result.exitCode).not.toBe(0)
+    const errorMessage = getTypecheckOutput(result)
     expect(errorMessage).toContain(`Type 'string' is not assignable to type 'number'.`)
   })
 
