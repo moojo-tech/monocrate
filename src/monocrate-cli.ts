@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { Arguments, Argv } from 'yargs'
+import { z } from 'zod'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 import { createConsoleReporter } from './reporter.js'
@@ -77,11 +78,13 @@ function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
   })
 }
 
+const NpmPassthroughArgs = z.array(z.string()).optional()
+
 async function runCommand(
   args: Arguments<CommonYargsArgs>,
   publish: boolean,
   packDestination?: string,
-  npmPublishArgs?: unknown
+  npmPublishArgs?: string[]
 ): Promise<void> {
   const cwd = process.cwd()
   const options: MonocrateOptions = {
@@ -93,7 +96,7 @@ async function runCommand(
     cwd,
     mirrorTo: args['mirror-to'],
     max: args.max,
-    npmPublishArgs: Array.isArray(npmPublishArgs) ? npmPublishArgs : undefined,
+    npmPublishArgs,
     reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
@@ -118,7 +121,13 @@ export function monocrateCli(): void {
       'publish <packages...>',
       `Publish one or more packages to npm.`,
       (yargs) => withCommonCommandOptions(yargs, 'Package directories to publish'),
-      async (args) => runCommand(args, true, undefined, args['--'])
+      async (args) => {
+        const parsed = NpmPassthroughArgs.safeParse(args['--'])
+        if (!parsed.success) {
+          throw new Error(`Invalid passthrough args: ${parsed.error.message}`)
+        }
+        return runCommand(args, true, undefined, parsed.data)
+      }
     )
     .demandCommand(1)
     .strictCommands()
