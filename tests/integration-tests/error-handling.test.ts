@@ -169,8 +169,6 @@ describe('error handling', () => {
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
-      dependencies: { '@test/lib': 'file:./node_modules/@test/lib' },
-      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello!')

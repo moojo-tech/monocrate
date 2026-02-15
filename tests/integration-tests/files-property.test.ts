@@ -107,7 +107,6 @@ console.log('Hello from bin');
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
-        bundledDependencies: ['@test/lib'],
       },
       'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
       'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
@@ -243,7 +242,7 @@ console.log('Hello from bin');
     expect(stdout.trim()).toBe('packed')
   })
 
-  it('adds bundledDependencies when subject has in-repo dependencies', async () => {
+  it('bundles in-repo dependencies under node_modules', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -278,8 +277,6 @@ console.log('Hello from bin');
       name: '@test/app',
       type: 'module',
       version: '1.0.0',
-      dependencies: { '@test/lib': 'file:./node_modules/@test/lib' },
-      bundledDependencies: ['@test/lib'],
     })
   })
 })
