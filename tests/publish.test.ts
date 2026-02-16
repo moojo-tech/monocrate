@@ -81,7 +81,7 @@ describe('npm publishing with Verdaccio', () => {
     })
     expect(verdaccio.runView('@test/mylib')).toMatchObject({ name: '@test/mylib', version: '99.99.99' })
     expect(
-      verdaccio.runConumser(`@test/mylib@99.99.99`, `import { hello } from '@test/mylib'; console.log(hello())`)
+      verdaccio.runConsumer(`@test/mylib@99.99.99`, `import { hello } from '@test/mylib'; console.log(hello())`)
     ).toBe('Hello from mylib!')
   }, 60000)
 
@@ -117,7 +117,7 @@ describe('npm publishing with Verdaccio', () => {
 
     expect(verdaccio.runView('@test/dry-lib')).toMatchObject({ name: '@test/dry-lib', version: '77.77.77' })
     expect(
-      verdaccio.runConumser(`@test/dry-lib@77.77.77`, `import { hello } from '@test/dry-lib'; console.log(hello())`)
+      verdaccio.runConsumer(`@test/dry-lib@77.77.77`, `import { hello } from '@test/dry-lib'; console.log(hello())`)
     ).toBe('Hello from dry-run tarball!')
   }, 60000)
 
@@ -137,7 +137,7 @@ describe('npm publishing with Verdaccio', () => {
       npmrcPath: verdaccio.npmrcPath(),
     })
     expect(verdaccio.runView('mylib')).toMatchObject({ name: 'mylib', version: '99.99.99' })
-    expect(verdaccio.runConumser(`mylib@99.99.99`, `import { hello } from 'mylib'; console.log(hello())`)).toBe(
+    expect(verdaccio.runConsumer(`mylib@99.99.99`, `import { hello } from 'mylib'; console.log(hello())`)).toBe(
       'Hello from mylib!'
     )
   }, 60000)
@@ -166,7 +166,7 @@ describe('npm publishing with Verdaccio', () => {
     })
     expect(verdaccio.runView('@test/app')).toMatchObject({ name: '@test/app', version: '88.88.88' })
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@test/app@88.88.88',
         `import { sayHello } from '@test/app'; console.log(sayHello('World'))`
       )
@@ -208,7 +208,7 @@ describe('npm publishing with Verdaccio', () => {
     })
 
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@test/dynamic-app@1.2.3',
         `import { run } from '@test/dynamic-app'; console.log(await run('World'))`
       )
@@ -254,7 +254,7 @@ module.exports = {
     })
 
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@test/cjs-app@5.6.7',
         `const { run } = require('@test/cjs-app'); console.log(run('World'))`
       )
@@ -288,7 +288,7 @@ module.exports = {
 
     // deps/ must be included in the tarball for the rewritten imports to work
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@test/files-app@2.0.0',
         `import { sayHello } from '@test/files-app'; console.log(sayHello('World'))`
       )
@@ -381,7 +381,7 @@ module.exports = {
       dependencies: { 'is-even': '~2.4.0', naturals: '^3.0.0' },
     })
 
-    expect(verdaccio.runConumser('foo', `import { analyze } from 'foo'`, `console.log(analyze(24))`)).toBe(
+    expect(verdaccio.runConsumer('foo', `import { analyze } from 'foo'`, `console.log(analyze(24))`)).toBe(
       '24 is even. Divisors: 1, 2, 3, 4, 6, 8, 12, 24'
     )
   }, 90000)
@@ -470,13 +470,13 @@ module.exports = {
     await monocrate(opts)
 
     expect(
-      verdaccio.runConumser('calculator@1.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
+      verdaccio.runConsumer('calculator@1.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
     ).toBe('7')
     expect(
-      verdaccio.runConumser('calculator@2.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
+      verdaccio.runConsumer('calculator@2.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
     ).toBe('12')
     expect(
-      verdaccio.runConumser('calculator@3.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
+      verdaccio.runConsumer('calculator@3.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
     ).toBe('81')
   }, 120000)
 
@@ -586,8 +586,9 @@ module.exports = {
     // See: https://github.com/yarnpkg/yarn/issues/5998
     // See: https://github.com/yarnpkg/yarn/issues/8436
     expect(
-      verdaccio.runConsumerWithYarnV1(
+      verdaccio.runConsumer(
         '@test/yarn-app@11.11.11',
+        { manager: 'yarn@v1' },
         `import { sayHello } from '@test/yarn-app'; console.log(sayHello('World'))`
       )
     ).toBe('Hello, World!')

@@ -104,7 +104,7 @@ describe('publishName integration with npm registry', () => {
 
     // Verify the package can be installed and has correct functionality
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@published/mylib@99.99.99',
         `import { getPublished } from '@published/mylib'; console.log(getPublished())`
       )
@@ -159,11 +159,11 @@ describe('publishName integration with npm registry', () => {
 
     // Verify both can be installed and used
     expect(
-      verdaccio.runConumser('@public/lib-a@1.0.0', `import { getName } from '@public/lib-a'; console.log(getName())`)
+      verdaccio.runConsumer('@public/lib-a@1.0.0', `import { getName } from '@public/lib-a'; console.log(getName())`)
     ).toBe('lib-a')
 
     expect(
-      verdaccio.runConumser('@public/lib-b@2.0.0', `import { getName } from '@public/lib-b'; console.log(getName())`)
+      verdaccio.runConsumer('@public/lib-b@2.0.0', `import { getName } from '@public/lib-b'; console.log(getName())`)
     ).toBe('lib-b')
   }, 120000)
 
@@ -204,7 +204,7 @@ describe('publishName integration with npm registry', () => {
 
     // Verify the app package correctly resolves its dependencies
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@public/app@1.0.0',
         `import { getAppMessage } from '@public/app'; console.log(getAppMessage())`
       )
