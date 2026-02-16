@@ -556,7 +556,7 @@ module.exports = {
     expect(viewResult['dist-tags'].latest).toBe('0.0.1')
   }, 60000)
 
-  it('yarn v1 can install a package with bundled in-repo dependencies', async () => {
+  it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {

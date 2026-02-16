@@ -50,9 +50,11 @@ describe('monocrate e2e', () => {
       main: 'dist/index.js',
       types: 'dist/index.d.ts',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
     // Verify end-to-end:
     expect(stdout.trim()).toBe('Hello, World!')
@@ -116,9 +118,11 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib-alpha': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib-alpha'],
     })
     expect(alpha.stdout.trim()).toBe('Alpha: ALPHA')
 
@@ -131,9 +135,11 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib-beta': '2.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
+      bundledDependencies: ['@test/lib-beta'],
     })
     expect(beta.stdout.trim()).toBe('Beta: BETA')
   }, 30000)
@@ -222,12 +228,17 @@ export function fromLevel3() {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/level1': '1.0.0',
+        '@test/level2': '1.0.0',
+        '@test/level3': '1.0.0',
+        '@test/level4': '1.0.0',
         express: '^4.18.0',
         lodash: '^4.17.21',
         chalk: '^5.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
+      bundledDependencies: ['@test/level1', '@test/level2', '@test/level3', '@test/level4'],
     })
 
     expect(stdout.trim()).toBe('L1->L2->L3->L4')
@@ -275,9 +286,11 @@ console.log(pnpmGreet());
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/pnpm-lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/pnpm-lib'],
     })
 
     expect(stdout.trim()).toBe('pnpm works!')
@@ -329,9 +342,11 @@ console.log(greet('World'));
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -774,9 +789,11 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -816,9 +833,11 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -877,10 +896,14 @@ console.log(a + '-' + b + '-' + c);
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
+        '@test/lib-a': '1.0.0',
+        '@test/lib-b': '2.0.0',
+        '@test/lib-c': '3.0.0',
         express: '^4.0.0',
         lodash: '^4.0.0',
         zod: '^3.0.0',
       },
+      bundledDependencies: ['@test/lib-a', '@test/lib-b', '@test/lib-c'],
     })
 
     // All three in-repo deps should be bundled under node_modules
