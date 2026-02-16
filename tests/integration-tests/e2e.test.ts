@@ -513,6 +513,127 @@ throwError();
     expect(stderr).toContain('index.js:2')
   })
 
+  describe('source maps', () => {
+    it('maps stack traces through source maps in an in-repo dependency', async () => {
+      const sourceMap = JSON.stringify({
+        version: 3,
+        file: 'index.js',
+        sourceRoot: '',
+        sources: ['../../src/index.ts'],
+        names: [],
+        // Line 1: AAAA (gen line 1 col 0 → source 0, line 0, col 0)
+        // Line 2: AAeA (gen line 2 col 0 → source 0, line delta +15 = line 15 (1-indexed: 16), col 0)
+        mappings: 'AAAA;AAeA',
+      })
+
+      const monorepoRoot = folderify({
+        'package.json': { name, workspaces: ['packages/*'] },
+        'packages/app/package.json': {
+          name: '@test/app',
+          version: '1.0.0',
+          type: 'module',
+          main: 'dist/index.js',
+          dependencies: {
+            '@test/lib': 'workspace:*',
+          },
+        },
+        'packages/app/dist/index.js': `import { throwError } from '@test/lib';\nthrowError();\n`,
+        'packages/lib/package.json': {
+          name: '@test/lib',
+          version: '1.0.0',
+          type: 'module',
+          main: 'dist/index.js',
+        },
+        'packages/lib/dist/index.js': `export function throwError() {\n  throw new Error('source-mapped error');\n}\n//# sourceMappingURL=index.js.map\n`,
+        'packages/lib/dist/index.js.map': sourceMap,
+      })
+
+      const { stderr } = await teskit.run(monorepoRoot, 'packages/app')
+
+      expect(stderr).toContain('source-mapped error')
+      expect(stderr).toContain('index.ts:16')
+    })
+
+    it('maps stack traces through source maps in the subject package', async () => {
+      const sourceMap = JSON.stringify({
+        version: 3,
+        file: 'index.js',
+        sourceRoot: '',
+        sources: ['../../src/index.ts'],
+        names: [],
+        // Line 1: AAOA (gen line 1 col 0 → source 0, line 7 (1-indexed: 8), col 0)
+        mappings: 'AAOA',
+      })
+
+      const monorepoRoot = folderify({
+        'package.json': { name, workspaces: ['packages/*'] },
+        'packages/app/package.json': {
+          name: '@test/app',
+          version: '1.0.0',
+          type: 'module',
+          main: 'dist/index.js',
+        },
+        'packages/app/dist/index.js': `throw new Error('subject source-mapped error');\n//# sourceMappingURL=index.js.map\n`,
+        'packages/app/dist/index.js.map': sourceMap,
+      })
+
+      const { stderr } = await teskit.run(monorepoRoot, 'packages/app')
+
+      expect(stderr).toContain('subject source-mapped error')
+      expect(stderr).toContain('index.ts:8')
+    })
+
+    it('maps stack traces through source maps in a transitive dependency', async () => {
+      const libBSourceMap = JSON.stringify({
+        version: 3,
+        file: 'index.js',
+        sourceRoot: '',
+        sources: ['../../src/index.ts'],
+        names: [],
+        // Line 1: AAAA (gen line 1 col 0 → source 0, line 0, col 0)
+        // Line 2: AAWA (gen line 2 col 0 → source 0, line delta +11 = line 11 (1-indexed: 12), col 0)
+        mappings: 'AAAA;AAWA',
+      })
+
+      const monorepoRoot = folderify({
+        'package.json': { name, workspaces: ['packages/*'] },
+        'packages/app/package.json': {
+          name: '@test/app',
+          version: '1.0.0',
+          type: 'module',
+          main: 'dist/index.js',
+          dependencies: {
+            '@test/lib-a': 'workspace:*',
+          },
+        },
+        'packages/app/dist/index.js': `import { callThrow } from '@test/lib-a';\ncallThrow();\n`,
+        'packages/lib-a/package.json': {
+          name: '@test/lib-a',
+          version: '1.0.0',
+          type: 'module',
+          main: 'dist/index.js',
+          dependencies: {
+            '@test/lib-b': 'workspace:*',
+          },
+        },
+        'packages/lib-a/dist/index.js': `import { throwError } from '@test/lib-b';\nexport function callThrow() { throwError(); }\n`,
+        'packages/lib-b/package.json': {
+          name: '@test/lib-b',
+          version: '1.0.0',
+          type: 'module',
+          main: 'dist/index.js',
+        },
+        'packages/lib-b/dist/index.js': `export function throwError() {\n  throw new Error('transitive source-mapped error');\n}\n//# sourceMappingURL=index.js.map\n`,
+        'packages/lib-b/dist/index.js.map': libBSourceMap,
+      })
+
+      const { stderr } = await teskit.run(monorepoRoot, 'packages/app')
+
+      expect(stderr).toContain('transitive source-mapped error')
+      expect(stderr).toContain('index.ts:12')
+    })
+  })
+
   it('type-checks consumer code that relies on declarations imported from bundled in-repo dependencies', async () => {
     const outputDir = await packPackageWithImportedDeclarations(teskit)
     const consumerProjectRoot = createConsumerProject(`import { bar } from '@myorg/a';
