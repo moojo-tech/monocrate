@@ -556,6 +556,43 @@ module.exports = {
     expect(viewResult['dist-tags'].latest).toBe('0.0.1')
   }, 60000)
 
+  it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/yarn-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/yarn-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/yarn-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': { name: '@test/yarn-lib', version: '1.0.0', type: 'module', main: 'dist/index.js' },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '11.11.11',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    // Yarn v1 must be able to install the published package without trying to resolve bundled
+    // in-repo dependencies from the registry. If in-repo deps are listed in `dependencies`,
+    // yarn v1 tries to fetch them from the registry (where they don't exist) and fails.
+    // See: https://github.com/yarnpkg/yarn/issues/5998
+    // See: https://github.com/yarnpkg/yarn/issues/8436
+    expect(
+      verdaccio.runConsumerWithYarnV1(
+        '@test/yarn-app@11.11.11',
+        `import { sayHello } from '@test/yarn-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
   it('does not move latest tag when second package fails to publish', async () => {
     // Pre-publish both packages so they have existing latest tags
     verdaccio.publishPackage('atomic-a', '1.0.0', `export const a = 'v1'`)
