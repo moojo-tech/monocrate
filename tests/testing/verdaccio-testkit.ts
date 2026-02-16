@@ -64,12 +64,13 @@ export class VerdaccioTestkit {
     return parsed.data
   }
 
-  runInstall(dir: string, packageName: string) {
-    // execSync throws if the command fails, which will fail the test
-    execSync(`npm install ${packageName} --registry=${this.get().url}`, {
-      cwd: dir,
-      stdio: 'pipe',
-    })
+  runInstall(dir: string, packageName: string, options?: RunConsumerOptions) {
+    const registry = this.get().url
+    const command =
+      options?.manager === 'yarn@v1'
+        ? `npx yarn@1.22.22 add ${packageName} --registry=${registry}`
+        : `npm install ${packageName} --registry=${registry}`
+    execSync(command, { cwd: dir, stdio: 'pipe' })
   }
 
   publishPackage(name: string, version: string, jsSourceCode: string) {
@@ -101,20 +102,9 @@ export class VerdaccioTestkit {
       [fileName]: allCode.join('\n'),
     })
 
-    if (options.manager === 'yarn@v1') {
-      this.yarnV1Install(dir, depToInstall)
-    } else {
-      this.runInstall(dir, depToInstall)
-    }
+    this.runInstall(dir, depToInstall, options)
 
     return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
-  }
-
-  yarnV1Install(dir: string, packageName: string) {
-    execSync(`npx yarn@1.22.22 add ${packageName} --registry=${this.get().url}`, {
-      cwd: dir,
-      stdio: 'pipe',
-    })
   }
 }
 async function startVerdaccio(): Promise<VerdaccioServer> {
