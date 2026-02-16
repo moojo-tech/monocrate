@@ -24,6 +24,10 @@ const NpmViewResult = z.object({
 })
 type NpmViewResult = z.infer<typeof NpmViewResult>
 
+interface RunConsumerOptions {
+  manager?: 'npm' | 'yarn@v1'
+}
+
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
 
@@ -85,13 +89,24 @@ export class VerdaccioTestkit {
     })
   }
 
-  runConumser(depToInstall: string, ...jsSourceCode: string[]) {
+  runConsumer(depToInstall: string, ...jsSourceCode: string[]): string
+  runConsumer(depToInstall: string, options: RunConsumerOptions, ...jsSourceCode: string[]): string
+  runConsumer(depToInstall: string, optionsOrCode?: RunConsumerOptions | string, ...jsSourceCode: string[]): string {
+    const options: RunConsumerOptions = typeof optionsOrCode === 'object' ? optionsOrCode : {}
+    const allCode = typeof optionsOrCode === 'string' ? [optionsOrCode, ...jsSourceCode] : jsSourceCode
+
     const fileName = `dist/index.js`
     const dir = folderify({
       'package.json': { name: 'na', version: '1.0.0' },
-      [fileName]: jsSourceCode.join('\n'),
+      [fileName]: allCode.join('\n'),
     })
-    this.runInstall(dir, depToInstall)
+
+    if (options.manager === 'yarn@v1') {
+      this.yarnV1Install(dir, depToInstall)
+    } else {
+      this.runInstall(dir, depToInstall)
+    }
+
     return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
   }
 
@@ -100,16 +115,6 @@ export class VerdaccioTestkit {
       cwd: dir,
       stdio: 'pipe',
     })
-  }
-
-  runConsumerWithYarnV1(depToInstall: string, ...jsSourceCode: string[]) {
-    const fileName = `dist/index.js`
-    const dir = folderify({
-      'package.json': { name: 'na', version: '1.0.0' },
-      [fileName]: jsSourceCode.join('\n'),
-    })
-    this.yarnV1Install(dir, depToInstall)
-    return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
   }
 }
 async function startVerdaccio(): Promise<VerdaccioServer> {
