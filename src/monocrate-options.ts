@@ -89,8 +89,10 @@ export interface MonocrateOptions {
   /**
    * Suffix appended to the embedded dependency directory name (`deps${suffix}`).
    *
-   * If omitted, a unique suffix is generated as `-${uuid}`.
-   * Useful for deterministic test output by passing an explicit value (for example, an empty string).
+   * TESTING ONLY.
+   * In real usage this should be left undefined so monocrate can generate a unique `-${uuid}` suffix.
+   *
+   * Primary use case: deterministic test output by passing an explicit value (for example, an empty string).
    */
   depsDirSuffix?: string
 }
