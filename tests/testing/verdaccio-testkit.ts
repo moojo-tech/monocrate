@@ -25,7 +25,7 @@ const NpmViewResult = z.object({
 type NpmViewResult = z.infer<typeof NpmViewResult>
 
 interface RunConsumerOptions {
-  manager?: 'npm' | 'yarn@v1' | 'yarn@berry' | 'pnpm'
+  manager?: 'npm' | 'yarn@v1' | 'yarn@berry' | 'pnpm' | 'bun'
 }
 
 // Both yarn v1 (`yarn`) and yarn berry (`@yarnpkg/cli-dist`) register the same binary
@@ -33,6 +33,7 @@ interface RunConsumerOptions {
 // We resolve the exact bin paths instead.
 const yarnV1Bin = path.resolve(import.meta.dirname, '../../node_modules/yarn/bin/yarn.js')
 const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarnpkg/cli-dist/bin/yarn.js')
+const bunBin = path.resolve(import.meta.dirname, '../../node_modules/.bin/bun')
 
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
@@ -89,6 +90,11 @@ export class VerdaccioTestkit {
       case 'pnpm': {
         fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
         execSync(`pnpm add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+        return
+      }
+      case 'bun': {
+        fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
+        execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
         return
       }
       default: {
