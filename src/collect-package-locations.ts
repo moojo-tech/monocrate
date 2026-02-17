@@ -86,12 +86,8 @@ export async function collectPackageLocations(
   closure: PackageClosure,
   outputDir: AbsolutePath,
   tempDirDispenser: TempDirDispenser,
-  embeddedDepsDir: RelativePath | undefined
+  embeddedDepsDir: RelativePath
 ): Promise<PackageLocation[]> {
-  if (embeddedDepsDir === undefined && closure.runtimeMembers.some((dep) => dep.name !== closure.subjectPackageName)) {
-    throw new Error('Inconsistency: embedded dependency directory is required for in-repo dependencies')
-  }
-
   return Promise.all(
     closure.runtimeMembers.map(async (dep) =>
       createPackageLocation(
@@ -99,9 +95,7 @@ export async function collectPackageLocations(
         dep,
         dep.name === closure.subjectPackageName
           ? outputDir
-          : embeddedDepsDir
-            ? AbsolutePath.join(outputDir, embeddedDepsDir, RelativePath(dep.name))
-            : outputDir,
+          : AbsolutePath.join(outputDir, embeddedDepsDir, RelativePath(dep.name)),
         dep.name === closure.subjectPackageName,
         tempDirDispenser
       )

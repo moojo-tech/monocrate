@@ -48,7 +48,7 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const embeddedDepsDir = inRepoDeps.length > 0 ? RelativePath(`deps-${randomUUID()}`) : undefined
+    const embeddedDepsDir = RelativePath(`deps-${randomUUID()}`)
     const locations = await collectPackageLocations(
       this.npmClient,
       closure,

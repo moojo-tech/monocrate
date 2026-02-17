@@ -8,7 +8,7 @@ export function rewritePackageJson(
   closure: PackageClosure,
   version: string | undefined,
   outputDir: AbsolutePath,
-  embeddedDepsDir: RelativePath | undefined
+  embeddedDepsDir: RelativePath
 ) {
   const subject = closure.runtimeMembers.find((at) => at.name === closure.subjectPackageName)
   if (!subject) {
@@ -28,13 +28,10 @@ export function rewritePackageJson(
 
   // Replace dependencies with flattened third-party deps (no workspace deps)
   const inRepoMembers = closure.runtimeMembers.filter((pkg) => pkg.name !== closure.subjectPackageName)
-  if (inRepoMembers.length > 0 && embeddedDepsDir === undefined) {
-    throw new Error('Inconsistency: embedded dependency directory is required for in-repo dependencies')
-  }
 
   const inRepoRuntimeDeps = Object.fromEntries(
     inRepoMembers.map((pkg) => {
-      const dependencyPath = path.posix.join(embeddedDepsDir ?? '', pkg.name)
+      const dependencyPath = path.posix.join(embeddedDepsDir, pkg.name)
       return [pkg.name, `file:./${dependencyPath}`]
     })
   )
