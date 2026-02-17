@@ -10,7 +10,9 @@ export function unfolderify(dir: string): FolderifyRecipe {
     for (const entry of entries) {
       const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name
       const fullPath = path.join(currentDir, entry.name)
-      if (entry.isDirectory()) {
+      if (entry.isSymbolicLink()) {
+        // Skip symlinks (e.g., node_modules symlinks created for file: deps)
+      } else if (entry.isDirectory()) {
         walk(fullPath, relativePath)
       } else {
         const content = fs.readFileSync(fullPath, 'utf-8')

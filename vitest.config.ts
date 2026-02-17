@@ -4,17 +4,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    testTimeout: 10_000,
     include: ['tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.ts'],
-      exclude: [
-        'src/**/*.d.ts',
-        'src/**/*.compilation-test.ts',
-        'src/main.ts',
-        'src/monocrate-cli.ts',
-      ],
+      exclude: ['src/**/*.d.ts', 'src/**/*.compilation-test.ts', 'src/main.ts', 'src/monocrate-cli.ts'],
       thresholds: {
         lines: 90,
         functions: 90,

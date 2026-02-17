@@ -1,5 +1,5 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { getDepsDir, MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 import { folderify } from '../testing/folderify.js'
 
 const name = 'root-package'
@@ -39,6 +39,8 @@ describe('.npmrc file handling', () => {
       'packages/lib/.npmrc': 'registry=https://lib.registry.com',
     })
 
-    expect((await teskit.run(monorepoRoot, 'packages/app')).output).not.toHaveProperty('node_modules/lib/.npmrc')
+    const { output } = await teskit.run(monorepoRoot, 'packages/app')
+    const depsDir = getDepsDir(output)
+    expect(output).not.toHaveProperty(`${depsDir}/lib/.npmrc`)
   })
 })
