@@ -594,6 +594,115 @@ module.exports = {
     ).toBe('Hello, World!')
   }, 90000)
 
+  it('yarn berry can install a simple published package', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/mylib/package.json': {
+        name: '@test/yarn-berry-simple',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/mylib/dist/index.js': `export function hello() { return 'Hello from yarn berry!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
+      monorepoRoot,
+      bump: '12.12.12',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/yarn-berry-simple@12.12.12',
+        { manager: 'yarn@berry' },
+        `import { hello } from '@test/yarn-berry-simple'; console.log(hello())`
+      )
+    ).toBe('Hello from yarn berry!')
+  }, 90000)
+
+  // Yarn berry (like yarn v1) does not respect bundledDependencies: it still tries to
+  // resolve bundled in-repo deps from the registry, where they don't exist.
+  // See the analogous yarn v1 test above for details.
+  it.skip('yarn berry can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/yarn-berry-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/yarn-berry-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/yarn-berry-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': {
+        name: '@test/yarn-berry-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '14.14.14',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/yarn-berry-app@14.14.14',
+        { manager: 'yarn@berry' },
+        `import { sayHello } from '@test/yarn-berry-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
+  it('pnpm can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/pnpm-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/pnpm-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/pnpm-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': {
+        name: '@test/pnpm-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '13.13.13',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/pnpm-app@13.13.13',
+        { manager: 'pnpm' },
+        `import { sayHello } from '@test/pnpm-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
   it('does not move latest tag when second package fails to publish', async () => {
     // Pre-publish both packages so they have existing latest tags
     verdaccio.publishPackage('atomic-a', '1.0.0', `export const a = 'v1'`)
