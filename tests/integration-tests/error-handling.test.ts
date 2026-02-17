@@ -8,18 +8,6 @@ import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
-function findEmbeddedDepsDir(output: Record<string, unknown>): string {
-  const depEntry = Object.keys(output).find((at) => at.startsWith('deps-'))
-  if (!depEntry) {
-    throw new Error('Expected at least one embedded dependency entry under deps-<uuid>')
-  }
-  const firstSegment = depEntry.split('/').at(0)
-  if (!firstSegment) {
-    throw new Error(`Expected a valid embedded dependency entry, got: ${depEntry}`)
-  }
-  return firstSegment
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -187,7 +175,6 @@ describe('error handling', () => {
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
     })
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
-    const depsDir = findEmbeddedDepsDir(output)
 
     const pkgJson = readOutputObject(output, 'package.json')
     expect(pkgJson).toEqual({
@@ -195,7 +182,7 @@ describe('error handling', () => {
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
-      dependencies: { '@test/lib': `file:./${depsDir}/@test/lib` },
+      dependencies: { '@test/lib': `file:./deps/@test/lib` },
     })
     expect(pkgJson).not.toHaveProperty('bundledDependencies')
 

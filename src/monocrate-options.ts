@@ -85,4 +85,12 @@ export interface MonocrateOptions {
    * If not provided, a silent reporter is used (no output).
    */
   reporter?: Reporter
+
+  /**
+   * Suffix appended to the embedded dependency directory name (`deps${suffix}`).
+   *
+   * If omitted, a per-package unique suffix is generated as `-${uuid}`.
+   * Useful for deterministic test output by passing an explicit value (for example, an empty string).
+   */
+  embeddedDepsSuffix?: string
 }
