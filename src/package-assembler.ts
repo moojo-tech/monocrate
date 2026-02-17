@@ -1,5 +1,4 @@
 import * as fsPromises from 'node:fs/promises'
-import { randomUUID } from 'node:crypto'
 import { collectPackageLocations } from './collect-package-locations.js'
 import { FileCopier } from './file-copier.js'
 import { resolveVersion } from './resolve-version.js'
@@ -24,7 +23,7 @@ export class PackageAssembler {
     private readonly outputRoot: AbsolutePath,
     private readonly tempDirDispenser: TempDirDispenser,
     private readonly report: Reporter,
-    private readonly depsDirSuffix: string | undefined
+    private readonly depsDirSuffix: string
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
@@ -49,8 +48,7 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const suffix = this.depsDirSuffix ?? `-${randomUUID()}`
-    const embeddedDepsDir = RelativePath(`deps${suffix}`)
+    const embeddedDepsDir = RelativePath(`deps${this.depsDirSuffix}`)
     const locations = await collectPackageLocations(
       this.npmClient,
       closure,
