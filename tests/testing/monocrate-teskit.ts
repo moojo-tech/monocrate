@@ -104,6 +104,26 @@ export function pj(
   }
 }
 
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export function readOutputObject(output: Record<string, unknown>, key: string): Record<string, unknown> {
+  const value = output[key]
+  if (!isRecord(value)) {
+    throw new Error(`Expected "${key}" to be an object in test output`)
+  }
+  return value
+}
+
+export function readOutputString(output: Record<string, unknown>, key: string): string {
+  const value = output[key]
+  if (typeof value !== 'string') {
+    throw new Error(`Expected "${key}" to be a string in test output`)
+  }
+  return value
+}
+
 function materializeFileProtocolDependencies(packageRoot: string): void {
   const packageJsonPath = path.join(packageRoot, 'package.json')
   const raw: unknown = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))

@@ -1,20 +1,8 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj, readOutputObject } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function readOutputObject(output: Record<string, unknown>, key: string): Record<string, unknown> {
-  const value = output[key]
-  if (!isRecord(value)) {
-    throw new Error(`Expected "${key}" to be an object in test output`)
-  }
-  return value
-}
 
 describe('file format support', () => {
   const teskit = new MonocrateTeskit()

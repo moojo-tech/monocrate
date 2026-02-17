@@ -1,7 +1,7 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj, readOutputObject, readOutputString } from '../testing/monocrate-teskit.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { x } from 'tinyexec'
@@ -17,26 +17,6 @@ function installPackedPackageInConsumerProject(
   const installedPackageDir = path.join(consumerProjectRoot, 'node_modules', ...packageName.split('/'))
   fs.mkdirSync(path.dirname(installedPackageDir), { recursive: true })
   fs.cpSync(packedPackageDir, installedPackageDir, { recursive: true })
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function readOutputObject(output: Record<string, unknown>, key: string): Record<string, unknown> {
-  const value = output[key]
-  if (!isRecord(value)) {
-    throw new Error(`Expected "${key}" to be an object in test output`)
-  }
-  return value
-}
-
-function readOutputString(output: Record<string, unknown>, key: string): string {
-  const value = output[key]
-  if (typeof value !== 'string') {
-    throw new Error(`Expected "${key}" to be a string in test output`)
-  }
-  return value
 }
 
 interface TypecheckResult {
