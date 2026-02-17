@@ -100,7 +100,7 @@ export function pj(
   }
 }
 
-export function materializeFileProtocolDependencies(packageRoot: string): void {
+function materializeFileProtocolDependencies(packageRoot: string): void {
   const packageJsonPath = path.join(packageRoot, 'package.json')
   const raw: unknown = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
   const parsed = PackageJson.safeParse(raw)
