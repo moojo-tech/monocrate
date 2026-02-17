@@ -29,7 +29,6 @@ interface CommonYargsArgs {
   bump?: string
   'result-file'?: string
   'mirror-to'?: string
-  'embedded-deps-suffix'?: string
   max: boolean
 }
 
@@ -69,11 +68,6 @@ function withCommonCommandOptions(parser: Argv, packageDescription: string): Arg
       description: 'Use max version across all packages (default: false)',
       default: false,
     })
-    .option('embedded-deps-suffix', {
-      type: 'string',
-      description:
-        'Suffix for embedded dependency directory (output is deps<suffix>). Defaults to a generated -<uuid> per package',
-    })
 }
 
 function withPackCommandOptions(parser: Argv): Argv<PackYargsArgs> {
@@ -103,7 +97,6 @@ async function runCommand(
     mirrorTo: args['mirror-to'],
     max: args.max,
     npmPublishArgs,
-    embeddedDepsSuffix: args['embedded-deps-suffix'],
     reporter: createConsoleReporter(),
   }
   const result = await monocrate(options)
