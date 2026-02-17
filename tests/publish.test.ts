@@ -703,6 +703,77 @@ module.exports = {
     ).toBe('Hello, World!')
   }, 90000)
 
+  it('bun can install a simple published package', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/mylib/package.json': {
+        name: '@test/bun-simple',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/mylib/dist/index.js': `export function hello() { return 'Hello from bun!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
+      monorepoRoot,
+      bump: '15.15.15',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/bun-simple@15.15.15',
+        { manager: 'bun' },
+        `import { hello } from '@test/bun-simple'; console.log(hello())`
+      )
+    ).toBe('Hello from bun!')
+  }, 90000)
+
+  // Bun (like yarn v1 and yarn berry) does not respect bundledDependencies: it still tries to
+  // resolve bundled in-repo deps from the registry, where they don't exist.
+  // See the analogous yarn v1 test above for details.
+  it.skip('bun can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/bun-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/bun-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/bun-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': {
+        name: '@test/bun-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '16.16.16',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/bun-app@16.16.16',
+        { manager: 'bun' },
+        `import { sayHello } from '@test/bun-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
   it('does not move latest tag when second package fails to publish', async () => {
     // Pre-publish both packages so they have existing latest tags
     verdaccio.publishPackage('atomic-a', '1.0.0', `export const a = 'v1'`)

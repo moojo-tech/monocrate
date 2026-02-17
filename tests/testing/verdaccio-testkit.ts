@@ -25,7 +25,7 @@ const NpmViewResult = z.object({
 type NpmViewResult = z.infer<typeof NpmViewResult>
 
 interface RunConsumerOptions {
-  manager?: 'npm' | 'yarn@v1' | 'yarn@berry' | 'pnpm'
+  manager?: 'npm' | 'yarn@v1' | 'yarn@berry' | 'pnpm' | 'bun'
 }
 
 // Both yarn v1 (`yarn`) and yarn berry (`@yarnpkg/cli-dist`) register the same binary
@@ -89,6 +89,11 @@ export class VerdaccioTestkit {
       case 'pnpm': {
         fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
         execSync(`pnpm add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+        return
+      }
+      case 'bun': {
+        fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
+        execSync(`bun add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
         return
       }
       default: {
