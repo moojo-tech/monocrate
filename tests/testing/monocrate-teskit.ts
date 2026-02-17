@@ -28,7 +28,9 @@ export class MonocrateTeskit {
   private extractTarball(tarballPath: string): string {
     const tempDir = this.tempDirDispenser.create()
     tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
-    return path.join(tempDir, 'package')
+    const outputDir = path.join(tempDir, 'package')
+    materializeFileProtocolDependencies(outputDir)
+    return outputDir
   }
 
   async run(
@@ -48,7 +50,6 @@ export class MonocrateTeskit {
       throw new Error('Expected at least one package summary')
     }
     const outputDir = this.extractTarball(summary.tarballPath)
-    materializeFileProtocolDependencies(outputDir)
 
     let stdout = ''
     let stderr = ''

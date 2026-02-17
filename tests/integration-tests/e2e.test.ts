@@ -1,7 +1,7 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit, materializeFileProtocolDependencies, pj } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { x } from 'tinyexec'
@@ -17,7 +17,6 @@ function installPackedPackageInConsumerProject(
   const installedPackageDir = path.join(consumerProjectRoot, 'node_modules', ...packageName.split('/'))
   fs.mkdirSync(path.dirname(installedPackageDir), { recursive: true })
   fs.cpSync(packedPackageDir, installedPackageDir, { recursive: true })
-  materializeFileProtocolDependencies(installedPackageDir)
 }
 
 function findEmbeddedDepsDir(output: Record<string, unknown>): string {
