@@ -19,7 +19,7 @@ export class MonocrateTeskit {
   async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
     const result = await monocrate({
       ...options,
-      embeddedDepsSuffix: options.embeddedDepsSuffix ?? '',
+      depsDirSuffix: options.depsDirSuffix ?? '',
     })
     const summary = result.summaries.at(0)
     if (!summary) {
@@ -47,7 +47,7 @@ export class MonocrateTeskit {
       monorepoRoot,
       bump,
       publish: false,
-      embeddedDepsSuffix: '',
+      depsDirSuffix: '',
     })
     const summary = result.summaries.at(0)
     if (!summary) {

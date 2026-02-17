@@ -24,7 +24,7 @@ export class PackageAssembler {
     private readonly outputRoot: AbsolutePath,
     private readonly tempDirDispenser: TempDirDispenser,
     private readonly report: Reporter,
-    private readonly embeddedDepsSuffix: string | undefined
+    private readonly depsDirSuffix: string | undefined
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
@@ -49,7 +49,7 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const suffix = this.embeddedDepsSuffix ?? `-${randomUUID()}`
+    const suffix = this.depsDirSuffix ?? `-${randomUUID()}`
     const embeddedDepsDir = RelativePath(`deps${suffix}`)
     const locations = await collectPackageLocations(
       this.npmClient,

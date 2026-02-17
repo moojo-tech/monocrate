@@ -69,9 +69,9 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   report({ type: 'monorepoRoot', root: monorepoRoot })
 
   const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirDispenser)
-  const embeddedDepsSuffix = options.embeddedDepsSuffix
-  if (embeddedDepsSuffix !== undefined && (embeddedDepsSuffix.includes('/') || embeddedDepsSuffix.includes('\\'))) {
-    throw new Error(`embeddedDepsSuffix must not contain path separators: "${embeddedDepsSuffix}"`)
+  const depsDirSuffix = options.depsDirSuffix
+  if (depsDirSuffix !== undefined && (depsDirSuffix.includes('/') || depsDirSuffix.includes('\\'))) {
+    throw new Error(`depsDirSuffix must not contain path separators: "${depsDirSuffix}"`)
   }
 
   // Check npm login status early before any heavy operations
@@ -82,7 +82,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
   try {
     const assemblers = sourceDirs.map(
-      (at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirDispenser, report, embeddedDepsSuffix)
+      (at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirDispenser, report, depsDirSuffix)
     )
 
     const pairs = await Promise.all(
