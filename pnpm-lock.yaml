@@ -42,6 +42,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18(@types/node@20.19.31)(yaml@2.8.2))
+      '@yarnpkg/cli-dist':
+        specifier: 4.12.0
+        version: 4.12.0
       eslint:
         specifier: ^9.0.0
         version: 9.39.2
@@ -665,6 +668,11 @@ packages:
 
   '@vitest/utils@4.0.18':
     resolution: {integrity: sha512-msMRKLMVLWygpK3u2Hybgi4MNjcYJvwTb0Ru09+fOyCXIgT5raYP041DRRdiJiI3k/2U6SEbAETB3YtBrUkCFA==}
+
+  '@yarnpkg/cli-dist@4.12.0':
+    resolution: {integrity: sha512-r0AVfpKUXIbgajKFY0wWMZLwZou+CJmtqt+Y5LTimbPaA78srI0SnLJIS4ikPE1mv8YTPQ7mqRUdoDB7W+kDDA==}
+    engines: {node: '>=18.12.0'}
+    hasBin: true
 
   JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
@@ -2890,6 +2898,8 @@ snapshots:
     dependencies:
       '@vitest/pretty-format': 4.0.18
       tinyrainbow: 3.0.3
+
+  '@yarnpkg/cli-dist@4.12.0': {}
 
   JSONStream@1.3.5:
     dependencies:

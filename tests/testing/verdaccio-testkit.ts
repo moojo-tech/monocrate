@@ -25,8 +25,14 @@ const NpmViewResult = z.object({
 type NpmViewResult = z.infer<typeof NpmViewResult>
 
 interface RunConsumerOptions {
-  manager?: 'npm' | 'yarn@v1'
+  manager?: 'npm' | 'yarn@v1' | 'yarn@berry' | 'pnpm'
 }
+
+// Both yarn v1 (`yarn`) and yarn berry (`@yarnpkg/cli-dist`) register the same binary
+// names (`yarn`, `yarnpkg`), so npx can't distinguish them when both are installed.
+// We resolve the exact bin paths instead.
+const yarnV1Bin = path.resolve(import.meta.dirname, '../../node_modules/yarn/bin/yarn.js')
+const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarnpkg/cli-dist/bin/yarn.js')
 
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
@@ -66,11 +72,29 @@ export class VerdaccioTestkit {
 
   runInstall(dir: string, packageName: string, options?: RunConsumerOptions) {
     const registry = this.get().url
-    const command =
-      options?.manager === 'yarn@v1'
-        ? `npx yarn@1.22.22 add ${packageName} --registry=${registry}`
-        : `npm install ${packageName} --registry=${registry}`
-    execSync(command, { cwd: dir, stdio: 'pipe' })
+    switch (options?.manager) {
+      case 'yarn@v1': {
+        execSync(`node ${yarnV1Bin} add ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
+        return
+      }
+      case 'yarn@berry': {
+        writeYarnBerryConfig(dir, registry)
+        execSync(`node ${yarnBerryBin} add ${packageName}`, {
+          cwd: dir,
+          stdio: 'pipe',
+          env: noProxyEnv(),
+        })
+        return
+      }
+      case 'pnpm': {
+        fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
+        execSync(`pnpm add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+        return
+      }
+      default: {
+        execSync(`npm install ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
+      }
+    }
   }
 
   publishPackage(name: string, version: string, jsSourceCode: string) {
@@ -200,6 +224,32 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
       reject(err)
     })
   })
+}
+
+function noProxyEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {}
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!/proxy/i.test(key)) {
+      env[key] = value
+    }
+  }
+  return env
+}
+
+function writeYarnBerryConfig(dir: string, registry: string) {
+  fs.writeFileSync(
+    path.join(dir, '.yarnrc.yml'),
+    [
+      'nodeLinker: node-modules',
+      `npmRegistryServer: "${registry}"`,
+      'enableImmutableInstalls: false',
+      'enableGlobalCache: false',
+      'httpProxy: ""',
+      'httpsProxy: ""',
+      'unsafeHttpWhitelist:',
+      '  - localhost',
+    ].join('\n')
+  )
 }
 
 function stopVerdaccio(verdaccio: VerdaccioServer): Promise<void> {
