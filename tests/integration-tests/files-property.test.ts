@@ -4,6 +4,30 @@ import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
+function findEmbeddedDepsDir(output: Record<string, unknown>): string {
+  const depEntry = Object.keys(output).find((at) => at.startsWith('deps-'))
+  if (!depEntry) {
+    throw new Error('Expected at least one embedded dependency entry under deps-<uuid>')
+  }
+  const firstSegment = depEntry.split('/').at(0)
+  if (!firstSegment) {
+    throw new Error(`Expected a valid embedded dependency entry, got: ${depEntry}`)
+  }
+  return firstSegment
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function readOutputObject(output: Record<string, unknown>, key: string): Record<string, unknown> {
+  const value = output[key]
+  if (!isRecord(value)) {
+    throw new Error(`Expected "${key}" to be an object in test output`)
+  }
+  return value
+}
+
 describe('files property support', () => {
   const teskit = new MonocrateTeskit()
   afterAll(() => {
@@ -33,6 +57,7 @@ describe('files property support', () => {
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
+    const depsDir = findEmbeddedDepsDir(output)
 
     expect(output).toMatchObject({
       'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
@@ -41,11 +66,13 @@ describe('files property support', () => {
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
-        bundledDependencies: ['@test/lib'],
+        dependencies: {
+          '@test/lib': `file:./${depsDir}/@test/lib`,
+        },
       },
-      'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
-      'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
-      'node_modules/@test/lib/package.json': {
+      [`${depsDir}/@test/lib/dist/index.js`]: `export function greet() { return 'Hello!'; }`,
+      [`${depsDir}/@test/lib/extra/utils.js`]: `export const helper = 'helper';`,
+      [`${depsDir}/@test/lib/package.json`]: {
         files: ['dist', 'extra'],
         main: 'dist/index.js',
         name: '@test/lib',
@@ -53,6 +80,8 @@ describe('files property support', () => {
         version: '1.0.0',
       },
     })
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
     expect(stdout.trim()).toBe('Hello!')
   })
 

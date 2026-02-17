@@ -1,10 +1,11 @@
 import * as fsPromises from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
 import { collectPackageLocations } from './collect-package-locations.js'
 import { FileCopier } from './file-copier.js'
 import { resolveVersion } from './resolve-version.js'
 import { rewritePackageJson } from './rewrite-package-json.js'
 import type { VersionSpecifier } from './version-specifier.js'
-import { AbsolutePath } from './paths.js'
+import { AbsolutePath, RelativePath } from './paths.js'
 import type { RepoExplorer, MonorepoPackage } from './repo-explorer.js'
 import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
@@ -47,13 +48,20 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirDispenser)
+    const embeddedDepsDir = inRepoDeps.length > 0 ? RelativePath(`deps-${randomUUID()}`) : undefined
+    const locations = await collectPackageLocations(
+      this.npmClient,
+      closure,
+      outputDir,
+      this.tempDirDispenser,
+      embeddedDepsDir
+    )
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
     await fsPromises.mkdir(outputDir, { recursive: true })
     await new FileCopier(packageMap).copy()
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
-    rewritePackageJson(closure, newVersion, outputDir)
+    rewritePackageJson(closure, newVersion, outputDir, embeddedDepsDir)
     await this.npmClient.pack(outputDir, tarballPath, { ignoreScripts: true })
 
     return { compiletimeMembers: closure.compiletimeMembers }

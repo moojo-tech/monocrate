@@ -3,7 +3,7 @@ import { unfolderify } from './unfolderify.js'
 import { monocrate } from '../../src/monocrate.js'
 import type { MonocrateOptions, MonocrateResult } from '../../src/monocrate.js'
 import path from 'node:path'
-import type { PackageJson } from '../../src/package-json.js'
+import { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
 import fs from 'node:fs'
 import * as tar from 'tar'
@@ -48,6 +48,7 @@ export class MonocrateTeskit {
       throw new Error('Expected at least one package summary')
     }
     const outputDir = this.extractTarball(summary.tarballPath)
+    materializeFileProtocolDependencies(outputDir)
 
     let stdout = ''
     let stderr = ''
@@ -95,5 +96,30 @@ export function pj(
     ...more,
     name,
     ...version,
+  }
+}
+
+export function materializeFileProtocolDependencies(packageRoot: string): void {
+  const packageJsonPath = path.join(packageRoot, 'package.json')
+  const raw: unknown = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+  const parsed = PackageJson.safeParse(raw)
+  if (!parsed.success) {
+    throw new Error(`Invalid package.json at ${packageJsonPath}: ${parsed.error.message}`)
+  }
+
+  const dependencies = parsed.data.dependencies ?? {}
+  for (const [dependencyName, specifier] of Object.entries(dependencies)) {
+    if (!specifier?.startsWith('file:')) {
+      continue
+    }
+
+    const relativePath = specifier.replace(/^file:/, '')
+    const sourceDir = path.resolve(packageRoot, relativePath)
+    if (!fs.existsSync(sourceDir)) {
+      throw new Error(`Embedded dependency path does not exist: ${relativePath}`)
+    }
+    const destinationDir = path.join(packageRoot, 'node_modules', ...dependencyName.split('/'))
+    fs.mkdirSync(path.dirname(destinationDir), { recursive: true })
+    fs.cpSync(sourceDir, destinationDir, { recursive: true })
   }
 }
