@@ -33,6 +33,7 @@ interface RunConsumerOptions {
 // We resolve the exact bin paths instead.
 const yarnV1Bin = path.resolve(import.meta.dirname, '../../node_modules/yarn/bin/yarn.js')
 const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarnpkg/cli-dist/bin/yarn.js')
+const bunBin = path.resolve(import.meta.dirname, '../../node_modules/.bin/bun')
 
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
@@ -93,7 +94,7 @@ export class VerdaccioTestkit {
       }
       case 'bun': {
         fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-        execSync(`bun add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+        execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
         return
       }
       default: {
