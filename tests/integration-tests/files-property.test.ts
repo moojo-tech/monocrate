@@ -1,6 +1,6 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
+import { getDepsDir, MonocrateTeskit } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -33,6 +33,7 @@ describe('files property support', () => {
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
+    const depsDir = getDepsDir(output)
 
     expect(output).toMatchObject({
       'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
@@ -41,11 +42,10 @@ describe('files property support', () => {
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
-        bundledDependencies: ['@test/lib'],
       },
-      'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
-      'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
-      'node_modules/@test/lib/package.json': {
+      [`${depsDir}/@test/lib/dist/index.js`]: `export function greet() { return 'Hello!'; }`,
+      [`${depsDir}/@test/lib/extra/utils.js`]: `export const helper = 'helper';`,
+      [`${depsDir}/@test/lib/package.json`]: {
         files: ['dist', 'extra'],
         main: 'dist/index.js',
         name: '@test/lib',

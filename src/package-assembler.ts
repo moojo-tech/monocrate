@@ -1,8 +1,10 @@
+import * as crypto from 'node:crypto'
 import * as fsPromises from 'node:fs/promises'
+import * as path from 'node:path'
 import { collectPackageLocations } from './collect-package-locations.js'
 import { FileCopier } from './file-copier.js'
 import { resolveVersion } from './resolve-version.js'
-import { rewritePackageJson } from './rewrite-package-json.js'
+import { rewritePackageJson, rewriteInRepoDepsInPackageJson } from './rewrite-package-json.js'
 import type { VersionSpecifier } from './version-specifier.js'
 import { AbsolutePath } from './paths.js'
 import type { RepoExplorer, MonorepoPackage } from './repo-explorer.js'
@@ -47,13 +49,35 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirDispenser)
+    const depsDirName = `deps-${crypto.randomUUID()}`
+    const locations = await collectPackageLocations(
+      this.npmClient,
+      closure,
+      outputDir,
+      depsDirName,
+      this.tempDirDispenser
+    )
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
     await fsPromises.mkdir(outputDir, { recursive: true })
     await new FileCopier(packageMap).copy()
 
+    // Rewrite in-repo dependency references in each bundled package's package.json
+    // to use file: protocol with relative paths instead of workspace: protocol
+    const inRepoLocations = new Map(
+      inRepoDeps.flatMap((name) => {
+        const location = packageMap.get(name)
+        return location ? [[name, location.toDir] as const] : []
+      })
+    )
+    for (const depName of inRepoDeps) {
+      const location = packageMap.get(depName)
+      if (location) {
+        rewriteInRepoDepsInPackageJson(path.join(location.toDir, 'package.json'), location.toDir, inRepoLocations)
+      }
+    }
+
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
-    rewritePackageJson(closure, newVersion, outputDir)
+    rewritePackageJson(closure, newVersion, outputDir, depsDirName)
     await this.npmClient.pack(outputDir, tarballPath, { ignoreScripts: true })
 
     return { compiletimeMembers: closure.compiletimeMembers }

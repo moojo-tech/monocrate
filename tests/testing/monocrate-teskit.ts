@@ -28,7 +28,36 @@ export class MonocrateTeskit {
   private extractTarball(tarballPath: string): string {
     const tempDir = this.tempDirDispenser.create()
     tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
-    return path.join(tempDir, 'package')
+    const packageDir = path.join(tempDir, 'package')
+    MonocrateTeskit.createNodeModulesForFileDeps(packageDir)
+    return packageDir
+  }
+
+  private static createNodeModulesForFileDeps(packageDir: string, visited = new Set<string>()): void {
+    const resolved = path.resolve(packageDir)
+    if (visited.has(resolved)) return
+    visited.add(resolved)
+
+    const packageJsonPath = path.join(packageDir, 'package.json')
+    if (!fs.existsSync(packageJsonPath)) return
+
+    const pkgJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as PackageJson
+    const deps = pkgJson.dependencies ?? {}
+
+    for (const [depName, version] of Object.entries(deps)) {
+      if (!version?.startsWith('file:')) continue
+
+      const relativePath = version.slice('file:'.length)
+      const absoluteDepPath = path.resolve(packageDir, relativePath)
+      const nodeModulesPath = path.join(packageDir, 'node_modules', ...depName.split('/'))
+
+      fs.mkdirSync(path.dirname(nodeModulesPath), { recursive: true })
+      if (!fs.existsSync(nodeModulesPath)) {
+        fs.symlinkSync(absoluteDepPath, nodeModulesPath)
+      }
+
+      MonocrateTeskit.createNodeModulesForFileDeps(absoluteDepPath, visited)
+    }
   }
 
   async run(
@@ -48,6 +77,7 @@ export class MonocrateTeskit {
       throw new Error('Expected at least one package summary')
     }
     const outputDir = this.extractTarball(summary.tarballPath)
+    const output = unfolderify(outputDir)
 
     let stdout = ''
     let stderr = ''
@@ -59,7 +89,6 @@ export class MonocrateTeskit {
     } catch (error) {
       stderr = (error as { stderr?: string }).stderr ?? stderr
     }
-    const output = unfolderify(outputDir)
     return { stdout, stderr, output }
   }
 }
@@ -96,4 +125,16 @@ export function pj(
     name,
     ...version,
   }
+}
+
+/**
+ * Finds the `deps-<uuid>` directory name from the output recipe.
+ * Throws if no deps directory is found (use only when in-repo deps are expected).
+ */
+export function getDepsDir(output: Record<string, unknown>): string {
+  for (const key of Object.keys(output)) {
+    const match = /^(deps-[0-9a-f-]+)\//.exec(key)
+    if (match?.[1]) return match[1]
+  }
+  throw new Error('No deps directory found in output')
 }
