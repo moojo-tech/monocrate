@@ -34,10 +34,10 @@ describe('files property support', () => {
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
 
-    const depsDir = Object.keys(output)
-      .find((k) => /^deps-[^/]+\//.test(k))
-      ?.split('/')[0]
-    expect(depsDir).toBeDefined()
+    const depsKey = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))
+    if (!depsKey) throw new Error('No deps-* directory found in output')
+    const [depsDir] = depsKey.split('/')
+    if (!depsDir) throw new Error(`Unexpected deps key format: ${depsKey}`)
     expect(output).toMatchObject({
       'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
       'package.json': {

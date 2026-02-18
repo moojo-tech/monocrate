@@ -164,9 +164,10 @@ describe('error handling', () => {
     })
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
-    const depsDir = Object.keys(output)
-      .find((k) => /^deps-[^/]+\//.test(k))
-      ?.split('/')[0]
+    const depsKey = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))
+    if (!depsKey) throw new Error('No deps-* directory found in output')
+    const [depsDir] = depsKey.split('/')
+    if (!depsDir) throw new Error(`Unexpected deps key format: ${depsKey}`)
     expect(output['package.json']).toEqual({
       name: '@test/app',
       version: '2.8.512',

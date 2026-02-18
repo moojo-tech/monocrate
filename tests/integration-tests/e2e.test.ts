@@ -36,7 +36,11 @@ function extractDepsDir(output: Record<string, unknown>): string {
   if (!key) {
     throw new Error('No deps-* directory found in output')
   }
-  return key.split('/')[0]!
+  const [depsDir] = key.split('/')
+  if (!depsDir) {
+    throw new Error(`Unexpected deps key format: ${key}`)
+  }
+  return depsDir
 }
 
 function depsPath(output: Record<string, unknown>, subPath: string): string {
