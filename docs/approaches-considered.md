@@ -38,7 +38,7 @@ The npm docs state that `bundledDependencies` package names "do not include any 
 
 Once an in-repo package is listed under `dependencies`, each package manager tries to resolve it:
 
-- **Yarn v1** ignores the bundled copy and tries to fetch the package from the npm registry. Since the in-repo package was never published there, installation fails. This is a known, long-standing bug ([yarnpkg/yarn#5998](https://github.com/yarnpkg/yarn/issues/5998), [yarnpkg/yarn#8436](https://github.com/yarnpkg/yarn/issues/8436)).
+- **Yarn v1** tries to also resolve the bundled package from the npm registry. If the package is not found there, installation fails — even though a bundled copy is already present in the tarball. This is a known, long-standing bug ([yarnpkg/yarn#5998](https://github.com/yarnpkg/yarn/issues/5998), [yarnpkg/yarn#8436](https://github.com/yarnpkg/yarn/issues/8436)).
 
 - **Yarn Berry** describes `bundledDependencies` as "an artifact of the past" in its [migration guide](https://yarnpkg.com/migration/guide). The feature is incompatible with Plug'n'Play (which has no `node_modules/`) and is absent from the [manifest configuration reference](https://yarnpkg.com/configuration/manifest). Yarn Berry recommends alternatives like `file:` or self-bundling with esbuild/webpack.
 
