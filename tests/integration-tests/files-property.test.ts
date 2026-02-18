@@ -34,10 +34,6 @@ describe('files property support', () => {
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
 
-    const depsKey = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))
-    if (!depsKey) throw new Error('No deps-* directory found in output')
-    const [depsDir] = depsKey.split('/')
-    if (!depsDir) throw new Error(`Unexpected deps key format: ${depsKey}`)
     expect(output).toMatchObject({
       'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
       'package.json': {
@@ -45,11 +41,11 @@ describe('files property support', () => {
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
-        dependencies: { '@test/lib': `file:./${depsDir}/@test/lib` },
+        bundledDependencies: ['@test/lib'],
       },
-      [`${depsDir}/@test/lib/dist/index.js`]: `export function greet() { return 'Hello!'; }`,
-      [`${depsDir}/@test/lib/extra/utils.js`]: `export const helper = 'helper';`,
-      [`${depsDir}/@test/lib/package.json`]: {
+      'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
+      'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
+      'node_modules/@test/lib/package.json': {
         files: ['dist', 'extra'],
         main: 'dist/index.js',
         name: '@test/lib',

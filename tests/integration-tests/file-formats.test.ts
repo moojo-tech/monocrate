@@ -42,11 +42,7 @@ console.log(helper());
 
       expect(stdout.trim()).toBe('Helper from .mjs!')
 
-      const depsKey = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))
-      if (!depsKey) throw new Error('No deps-* directory found in output')
-      const [depsDir] = depsKey.split('/')
-      if (!depsDir) throw new Error(`Unexpected deps key format: ${depsKey}`)
-      const libPkgJson = output[`${depsDir}/@test/lib/package.json`] as Record<string, unknown>
+      const libPkgJson = output['node_modules/@test/lib/package.json'] as Record<string, unknown>
       expect(libPkgJson.exports).toEqual({
         '.': './dist/index.js',
         './utils': './dist/utils/helper.mjs',
@@ -77,11 +73,7 @@ console.log(greet());`,
       })
 
       const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
-      const depsKey = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))
-      if (!depsKey) throw new Error('No deps-* directory found in output')
-      const [depsDir] = depsKey.split('/')
-      if (!depsDir) throw new Error(`Unexpected deps key format: ${depsKey}`)
-      expect(output).toHaveProperty(`${depsDir}/@test/lib/dist/index.cjs`)
+      expect(output).toHaveProperty('node_modules/@test/lib/dist/index.cjs')
       expect(stdout.trim()).toBe('hello')
     })
   })
