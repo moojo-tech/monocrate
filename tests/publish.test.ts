@@ -556,7 +556,7 @@ module.exports = {
     expect(viewResult['dist-tags'].latest).toBe('0.0.1')
   }, 60000)
 
-  it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {
+  it('yarn v1 can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -580,11 +580,6 @@ module.exports = {
       npmrcPath: verdaccio.npmrcPath(),
     })
 
-    // Yarn v1 must be able to install the published package without trying to resolve bundled
-    // in-repo dependencies from the registry. If in-repo deps are listed in `dependencies`,
-    // yarn v1 tries to fetch them from the registry (where they don't exist) and fails.
-    // See: https://github.com/yarnpkg/yarn/issues/5998
-    // See: https://github.com/yarnpkg/yarn/issues/8436
     expect(
       verdaccio.runConsumer(
         '@test/yarn-app@11.11.11',
@@ -624,10 +619,7 @@ module.exports = {
     ).toBe('Hello from yarn berry!')
   }, 90000)
 
-  // Yarn berry (like yarn v1) does not respect bundledDependencies: it still tries to
-  // resolve bundled in-repo deps from the registry, where they don't exist.
-  // See the analogous yarn v1 test above for details.
-  it.skip('yarn berry can install a package with bundled in-repo dependencies', async () => {
+  it('yarn berry can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -665,7 +657,7 @@ module.exports = {
     ).toBe('Hello, World!')
   }, 90000)
 
-  it('pnpm can install a package with bundled in-repo dependencies', async () => {
+  it('pnpm can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -733,10 +725,7 @@ module.exports = {
     ).toBe('Hello from bun!')
   }, 90000)
 
-  // Bun (like yarn v1 and yarn berry) does not respect bundledDependencies: it still tries to
-  // resolve bundled in-repo deps from the registry, where they don't exist.
-  // See the analogous yarn v1 test above for details.
-  it.skip('bun can install a package with bundled in-repo dependencies', async () => {
+  it('bun can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {

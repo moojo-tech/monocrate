@@ -49,6 +49,12 @@ export class MonocrateTeskit {
     }
     const outputDir = this.extractTarball(summary.tarballPath)
 
+    // Capture the directory structure before linking (unfolderify doesn't traverse symlinked dirs)
+    const output = unfolderify(outputDir)
+
+    // Create node_modules symlinks for file: deps so node can resolve them at runtime
+    this.linkFileDeps(outputDir)
+
     let stdout = ''
     let stderr = ''
     try {
@@ -59,8 +65,22 @@ export class MonocrateTeskit {
     } catch (error) {
       stderr = (error as { stderr?: string }).stderr ?? stderr
     }
-    const output = unfolderify(outputDir)
     return { stdout, stderr, output }
+  }
+
+  private linkFileDeps(outputDir: string): void {
+    const pkgJson = JSON.parse(fs.readFileSync(path.join(outputDir, 'package.json'), 'utf-8')) as {
+      dependencies?: Record<string, string>
+    }
+    for (const [name, version] of Object.entries(pkgJson.dependencies ?? {})) {
+      if (version.startsWith('file:')) {
+        const target = path.resolve(outputDir, version.slice('file:'.length))
+        const parts = name.split('/')
+        const linkPath = path.join(outputDir, 'node_modules', ...parts)
+        fs.mkdirSync(path.dirname(linkPath), { recursive: true })
+        fs.symlinkSync(target, linkPath)
+      }
+    }
   }
 }
 

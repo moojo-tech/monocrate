@@ -1,4 +1,5 @@
 import * as fsPromises from 'node:fs/promises'
+import * as crypto from 'node:crypto'
 import { collectPackageLocations } from './collect-package-locations.js'
 import { FileCopier } from './file-copier.js'
 import { resolveVersion } from './resolve-version.js'
@@ -47,13 +48,14 @@ export class PackageAssembler {
     const inRepoDeps = closure.runtimeMembers.filter((m) => m.name !== this.pkgName).map((m) => m.name)
     this.report({ type: 'closure', packageName: this.pkgName, inRepoDeps })
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirDispenser)
+    const depsDir = `deps-${crypto.randomUUID()}`
+    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, this.tempDirDispenser, depsDir)
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
     await fsPromises.mkdir(outputDir, { recursive: true })
     await new FileCopier(packageMap).copy()
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
-    rewritePackageJson(closure, newVersion, outputDir)
+    rewritePackageJson(closure, newVersion, outputDir, depsDir)
     await this.npmClient.pack(outputDir, tarballPath, { ignoreScripts: true })
 
     return { compiletimeMembers: closure.compiletimeMembers }

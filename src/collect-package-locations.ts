@@ -85,7 +85,8 @@ export async function collectPackageLocations(
   npmClient: NpmClient,
   closure: PackageClosure,
   outputDir: AbsolutePath,
-  tempDirDispenser: TempDirDispenser
+  tempDirDispenser: TempDirDispenser,
+  depsDir: string
 ): Promise<PackageLocation[]> {
   return Promise.all(
     closure.runtimeMembers.map(async (dep) =>
@@ -94,7 +95,7 @@ export async function collectPackageLocations(
         dep,
         dep.name === closure.subjectPackageName
           ? outputDir
-          : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name)),
+          : AbsolutePath.join(outputDir, RelativePath(depsDir), RelativePath(dep.name)),
         dep.name === closure.subjectPackageName,
         tempDirDispenser
       )

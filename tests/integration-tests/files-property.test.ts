@@ -34,6 +34,10 @@ describe('files property support', () => {
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
 
+    const depsDir = Object.keys(output)
+      .find((k) => /^deps-[^/]+\//.test(k))
+      ?.split('/')[0]
+    expect(depsDir).toBeDefined()
     expect(output).toMatchObject({
       'dist/index.js': `import { greet } from '@test/lib'; console.log(greet());`,
       'package.json': {
@@ -41,11 +45,11 @@ describe('files property support', () => {
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
-        bundledDependencies: ['@test/lib'],
+        dependencies: { '@test/lib': `file:./${depsDir}/@test/lib` },
       },
-      'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
-      'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
-      'node_modules/@test/lib/package.json': {
+      [`${depsDir}/@test/lib/dist/index.js`]: `export function greet() { return 'Hello!'; }`,
+      [`${depsDir}/@test/lib/extra/utils.js`]: `export const helper = 'helper';`,
+      [`${depsDir}/@test/lib/package.json`]: {
         files: ['dist', 'extra'],
         main: 'dist/index.js',
         name: '@test/lib',

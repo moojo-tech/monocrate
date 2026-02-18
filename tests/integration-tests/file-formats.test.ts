@@ -42,7 +42,8 @@ console.log(helper());
 
       expect(stdout.trim()).toBe('Helper from .mjs!')
 
-      const libPkgJson = output['node_modules/@test/lib/package.json'] as Record<string, unknown>
+      const depsDir = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))?.split('/')[0]
+      const libPkgJson = output[`${depsDir}/@test/lib/package.json`] as Record<string, unknown>
       expect(libPkgJson.exports).toEqual({
         '.': './dist/index.js',
         './utils': './dist/utils/helper.mjs',
@@ -73,7 +74,8 @@ console.log(greet());`,
       })
 
       const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
-      expect(output).toHaveProperty('node_modules/@test/lib/dist/index.cjs')
+      const depsDir = Object.keys(output).find((k) => /^deps-[^/]+\//.test(k))?.split('/')[0]
+      expect(output).toHaveProperty(`${depsDir}/@test/lib/dist/index.cjs`)
       expect(stdout.trim()).toBe('hello')
     })
   })

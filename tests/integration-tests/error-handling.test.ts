@@ -164,13 +164,15 @@ describe('error handling', () => {
     })
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
+    const depsDir = Object.keys(output)
+      .find((k) => /^deps-[^/]+\//.test(k))
+      ?.split('/')[0]
     expect(output['package.json']).toEqual({
       name: '@test/app',
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
-      dependencies: { '@test/lib': '0.9.9' },
-      bundledDependencies: ['@test/lib'],
+      dependencies: { '@test/lib': `file:./${depsDir}/@test/lib` },
     })
 
     expect(stdout.trim()).toBe('Hello!')
