@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
@@ -69,6 +70,10 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   report({ type: 'monorepoRoot', root: monorepoRoot })
 
   const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirDispenser)
+  const depsDirSuffix = options.depsDirSuffix ?? `-${randomUUID()}`
+  if (depsDirSuffix.includes('/') || depsDirSuffix.includes('\\')) {
+    throw new Error(`depsDirSuffix must not contain path separators: "${depsDirSuffix}"`)
+  }
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
@@ -78,7 +83,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 
   try {
     const assemblers = sourceDirs.map(
-      (at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirDispenser, report)
+      (at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirDispenser, report, depsDirSuffix)
     )
 
     const pairs = await Promise.all(

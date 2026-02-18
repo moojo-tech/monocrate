@@ -1,6 +1,6 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, readOutputObject } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
@@ -41,11 +41,13 @@ describe('files property support', () => {
         name: '@test/app',
         type: 'module',
         version: '3.9.27',
-        bundledDependencies: ['@test/lib'],
+        dependencies: {
+          '@test/lib': `file:./deps/@test/lib`,
+        },
       },
-      'node_modules/@test/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
-      'node_modules/@test/lib/extra/utils.js': `export const helper = 'helper';`,
-      'node_modules/@test/lib/package.json': {
+      [`deps/@test/lib/dist/index.js`]: `export function greet() { return 'Hello!'; }`,
+      [`deps/@test/lib/extra/utils.js`]: `export const helper = 'helper';`,
+      [`deps/@test/lib/package.json`]: {
         files: ['dist', 'extra'],
         main: 'dist/index.js',
         name: '@test/lib',
@@ -53,6 +55,8 @@ describe('files property support', () => {
         version: '1.0.0',
       },
     })
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
     expect(stdout.trim()).toBe('Hello!')
   })
 

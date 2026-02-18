@@ -1,7 +1,7 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj, readOutputObject, readOutputString } from '../testing/monocrate-teskit.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { x } from 'tinyexec'
@@ -140,20 +140,21 @@ describe('monocrate e2e', () => {
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '4.256.16384' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/app',
       version: '4.256.16384',
       type: 'module',
       main: 'dist/index.js',
       types: 'dist/index.d.ts',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': `file:./deps/@test/lib`,
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
+    expect(pkgJson).not.toHaveProperty('bundleDependencies')
     // Verify end-to-end:
     expect(stdout.trim()).toBe('Hello, World!')
   })
@@ -209,36 +210,36 @@ describe('monocrate e2e', () => {
 
     // Assemble only app-alpha
     const alpha = await teskit.run(monorepoRoot, 'packages/app-alpha', { bump: '4.16.64' })
-
-    expect(alpha.output['package.json']).toEqual({
+    const alphaPkgJson = readOutputObject(alpha.output, 'package.json')
+    expect(alphaPkgJson).toEqual({
       name: '@test/app-alpha',
       version: '4.16.64',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-alpha': '1.0.0',
+        '@test/lib-alpha': `file:./deps/@test/lib-alpha`,
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib-alpha'],
     })
+    expect(alphaPkgJson).not.toHaveProperty('bundledDependencies')
     expect(alpha.stdout.trim()).toBe('Alpha: ALPHA')
 
     // Assemble only app-beta
     const beta = await teskit.run(monorepoRoot, 'packages/app-beta', { bump: '5.25.125' })
-
-    expect(beta.output['package.json']).toEqual({
+    const betaPkgJson = readOutputObject(beta.output, 'package.json')
+    expect(betaPkgJson).toEqual({
       name: '@test/app-beta',
       version: '5.25.125',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-beta': '2.0.0',
+        '@test/lib-beta': `file:./deps/@test/lib-beta`,
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
-      bundledDependencies: ['@test/lib-beta'],
     })
+    expect(betaPkgJson).not.toHaveProperty('bundledDependencies')
     expect(beta.stdout.trim()).toBe('Beta: BETA')
   }, 30000)
 
@@ -319,25 +320,25 @@ export function fromLevel3() {
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '4.16.64' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/app',
       version: '4.16.64',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/level1': '1.0.0',
-        '@test/level2': '1.0.0',
-        '@test/level3': '1.0.0',
-        '@test/level4': '1.0.0',
+        '@test/level1': `file:./deps/@test/level1`,
+        '@test/level2': `file:./deps/@test/level2`,
+        '@test/level3': `file:./deps/@test/level3`,
+        '@test/level4': `file:./deps/@test/level4`,
         express: '^4.18.0',
         lodash: '^4.17.21',
         chalk: '^5.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
-      bundledDependencies: ['@test/level1', '@test/level2', '@test/level3', '@test/level4'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
 
     expect(stdout.trim()).toBe('L1->L2->L3->L4')
   }, 30000)
@@ -377,19 +378,19 @@ console.log(pnpmGreet());
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '9.81.729' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/pnpm-app',
       version: '9.81.729',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/pnpm-lib': '1.0.0',
+        '@test/pnpm-lib': `file:./deps/@test/pnpm-lib`,
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/pnpm-lib'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
 
     expect(stdout.trim()).toBe('pnpm works!')
   })
@@ -433,19 +434,19 @@ console.log(greet('World'));
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/app',
       version: '3.9.27',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': `file:./deps/@test/lib`,
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
 
     expect(stdout.trim()).toBe('Hello, World!')
   })
@@ -467,10 +468,10 @@ console.log(greet('World'));
     const { output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
 
     // lib (production dependency) should be included
-    expect(output).toHaveProperty('node_modules/@test/lib/package.json')
+    expect(output).toHaveProperty(`deps/@test/lib/package.json`)
 
     // build-tool (devDependency) should NOT be included in packaged output
-    expect(output).not.toHaveProperty('node_modules/@test/build-tool/package.json')
+    expect(output).not.toHaveProperty(`deps/@test/build-tool/package.json`)
   })
 
   it('preserves line numbers in stack traces', async () => {
@@ -634,7 +635,7 @@ throwError();
     })
   })
 
-  it('type-checks consumer code that relies on declarations imported from bundled in-repo dependencies', async () => {
+  it('type-checks consumer code that relies on declarations imported from embedded in-repo dependencies', async () => {
     const outputDir = await packPackageWithImportedDeclarations(teskit)
     const consumerProjectRoot = createConsumerProject(`import { bar } from '@myorg/a';
 const upperCaseBar: string = bar.toUpperCase();
@@ -647,7 +648,7 @@ void upperCaseBar;
     expect(result.exitCode).toBe(0)
   })
 
-  it('fails type-checking when consumer code violates declaration types imported from bundled in-repo dependencies', async () => {
+  it('fails type-checking when consumer code violates declaration types imported from embedded in-repo dependencies', async () => {
     const outputDir = await packPackageWithImportedDeclarations(teskit)
     const consumerProjectRoot = createConsumerProject(`import { bar } from '@myorg/a';
 const asNumber: number = bar;
@@ -830,8 +831,8 @@ export const a = 'a-' + b;
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
-    // Verify bundled dependency files keep imports as package names
-    const libAIndex = output['node_modules/@myorg/lib-a/dist/index.js'] as string
+    // Verify embedded dependency files keep imports as package names
+    const libAIndex = readOutputString(output, `deps/@myorg/lib-a/dist/index.js`)
     expect(libAIndex).toContain("from '@myorg/lib-b'")
 
     // Verify execution works
@@ -865,19 +866,19 @@ export const a = 'a-' + b;
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '2.0.0' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/app',
       version: '2.0.0',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': `file:./deps/@test/lib`,
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
 
     expect(stdout.trim()).toBe('Hello, World!')
   })
@@ -909,19 +910,19 @@ export const a = 'a-' + b;
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.0.0' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/app',
       version: '3.0.0',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
+        '@test/lib': `file:./deps/@test/lib`,
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
 
     expect(stdout.trim()).toBe('Hello, World!')
   })
@@ -972,27 +973,27 @@ console.log(a + '-' + b + '-' + c);
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '5.0.0' })
-
-    expect(output['package.json']).toEqual({
+    const pkgJson = readOutputObject(output, 'package.json')
+    expect(pkgJson).toEqual({
       name: '@test/app',
       version: '5.0.0',
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-a': '1.0.0',
-        '@test/lib-b': '2.0.0',
-        '@test/lib-c': '3.0.0',
+        '@test/lib-a': `file:./deps/@test/lib-a`,
+        '@test/lib-b': `file:./deps/@test/lib-b`,
+        '@test/lib-c': `file:./deps/@test/lib-c`,
         express: '^4.0.0',
         lodash: '^4.0.0',
         zod: '^3.0.0',
       },
-      bundledDependencies: ['@test/lib-a', '@test/lib-b', '@test/lib-c'],
     })
+    expect(pkgJson).not.toHaveProperty('bundledDependencies')
 
-    // All three in-repo deps should be bundled under node_modules
-    expect(output).toHaveProperty('node_modules/@test/lib-a/dist/index.js')
-    expect(output).toHaveProperty('node_modules/@test/lib-b/dist/index.js')
-    expect(output).toHaveProperty('node_modules/@test/lib-c/dist/index.js')
+    // All three in-repo deps should be embedded under deps
+    expect(output).toHaveProperty(`deps/@test/lib-a/dist/index.js`)
+    expect(output).toHaveProperty(`deps/@test/lib-b/dist/index.js`)
+    expect(output).toHaveProperty(`deps/@test/lib-c/dist/index.js`)
 
     expect(stdout.trim()).toBe('A-B-C')
   })
