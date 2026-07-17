@@ -71,4 +71,14 @@ export interface MonocrateOptions {
    * and you want to preserve meaningful versioning per package.
    */
   max?: boolean
+
+  /**
+   * @deprecated ignored
+   */
+  packDestination?: unknown
+
+  /**
+   * @deprecated ignored
+   */
+  npmPublishArgs?: unknown[]
 }

@@ -13,7 +13,7 @@ describe('optional output directory', () => {
   afterAll(() => {
     teskit.shutdown()
   })
-  it('creates a temp directory when outputDir is not provided', async () => {
+  it('creates a temp directory when packDestination is not provided', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': pj('@test/app'),
