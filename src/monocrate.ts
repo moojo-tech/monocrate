@@ -12,6 +12,7 @@ import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
+import { TempDirDispenser } from './temp-dir-dispenser.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
@@ -23,8 +24,16 @@ export type { MonocrateResult } from './monocrate-result.js'
  * @throws Error if assembly or publishing fails
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
+  // This dispenser is used for the tarballs which are intentionally kept
+  const dispenser = new TempDirDispenser() 
+  const tarballsDir = dispenser.create()
+  return await monocrateImpl(options, tarballsDir)
+}
+
+async function monocrateImpl(options: MonocrateOptions, tarballsDir: string): Promise<MonocrateResult> {
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
+
 
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
@@ -82,12 +91,15 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     max = maxVersion(max, at.version)
   }
 
-  const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
+  const resolvedPairs = pairs.map((at) => {
+    const version = useMax ? max : at.version
+    return { ...at, version, tarballPath: path.join(tarballsDir, `${at.assembler.publishAs}-${version}.tgz`)  }
+  })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
   // Phase 1: Assemble all packages and publish with --tag pending
-  for (const { assembler, version } of resolvedPairs) {
-    const { compiletimeMembers } = await assembler.assemble(version)
+  for (const { assembler, version, tarballPath } of resolvedPairs) {
+    const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
     for (const pkg of compiletimeMembers) {
       allPackagesForMirror.set(pkg.name, pkg)
     }
@@ -113,11 +125,11 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   return {
     outputDir: a0.getOutputDir(),
     resolvedVersion: useMax ? max : undefined,
-    summaries: resolvedPairs.map(({ assembler, version }) => ({
+    summaries: resolvedPairs.map(({ assembler, version, tarballPath }) => ({
       outputDir: assembler.getOutputDir(),
       packageName: assembler.pkgName,
       version,
-      tarballPath: `/tmp/wtf-${crypto.randomUUID()}`,
+      tarballPath
     })),
   }
 }
