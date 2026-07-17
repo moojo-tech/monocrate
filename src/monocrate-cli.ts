@@ -1,46 +1,30 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { createRequire } from 'node:module'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 
-const require = createRequire(import.meta.url)
-const pkg = require('../package.json') as { version: string }
-
-interface YargsArgs {
-  _: string[]
-  'output-dir'?: string
-  root?: string
-  bump?: string
-  report?: string
-  'mirror-to'?: string
-  'dry-run'?: boolean
-  max?: boolean
-}
-
 export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
-    .version(pkg.version)
     .usage(
       `From monorepo to npm in one command.
 
 Point at your packages. That's it.
 
-Usage: $0 <packages...> [options]`
+Usage: $0 [options]`
     )
     .example('$0 pkg/foo --bump patch', 'Bump to next patch and publish')
     .example('$0 libs/a libs/b', 'Multi-package (defaults to minor bump)')
     .example('$0 pkg/foo --dry-run', 'Prepare without publishing')
     .example('$0 pkg/foo --bump package', 'Use version from package.json')
-    .positional('packages', {
-      describe: 'Package directories to publish',
-      type: 'string',
-      array: true,
-    })
     .options({
+      packages: {
+        describe: 'Package directories to publish',
+        type: 'string',
+        array: true,
+      },
       bump: {
         alias: 'b',
         type: 'string' as const,
@@ -80,14 +64,13 @@ Usage: $0 <packages...> [options]`
     .strict()
     .help()
     .option('help', { hidden: true })
-    .option('version', { hidden: true })
 
   void Promise.resolve(parser.parse())
-    .then(async (argv) => {
-      const args = argv as YargsArgs
-      const packages = args._
+    .then(async (args) => {
+      const packages = args.packages ?? []
+
       if (packages.length === 0) {
-        throw new Error('At least one package directory must be specified. Try: monocrate <package-dir>')
+        throw new Error('At least one package directory must be specified')
       }
       const options: MonocrateOptions = {
         pathToSubjectPackages: packages,

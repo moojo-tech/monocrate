@@ -695,7 +695,7 @@ export const foo = b.foo;
     expect(indexJs).not.toContain("import('@myorg/b')")
   })
 
-  it('errors on computed dynamic imports', async () => {
+  it('does not rewrite (computed) dynamic imports', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
@@ -708,14 +708,17 @@ export const foo = b.foo;
 `,
     })
 
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/a',
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Computed import not supported: import(modulePath)')
+    const { outputDir } = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: 'packages/a',
+      publish: false,
+      bump: '2.8.512',
+    })
+    const output = unfolderify(outputDir)
+    const indexJs = output['dist/index.js'] as string
+
+    // Dynamic import should not be rewritten
+    expect(indexJs).toContain('const b = await import(modulePath)')
   })
 
   it('handles cross-dependency imports between in-repo deps', async () => {
