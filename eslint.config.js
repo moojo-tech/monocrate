@@ -20,7 +20,7 @@ export default tseslint.config(
     },
     rules: {
       'no-tabs': 'error',
-      indent: ['warn', 2, { SwitchCase: 1 }],
+      indent: ['warn', 2],
       'unused-imports/no-unused-imports': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': 'off',

@@ -39,10 +39,6 @@ cp package.json "$PUBLISH_DIR/"
 cp README.md "$PUBLISH_DIR/" 2>/dev/null || true
 cp LICENSE "$PUBLISH_DIR/" 2>/dev/null || true
 
-echo "==> Removing dev-only scripts from package.json..."
-cd "$PUBLISH_DIR"
-npm pkg delete scripts.prepare scripts.preinstall 2>/dev/null || true
-
 echo "==> Getting latest published version..."
 LATEST_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || echo "0.0.0")
 echo "    Latest published version: $LATEST_VERSION"
@@ -50,12 +46,12 @@ echo "    Latest published version: $LATEST_VERSION"
 echo "==> Setting version and bumping minor..."
 cd "$PUBLISH_DIR"
 npm pkg set version="$LATEST_VERSION"
-NEW_VERSION=$(npm version patch --no-git-tag-version)
+NEW_VERSION=$(npm version minor --no-git-tag-version)
 NEW_VERSION="${NEW_VERSION#v}"  # Remove 'v' prefix if present
 echo "    New version: $NEW_VERSION"
 
 echo "==> Publishing to npm..."
-npm publish --ignore-scripts
+npm publish
 
 echo "==> Creating and pushing git tag..."
 cd "$PROJECT_ROOT"

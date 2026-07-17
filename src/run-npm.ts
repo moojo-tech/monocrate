@@ -88,7 +88,7 @@ export async function runNpm(
   if (result.exitCode !== 0) {
     let message = `An NPM command exited with code ${String(result.exitCode)} - ${synopsis}`
     if (stdio === 'pipe') {
-      message += `\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+      message += `\n${result.stdout}`
     }
     const error = new Error(message)
     if (errorPolicy === 'throw') {

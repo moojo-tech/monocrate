@@ -1,80 +1,63 @@
 import * as fs from 'node:fs'
-import * as fsPromises from 'node:fs/promises'
-import * as path from 'node:path'
-import * as tar from 'tar'
+import * as ResolveExports from 'resolve.exports'
 import type { PackageLocation } from './package-location.js'
 import type { PackageClosure } from './package-closure.js'
 import type { MonorepoPackage } from './repo-explorer.js'
+import { getFilesToPack } from './get-files-to-pack.js'
 import { AbsolutePath, RelativePath } from './paths.js'
+import type { PackageJson } from './package-json.js'
 import type { NpmClient } from './npm-client.js'
-import type { TempDirDispenser } from './temp-dir-dispenser.js'
+import { manglePackageName } from './name-mangler.js'
 
-function listFilesRecursively(rootDir: AbsolutePath): Promise<string[]> {
-  async function visit(dir: AbsolutePath): Promise<string[]> {
-    const entries = await fsPromises.readdir(dir, { withFileTypes: true })
-    const nested = await Promise.all(
-      entries.map(async (entry): Promise<string[]> => {
-        const absolute = AbsolutePath(path.join(dir, entry.name))
-        if (entry.isDirectory()) {
-          return visit(absolute)
-        }
-        if (!entry.isFile()) {
-          return []
-        }
-        const relative = path.relative(rootDir, absolute)
-        if (path.isAbsolute(relative)) {
-          throw new Error(`Inconsistency: expected ${absolute} to be within ${rootDir}`)
-        }
-        return [relative]
-      })
-    )
-    return nested.flat()
+/** Directory name where in-repo dependencies are placed in the output. */
+export const DEPS_DIR = 'deps'
+
+/**
+ * Resolves an import specifier to a package-relative path using Node.js resolution semantics.
+ * Handles both bare imports (subpath='') and subpath imports (subpath='utils/helper').
+ */
+export function resolveImport(packageJson: PackageJson, subpath: string): string {
+  const entry = subpath === '' ? '.' : `./${subpath}`
+
+  // Try exports field resolution (resolve.exports only handles the exports field, not main)
+  const resolved = ResolveExports.resolve(packageJson, entry)
+  if (resolved) {
+    // The exports field can map to an array of fallback paths. Node.js tries them in order and uses
+    // the first "processable" path (e.g., skips unsupported protocols), but does NOT fall back if the
+    // file is missing. Picking the first entry matches Node.js behavior.
+    // See: https://nodejs.org/api/packages.html#package-entry-points
+    const resolvedPath = Array.isArray(resolved) ? resolved[0] : resolved
+    if (resolvedPath !== undefined) {
+      // If the resolved path starts with './', remove it
+      return resolvedPath.startsWith('./') ? resolvedPath.slice(2) : resolvedPath
+    }
   }
-  return visit(rootDir)
-}
 
-async function packAndExtractDirectory(
-  npmClient: NpmClient,
-  packageDir: AbsolutePath,
-  tempDirDispenser: TempDirDispenser
-): Promise<AbsolutePath> {
-  const tempDir = tempDirDispenser.create()
-  const tarball = AbsolutePath.join(tempDir, RelativePath('package.tgz'))
-  await npmClient.pack(packageDir, tarball)
-  await tar.x({ file: tarball, cwd: tempDir })
-
-  const extracted = AbsolutePath.join(tempDir, RelativePath('package'))
-  const stats = await fsPromises.stat(extracted)
-  if (!stats.isDirectory()) {
-    throw new Error(`Expected ${extracted} to be a directory`)
+  // Otherwise (no exports field or no matching export) -
+  if (subpath === '') {
+    // Bare import (e.g., import ... from '@myorg/pkg'): use main field, then index.js (Node.js default)
+    return packageJson.main ?? 'index.js'
   }
-  return extracted
+  // Subpath import (e.g., import ... from '@myorg/pkg/utils/helper'): subpath relative to package root
+  return `${subpath}.js`
 }
 
 async function createPackageLocation(
   npmClient: NpmClient,
   pkg: MonorepoPackage,
-  directoryInOutput: AbsolutePath,
-  includeNpmrc: boolean,
-  tempDirDispenser: TempDirDispenser
+  directoryInOutput: AbsolutePath
 ): Promise<PackageLocation> {
-  const packed = await packAndExtractDirectory(npmClient, pkg.fromDir, tempDirDispenser)
+  const filesToCopy = await getFilesToPack(npmClient, pkg.fromDir)
 
-  const filesToCopy = await listFilesRecursively(packed)
-
-  if (includeNpmrc) {
-    // Include .npmrc for the subject package only (npm pack does not include config files).
-    const npmrcPath = AbsolutePath.join(pkg.fromDir, RelativePath('.npmrc'))
-    if (fs.existsSync(npmrcPath)) {
-      const extractedNpmrc = AbsolutePath.join(packed, RelativePath('.npmrc'))
-      await fsPromises.copyFile(npmrcPath, extractedNpmrc)
-      filesToCopy.push('.npmrc')
-    }
+  // Add .npmrc if it exists (npm pack doesn't include it since it's a config file)
+  const npmrcPath = AbsolutePath.join(pkg.fromDir, RelativePath('.npmrc'))
+  if (fs.existsSync(npmrcPath)) {
+    filesToCopy.push('.npmrc')
   }
 
   return {
     name: pkg.name,
-    fromDir: packed,
+    fromDir: pkg.fromDir,
     toDir: directoryInOutput,
     filesToCopy,
     packageJson: pkg.packageJson,
@@ -84,19 +67,17 @@ async function createPackageLocation(
 export async function collectPackageLocations(
   npmClient: NpmClient,
   closure: PackageClosure,
-  outputDir: AbsolutePath,
-  tempDirDispenser: TempDirDispenser
+  outputDir: AbsolutePath
 ): Promise<PackageLocation[]> {
+  // TODO(imaman): use promises()
   return Promise.all(
-    closure.runtimeMembers.map(async (dep) =>
+    closure.runtimeMembers.map((dep) =>
       createPackageLocation(
         npmClient,
         dep,
         dep.name === closure.subjectPackageName
           ? outputDir
-          : AbsolutePath.join(outputDir, RelativePath('node_modules'), RelativePath(dep.name)),
-        dep.name === closure.subjectPackageName,
-        tempDirDispenser
+          : AbsolutePath.join(outputDir, RelativePath(DEPS_DIR), RelativePath(manglePackageName(dep.name)))
       )
     )
   )
