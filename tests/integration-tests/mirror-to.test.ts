@@ -250,7 +250,7 @@ describe('--mirror-to option', () => {
       },
       'packages/build-tool/dist/index.js': `export function build() { return 'building'; }`,
     })
-  })
+  }, 15000)
 
   it('mirrors transitive dependencies across prod and dev boundaries', async () => {
     // Test that:

@@ -1,11 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
-import { pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('version conflict detection', () => {
+  const teskit = new MonocrateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('throws with detailed error message when packages require different versions', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -62,7 +66,7 @@ describe('version conflict detection', () => {
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!'; }`,
     })
 
-    const { stdout } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout } = await teskit.run(monorepoRoot, 'packages/app')
     expect(stdout.trim()).toBe('Hello!')
   })
 

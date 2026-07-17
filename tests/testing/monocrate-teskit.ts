@@ -1,15 +1,67 @@
 import { execSync } from 'child_process'
 import { unfolderify } from './unfolderify.js'
 import { monocrate } from '../../src/monocrate.js'
+import type { MonocrateOptions, MonocrateResult } from '../../src/monocrate.js'
 import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
 import fs from 'node:fs'
+import * as tar from 'tar'
+import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 
-export class MonocreateTeskit {
-  async start() {}
+export class MonocrateTeskit {
+  private readonly tempDirDispenser = new TempDirDispenser()
 
-  async shutdown() {}
+  shutdown() {
+    this.tempDirDispenser.cleanup()
+  }
+
+  async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
+    const result = await monocrate(options)
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected at least one package summary')
+    }
+    return { ...result, outputDir: this.extractTarball(summary.tarballPath) }
+  }
+
+  private extractTarball(tarballPath: string): string {
+    const tempDir = this.tempDirDispenser.create()
+    tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
+    return path.join(tempDir, 'package')
+  }
+
+  async run(
+    monorepoRoot: string,
+    sourcePackage: string,
+    { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
+  ) {
+    const result = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
+      monorepoRoot,
+      bump,
+      publish: false,
+    })
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected at least one package summary')
+    }
+    const outputDir = this.extractTarball(summary.tarballPath)
+
+    let stdout = ''
+    let stderr = ''
+    try {
+      stdout = execSync(`node --enable-source-maps ${path.join(outputDir, entryPoint)}`, {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      })
+    } catch (error) {
+      stderr = (error as { stderr?: string }).stderr ?? stderr
+    }
+    const output = unfolderify(outputDir)
+    return { stdout, stderr, output }
+  }
 }
 
 export function createTempDir(prefix = 'monocrate-testing-'): string {
@@ -44,31 +96,4 @@ export function pj(
     name,
     ...version,
   }
-}
-
-export async function runMonocrate(
-  monorepoRoot: string,
-  sourcePackage: string,
-  { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
-) {
-  const { outputDir } = await monocrate({
-    cwd: monorepoRoot,
-    pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
-    monorepoRoot,
-    bump,
-    publish: false,
-  })
-
-  let stdout = ''
-  let stderr = ''
-  try {
-    stdout = execSync(`node --enable-source-maps ${path.join(outputDir, entryPoint)}`, {
-      encoding: 'utf-8',
-      stdio: 'pipe',
-    })
-  } catch (error) {
-    stderr = (error as { stderr?: string }).stderr ?? stderr
-  }
-  const output = unfolderify(outputDir)
-  return { stdout, stderr, output }
 }

@@ -59,16 +59,16 @@ describe('multi-package versioning', () => {
     // With max=true, all summaries should have the same version
     expect(result.summaries.map((s) => s.version)).toEqual(['3.0.1', '3.0.1', '3.0.1', '3.0.1'])
 
-    expect(verdaccio.runConumser('mpv-alpha@3.0.1', `import { value } from 'mpv-alpha'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('mpv-alpha@3.0.1', `import { value } from 'mpv-alpha'; console.log(value)`)).toBe(
       'alpha-new'
     )
-    expect(verdaccio.runConumser('mpv-beta@3.0.1', `import { value } from 'mpv-beta'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('mpv-beta@3.0.1', `import { value } from 'mpv-beta'; console.log(value)`)).toBe(
       'beta-new'
     )
-    expect(verdaccio.runConumser('mpv-gamma@3.0.1', `import { value } from 'mpv-gamma'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('mpv-gamma@3.0.1', `import { value } from 'mpv-gamma'; console.log(value)`)).toBe(
       'gamma-new'
     )
-    expect(verdaccio.runConumser('mpv-delta@3.0.1', `import { value } from 'mpv-delta'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('mpv-delta@3.0.1', `import { value } from 'mpv-delta'; console.log(value)`)).toBe(
       'delta-new'
     )
   }, 120000)
@@ -94,7 +94,7 @@ describe('multi-package versioning', () => {
 
     expect(verdaccio.runView('mpv-app')).toMatchObject({ version: '1.0.0' })
     expect(verdaccio.runView('mpv-lib')).toMatchObject({ version: '1.0.0' })
-    expect(verdaccio.runConumser('mpv-app@1.0.0', `import { run } from 'mpv-app'; console.log(run())`)).toBe(
+    expect(verdaccio.runConsumer('mpv-app@1.0.0', `import { run } from 'mpv-app'; console.log(run())`)).toBe(
       'app:original'
     )
 
@@ -112,7 +112,7 @@ describe('multi-package versioning', () => {
     })
 
     // Step 4: Consuming app@2.0.0 should run the updated lib code
-    expect(verdaccio.runConumser('mpv-app@2.0.0', `import { run } from 'mpv-app'; console.log(run())`)).toBe(
+    expect(verdaccio.runConsumer('mpv-app@2.0.0', `import { run } from 'mpv-app'; console.log(run())`)).toBe(
       'app:updated'
     )
 
@@ -166,16 +166,16 @@ describe('multi-package versioning', () => {
     expect(verdaccio.runView('ipv-delta')).toMatchObject({ version: '2.5.1' })
 
     // Verify the packages work correctly at their individual versions
-    expect(verdaccio.runConumser('ipv-alpha@1.0.1', `import { value } from 'ipv-alpha'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('ipv-alpha@1.0.1', `import { value } from 'ipv-alpha'; console.log(value)`)).toBe(
       'alpha-new'
     )
-    expect(verdaccio.runConumser('ipv-beta@2.0.1', `import { value } from 'ipv-beta'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('ipv-beta@2.0.1', `import { value } from 'ipv-beta'; console.log(value)`)).toBe(
       'beta-new'
     )
-    expect(verdaccio.runConumser('ipv-gamma@3.0.1', `import { value } from 'ipv-gamma'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('ipv-gamma@3.0.1', `import { value } from 'ipv-gamma'; console.log(value)`)).toBe(
       'gamma-new'
     )
-    expect(verdaccio.runConumser('ipv-delta@2.5.1', `import { value } from 'ipv-delta'; console.log(value)`)).toBe(
+    expect(verdaccio.runConsumer('ipv-delta@2.5.1', `import { value } from 'ipv-delta'; console.log(value)`)).toBe(
       'delta-new'
     )
   }, 120000)

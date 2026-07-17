@@ -1,14 +1,18 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { createTempDir, pj } from '../testing/monocrate-teskit.js'
+import { createTempDir, MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('optional output directory', () => {
+  const teskit = new MonocrateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('creates a temp directory when outputDir is not provided', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -16,7 +20,7 @@ describe('optional output directory', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const result = await monocrate({
+    const result = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -37,7 +41,7 @@ describe('optional output directory', () => {
     })
   })
 
-  it('uses provided outputRoot when specified', async () => {
+  it('uses provided packDestination when specified', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/app/package.json': pj('@test/app'),
@@ -45,17 +49,17 @@ describe('optional output directory', () => {
 `,
     })
 
-    const specifiedOutputRoot = createTempDir('monocrate-explicit-output-')
-    const { outputDir } = await monocrate({
+    const specifiedPackDestination = createTempDir('monocrate-explicit-output-')
+    await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
-      outputRoot: specifiedOutputRoot,
+      packDestination: specifiedPackDestination,
       monorepoRoot,
       publish: false,
       bump: '2.8.512',
     })
 
-    expect(outputDir.startsWith(specifiedOutputRoot)).toBe(true)
-    expect(outputDir).toBe(path.join(specifiedOutputRoot, 'packages/app'))
+    const dir = unfolderify(specifiedPackDestination)
+    expect(Object.keys(dir)).toEqual(['test-app-2.8.512.tgz'])
   })
 })

@@ -1,14 +1,18 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { pj, runMonocrate } from '../testing/monocrate-teskit.js'
+import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('error handling', () => {
+  const teskit = new MonocrateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('handles package with no dist directory (npm pack includes only package.json)', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -16,7 +20,7 @@ describe('error handling', () => {
       // No dist directory created - npm pack will still succeed with just package.json
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       monorepoRoot,
@@ -109,78 +113,6 @@ describe('error handling', () => {
     ).rejects.toThrow(/Package "@test\/external" is located at .* which is outside the monorepo root/)
   })
 
-  it('throws when code imports an in-repo package not listed in dependencies', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      // app imports @test/lib but does NOT list it in dependencies
-      'packages/app/package.json': pj('@test/app'),
-      'packages/app/dist/index.js': `import { greet } from '@test/lib';
-export const message = greet();
-`,
-      // lib exists in the monorepo
-      'packages/lib/package.json': pj('@test/lib'),
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
-    })
-
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow(
-      'Import of in-repo package "@test/lib" found in packages/app/dist/index.js, ' +
-        'but "@test/lib" is not listed in package.json dependencies'
-    )
-  })
-
-  it('throws when code imports an in-repo package not listed in dependencies (via re-export)', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      // app re-exports from @test/lib but does NOT list it in dependencies
-      'packages/app/package.json': pj('@test/app'),
-      'packages/app/dist/index.js': `export { greet } from '@test/lib';
-`,
-      'packages/lib/package.json': pj('@test/lib'),
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
-    })
-
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Import of in-repo package "@test/lib" found in packages/app/dist/index.js')
-  })
-
-  it('throws when code imports an in-repo package not listed in dependencies (via dynamic import)', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { name, workspaces: ['packages/*'] },
-      // app dynamically imports @test/lib but does NOT list it in dependencies
-      'packages/app/package.json': pj('@test/app'),
-      'packages/app/dist/index.js': `const lib = await import('@test/lib');
-export const message = lib.greet();
-`,
-      'packages/lib/package.json': pj('@test/lib'),
-      'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
-    })
-
-    await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/app',
-        monorepoRoot,
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).rejects.toThrow('Import of in-repo package "@test/lib" found in packages/app/dist/index.js')
-  })
-
   it('throws when workspaces field in package.json is malformed', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: 'not-an-array-or-object' },
@@ -230,13 +162,15 @@ export const message = lib.greet();
       'packages/lib/package.json': pj('@test/lib'),
       'packages/lib/dist/index.js': `export function greet() { return 'Hello!' }`,
     })
-    const { stdout, output } = await runMonocrate(monorepoRoot, 'packages/app')
+    const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     expect(output['package.json']).toEqual({
       name: '@test/app',
       version: '2.8.512',
       type: 'module',
       main: 'dist/index.js',
+      dependencies: { '@test/lib': '0.9.9' },
+      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello!')
