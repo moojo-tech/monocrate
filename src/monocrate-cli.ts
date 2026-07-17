@@ -5,17 +5,6 @@ import { hideBin } from 'yargs/helpers'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 
-interface YargsArgs {
-  _: string[]
-  'output-dir'?: string
-  root?: string
-  bump?: string
-  report?: string
-  'mirror-to'?: string
-  'dry-run'?: boolean
-  max?: boolean
-}
-
 export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
@@ -77,9 +66,8 @@ Usage: $0 [options]`
     .option('help', { hidden: true })
 
   void Promise.resolve(parser.parse())
-    .then(async (argv) => {
-      const args = argv as YargsArgs
-      const packages = argv.packages ?? []
+    .then(async (args) => {
+      const packages = args.packages ?? []
 
       if (packages.length === 0) {
         throw new Error('At least one package directory must be specified')
