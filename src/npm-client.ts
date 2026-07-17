@@ -1,10 +1,7 @@
-import * as fsPromises from 'node:fs/promises'
 import { z } from 'zod'
-import { AbsolutePath } from './paths.js'
-import type { NpmOptionsBase } from './run-npm.js'
+import type { AbsolutePath } from './paths.js'
+import type { NpmOptionsBase} from './run-npm.js';
 import { runNpm } from './run-npm.js'
-import { findSingleTarballInDirectory } from './tarball.js'
-import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 const NpmErrorResponse = z.object({
   error: z.object({
@@ -15,10 +12,7 @@ const NpmErrorResponse = z.object({
 })
 
 export class NpmClient {
-  constructor(
-    private readonly npmOptions: NpmOptionsBase | undefined,
-    private readonly tempDirDispenser: TempDirDispenser
-  ) {}
+  constructor(private readonly npmOptions?: NpmOptionsBase) {}
 
   /**
    * Checks if the user is logged in to npm.
@@ -35,7 +29,9 @@ export class NpmClient {
 
     if (!ok) {
       const registry = this.npmOptions?.userconfig ? ` (using config: ${this.npmOptions.userconfig})` : ''
-      throw new Error(`Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`)
+      throw new Error(
+        `Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`
+      )
     }
 
     return stdout.trim()
@@ -44,20 +40,6 @@ export class NpmClient {
   async publish(dir: AbsolutePath, tag?: string): Promise<void> {
     const args = tag ? ['--tag', tag] : []
     await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
-  }
-
-  async publishTarball(
-    tarballPath: AbsolutePath,
-    cwd: AbsolutePath,
-    tag: string | undefined,
-    extraArgs: string[]
-  ): Promise<void> {
-    const args: string[] = [tarballPath]
-    if (tag) {
-      args.push('--tag', tag)
-    }
-    args.push(...extraArgs)
-    await runNpm('publish', args, cwd, { ...this.npmOptions, stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
@@ -97,20 +79,47 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, outputTarballPath: AbsolutePath, options?: { ignoreScripts?: boolean }): Promise<void> {
-    const tempDir = this.tempDirDispenser.create()
-    const args = options?.ignoreScripts
-      ? ['--ignore-scripts', '--pack-destination', tempDir]
-      : ['--pack-destination', tempDir]
-    await runNpm('pack', args, dir, {
+  async pack(dir: AbsolutePath, options?: { dryRun?: boolean }) {
+    const { stdout, ok } = await runNpm('pack', ['--json', ...(options?.dryRun ? ['--dry-run'] : [])], dir, {
       ...this.npmOptions,
       stdio: 'pipe',
-      nonZeroExitCodePolicy: 'throw',
+      nonZeroExitCodePolicy: 'return',
     })
 
-    const packedTarball = await findSingleTarballInDirectory(tempDir)
-    await fsPromises.mkdir(AbsolutePath.dirname(outputTarballPath), { recursive: true })
-    await fsPromises.rm(outputTarballPath, { force: true })
-    await fsPromises.copyFile(packedTarball, outputTarballPath)
+    if (!ok) {
+      const parsed = NpmErrorResponse.safeParse(JSON.parse(stdout))
+      if (!parsed.success) {
+        throw new Error(`Error response of 'npm pack' could not be parsed: ${stdout}`)
+      }
+
+      const code = parsed.data.error.code ?? 'UNKNOWN'
+      const detail = parsed.data.error.detail ?? parsed.data.error.summary ?? '<No Further Details>'
+      throw new Error(`The 'npm view' command failed (code: ${code}): ${detail}`)
+    }
+
+    const parsed = z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          version: z.string(),
+          size: z.number(),
+          unpackedSize: z.number(),
+          shasum: z.string(),
+          integrity: z.string(),
+          filename: z.string(),
+          files: z.array(
+            z.object({
+              path: z.string(),
+            })
+          ),
+        })
+      )
+      .safeParse(JSON.parse(stdout))
+    if (!parsed.success) {
+      throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
+    }
+
+    return parsed.data
   }
 }

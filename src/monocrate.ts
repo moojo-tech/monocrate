@@ -4,22 +4,17 @@ import * as path from 'node:path'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
+import { publish } from './publish.js'
 import { parseVersionSpecifier } from './version-specifier.js'
-import { AbsolutePath, RelativePath } from './paths.js'
+import { AbsolutePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
-import { TempDirDispenser } from './temp-dir-dispenser.js'
-import { createSilentReporter } from './reporter.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
-
-function npmTarballFileName(packageName: string, version: string): string {
-  return `${packageName.replace(/^@/, '').replace(/\//g, '-')}-${version}.tgz`
-}
 
 /**
  * Assembles a monorepo package and its in-repo dependencies for npm publishing.
@@ -28,9 +23,6 @@ function npmTarballFileName(packageName: string, version: string): string {
  * @throws Error if assembly or publishing fails
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
-  const report = options.reporter ?? createSilentReporter()
-  const tempDirDispenser = new TempDirDispenser()
-
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
@@ -43,10 +35,8 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   if (!cwdExists) {
     throw new Error(`cwd does not exist: ${cwd}`)
   }
-
-  const workDir = AbsolutePath(await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-')))
-  const packDestination = AbsolutePath(
-    options.packDestination ? path.resolve(cwd, options.packDestination) : AbsolutePath(options.cwd)
+  const outputRoot = AbsolutePath(
+    options.outputRoot ? path.resolve(cwd, options.outputRoot) : await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-'))
   )
 
   // Validate bump argument before any side effects (defaults to 'minor')
@@ -66,94 +56,67 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     ? AbsolutePath(path.resolve(cwd, options.monorepoRoot))
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
-  report({ type: 'monorepoRoot', root: monorepoRoot })
 
-  const npmClient = new NpmClient({ userconfig: options.npmrcPath }, tempDirDispenser)
+  const npmClient = new NpmClient({ userconfig: options.npmrcPath })
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
-    const username = await npmClient.whoami(cwd)
-    report({ type: 'npmLogin', username })
+    await npmClient.whoami(cwd)
   }
 
-  try {
-    const assemblers = sourceDirs.map(
-      (at) => new PackageAssembler(npmClient, explorer, at, workDir, tempDirDispenser, report)
-    )
+  const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot))
+  const a0 = assemblers.at(0)
+  if (!a0) {
+    throw new Error(`Incosistency - could not find an assembler for the first package`)
+  }
 
-    const pairs = await Promise.all(
-      assemblers.map(async (a) => ({ assembler: a, version: await a.computeNewVersion(versionSpecifier) }))
-    )
+  const pairs = await Promise.all(
+    assemblers.map(async (a) => ({ assembler: a, version: await a.computeNewVersion(versionSpecifier) }))
+  )
 
-    let max = pairs.at(0)?.version
-    if (!max) {
-      throw new Error('Inconsistency - no versions computed')
-    }
-    for (const at of pairs) {
-      max = maxVersion(max, at.version)
-    }
+  let max = pairs.at(0)?.version
+  if (!max) {
+    throw new Error('Inconsistency - no versions computed')
+  }
+  for (const at of pairs) {
+    max = maxVersion(max, at.version)
+  }
 
-    const packagePlans = pairs.map((at) => {
-      const version = useMax ? max : at.version
-      const tarballPath = AbsolutePath.join(
-        packDestination,
-        RelativePath(npmTarballFileName(at.assembler.publishAs, version))
-      )
-      report({ type: 'version', packageName: at.assembler.publishAs, version })
-      return { assembler: at.assembler, version, tarballPath }
-    })
-    const allPackagesForMirror = new Map<string, MonorepoPackage>()
+  const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
+  const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
-    const npmPublishArgs = options.npmPublishArgs ?? []
-    const isSinglePackagePublish = options.publish && packagePlans.length === 1
-
-    // Phase 1: Assemble all packages and generate their final tarballs.
-    // If publishing multiple packages, publish each tarball with --tag pending (two-phase).
-    // If publishing a single package, publish directly to latest (single-phase).
-    for (const { assembler, version, tarballPath } of packagePlans) {
-      const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
-      for (const pkg of compiletimeMembers) {
-        allPackagesForMirror.set(pkg.name, pkg)
-      }
-      report({ type: 'assemble', packageName: assembler.publishAs, version })
-
-      if (options.publish) {
-        const tag = isSinglePackagePublish ? undefined : 'pending'
-        await npmClient.publishTarball(tarballPath, cwd, tag, npmPublishArgs)
-        report({ type: 'publish', packageName: assembler.publishAs, version })
-      } else {
-        report({ type: 'pack', packageName: assembler.publishAs, tarballPath })
-      }
+  // Phase 1: Assemble all packages and publish with --tag pending
+  for (const { assembler, version } of resolvedPairs) {
+    const { compiletimeMembers } = await assembler.assemble(version)
+    for (const pkg of compiletimeMembers) {
+      allPackagesForMirror.set(pkg.name, pkg)
     }
 
-    // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded).
-    // Skipped for single-package publishes since they publish directly to latest.
-    if (options.publish && !isSinglePackagePublish) {
-      for (const { assembler, version } of packagePlans) {
-        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', cwd)
-        report({ type: 'tagLatest', packageName: assembler.publishAs, version })
-      }
+    if (options.publish) {
+      await publish(npmClient, assembler.getOutputDir(), 'pending')
     }
+  }
 
-    // Mirror source files if mirrorTo is specified
-    if (options.mirrorTo) {
-      const mirrorDir = AbsolutePath(path.resolve(cwd, options.mirrorTo))
-      await mirrorSources([...allPackagesForMirror.values()], mirrorDir)
+  // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
+  if (options.publish) {
+    for (const { assembler, version } of resolvedPairs) {
+      await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
     }
+  }
 
-    return {
-      resolvedVersion: useMax ? max : undefined,
-      summaries: packagePlans.map(({ assembler, version, tarballPath }) => ({
-        packageName: assembler.pkgName,
-        version,
-        tarballPath,
-      })),
-    }
-  } finally {
-    try {
-      tempDirDispenser.cleanup()
-    } catch {
-      // Best-effort cleanup only: temp directory cleanup failure must not mask the main operation result.
-    }
+  // Mirror source files if mirrorTo is specified
+  if (options.mirrorTo) {
+    const mirrorDir = AbsolutePath(path.resolve(cwd, options.mirrorTo))
+    await mirrorSources([...allPackagesForMirror.values()], mirrorDir)
+  }
+
+  return {
+    outputDir: a0.getOutputDir(),
+    resolvedVersion: useMax ? max : undefined,
+    summaries: resolvedPairs.map(({ assembler, version }) => ({
+      outputDir: assembler.getOutputDir(),
+      packageName: assembler.pkgName,
+      version,
+    })),
   }
 }

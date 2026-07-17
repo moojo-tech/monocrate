@@ -9,8 +9,8 @@ export interface PackageLocation {
   name: string
 
   /**
-   * Absolute path to the extracted package payload directory (the unpacked `package/` folder from `npm pack`).
-   * @example "/tmp/monocrate-pack-abc123/package"
+   * Absolute path to the package's directory in the repo.
+   * @example "/home/user/monorepo/packages/my-package"
    */
   fromDir: AbsolutePath
 
@@ -21,7 +21,7 @@ export interface PackageLocation {
   toDir: AbsolutePath
 
   /**
-   * Individual file paths (relative to `fromDir`) to copy, as determined from the unpacked `npm pack` payload.
+   * Individual file paths (relative to the package dir) to copy, as determined by `npm pack --dry-run`.
    * These are the exact files npm would include in the published tarball.
    * @example ["dist/index.js", "dist/utils.js", "package.json"]
    */

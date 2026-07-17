@@ -24,17 +24,6 @@ const NpmViewResult = z.object({
 })
 type NpmViewResult = z.infer<typeof NpmViewResult>
 
-interface RunConsumerOptions {
-  manager?: 'npm' | 'yarn@v1' | 'yarn@berry' | 'pnpm' | 'bun'
-}
-
-// Both yarn v1 (`yarn`) and yarn berry (`@yarnpkg/cli-dist`) register the same binary
-// names (`yarn`, `yarnpkg`), so npx can't distinguish them when both are installed.
-// We resolve the exact bin paths instead.
-const yarnV1Bin = path.resolve(import.meta.dirname, '../../node_modules/yarn/bin/yarn.js')
-const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarnpkg/cli-dist/bin/yarn.js')
-const bunBin = path.resolve(import.meta.dirname, '../../node_modules/.bin/bun')
-
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
 
@@ -71,36 +60,12 @@ export class VerdaccioTestkit {
     return parsed.data
   }
 
-  runInstall(dir: string, packageName: string, options?: RunConsumerOptions) {
-    const registry = this.get().url
-    switch (options?.manager) {
-      case 'yarn@v1': {
-        execSync(`node ${yarnV1Bin} add ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
-        return
-      }
-      case 'yarn@berry': {
-        writeYarnBerryConfig(dir, registry)
-        execSync(`node ${yarnBerryBin} add ${packageName}`, {
-          cwd: dir,
-          stdio: 'pipe',
-          env: noProxyEnv(),
-        })
-        return
-      }
-      case 'pnpm': {
-        fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-        execSync(`pnpm add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
-        return
-      }
-      case 'bun': {
-        fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-        execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
-        return
-      }
-      default: {
-        execSync(`npm install ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
-      }
-    }
+  runInstall(dir: string, packageName: string) {
+    // execSync throws if the command fails, which will fail the test
+    execSync(`npm install ${packageName} --registry=${this.get().url}`, {
+      cwd: dir,
+      stdio: 'pipe',
+    })
   }
 
   publishPackage(name: string, version: string, jsSourceCode: string) {
@@ -114,26 +79,13 @@ export class VerdaccioTestkit {
     execSync(`npm publish --registry=${this.get().url}`, { cwd: dir, stdio: 'pipe' })
   }
 
-  publishTarball(tarballPath: string) {
-    execSync(`npm publish ${JSON.stringify(tarballPath)} --userconfig ${JSON.stringify(this.get().npmrcPath)}`, {
-      stdio: 'pipe',
-    })
-  }
-
-  runConsumer(depToInstall: string, ...jsSourceCode: string[]): string
-  runConsumer(depToInstall: string, options: RunConsumerOptions, ...jsSourceCode: string[]): string
-  runConsumer(depToInstall: string, optionsOrCode?: RunConsumerOptions | string, ...jsSourceCode: string[]): string {
-    const options: RunConsumerOptions = typeof optionsOrCode === 'object' ? optionsOrCode : {}
-    const allCode = typeof optionsOrCode === 'string' ? [optionsOrCode, ...jsSourceCode] : jsSourceCode
-
+  runConumser(depToInstall: string, ...jsSourceCode: string[]) {
     const fileName = `dist/index.js`
     const dir = folderify({
       'package.json': { name: 'na', version: '1.0.0' },
-      [fileName]: allCode.join('\n'),
+      [fileName]: jsSourceCode.join('\n'),
     })
-
-    this.runInstall(dir, depToInstall, options)
-
+    this.runInstall(dir, depToInstall)
     return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
   }
 }
@@ -230,32 +182,6 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
       reject(err)
     })
   })
-}
-
-function noProxyEnv(): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (!/proxy/i.test(key)) {
-      env[key] = value
-    }
-  }
-  return env
-}
-
-function writeYarnBerryConfig(dir: string, registry: string) {
-  fs.writeFileSync(
-    path.join(dir, '.yarnrc.yml'),
-    [
-      'nodeLinker: node-modules',
-      `npmRegistryServer: "${registry}"`,
-      'enableImmutableInstalls: false',
-      'enableGlobalCache: false',
-      'httpProxy: ""',
-      'httpsProxy: ""',
-      'unsafeHttpWhitelist:',
-      '  - localhost',
-    ].join('\n')
-  )
 }
 
 function stopVerdaccio(verdaccio: VerdaccioServer): Promise<void> {

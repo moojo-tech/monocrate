@@ -1,5 +1,3 @@
-import type { Reporter } from './reporter.js'
-
 export interface MonocrateOptions {
   /**
    * Paths to the directories of the various package to assemble. If a string, it is transformed to a single element array.
@@ -7,12 +5,12 @@ export interface MonocrateOptions {
    */
   pathToSubjectPackages: string[] | string
   /**
-   * Path to the destination directory where tarballs will be written.
+   * Path to the output root directory where the assembly will be written.
    * The actual output will be placed in a subdirectory named after the package.
    * Can be absolute or relative. Relative paths are resolved from the cwd option.
    * If not specified, a dedicated temp directory is created under the system temp directory.
    */
-  packDestination?: string
+  outputRoot?: string
   /**
    * Path to the monorepo root directory.
    * Can be absolute or relative. Relative paths are resolved from the cwd option.
@@ -73,16 +71,4 @@ export interface MonocrateOptions {
    * and you want to preserve meaningful versioning per package.
    */
   max?: boolean
-
-  /**
-   * Additional arguments to pass through to `npm publish`.
-   * These are appended verbatim to the npm publish command line.
-   */
-  npmPublishArgs?: string[]
-
-  /**
-   * Reporter function called with semantic progress events during the pipeline.
-   * If not provided, a silent reporter is used (no output).
-   */
-  reporter?: Reporter
 }
