@@ -117,6 +117,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
       outputDir: assembler.getOutputDir(),
       packageName: assembler.pkgName,
       version,
+      tarballPath: `/tmp/wtf-${crypto.randomUUID()}`,
     })),
   }
 }
