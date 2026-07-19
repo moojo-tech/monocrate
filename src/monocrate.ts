@@ -30,7 +30,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 }
 
 async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
-  const tarballsDir = dispenser.create()
+  const tarballsDir = options.packDestination ?? options.cwd
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
@@ -92,7 +92,16 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
 
   const resolvedPairs = pairs.map((at) => {
     const version = useMax ? max : at.version
-    return { ...at, version, tarballPath: path.join(tarballsDir, `${at.assembler.publishAs}-${version}.tgz`) }
+    let pn = at.assembler.publishAs
+    if (pn.startsWith('@')) {
+      const [a, b] = pn.slice(1).split('/')
+      if (!a || !b) {
+        throw new Error(`Illegal package name: ${pn}`)
+      }
+
+      pn = a + '-' + b
+    }
+    return { ...at, version, tarballPath: path.join(tarballsDir, `${pn}-${version}.tgz`) }
   })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 

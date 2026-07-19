@@ -18,9 +18,7 @@ describe('file format support', () => {
           type: 'module',
           main: 'dist/index.js',
         }),
-        'packages/app/dist/index.js': `import { helper } from '@test/lib/utils';
-console.log(helper());
-`,
+        'packages/app/dist/index.js': `import { helper } from '@test/lib/utils'; console.log(helper());`,
         'packages/lib/package.json': {
           name: '@test/lib',
           version: '1.0.0',
@@ -30,19 +28,15 @@ console.log(helper());
             './utils': './dist/utils/helper.mjs',
           },
         },
-        'packages/lib/dist/index.js': `export const main = 'main';
-`,
-        'packages/lib/dist/utils/helper.mjs': `export function helper() {
-  return 'Helper from .mjs!';
-}
-`,
+        'packages/lib/dist/index.js': `export const main = 'main';`,
+        'packages/lib/dist/utils/helper.mjs': `export function helper() { return 'Helper from .mjs!'; }`,
       })
 
       const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
 
       expect(stdout.trim()).toBe('Helper from .mjs!')
 
-      const libPkgJson = output['node_modules/@test/lib/package.json'] as Record<string, unknown>
+      const libPkgJson = output['deps/__test__lib/package.json'] as Record<string, unknown>
       expect(libPkgJson.exports).toEqual({
         '.': './dist/index.js',
         './utils': './dist/utils/helper.mjs',
@@ -72,9 +66,13 @@ console.log(greet());`,
 `,
       })
 
-      const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
-      expect(output).toHaveProperty('node_modules/@test/lib/dist/index.cjs')
-      expect(stdout.trim()).toBe('hello')
+      await expect(teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })).rejects.toThrow(
+        [
+          'Cannot process a .js file in a CommonJS package: packages/app/dist/index.js',
+          'Package "@test/app" does not have "type": "module" in package.json.',
+          'Monocrate only supports ES modules. Set "type": "module" in package.json or use .mjs extension.',
+        ].join('\n')
+      )
     })
   })
 })

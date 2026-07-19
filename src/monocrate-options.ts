@@ -72,10 +72,7 @@ export interface MonocrateOptions {
    */
   max?: boolean
 
-  /**
-   * @deprecated ignored
-   */
-  packDestination?: unknown
+  packDestination?: string
 
   /**
    * @deprecated ignored
