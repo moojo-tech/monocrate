@@ -137,7 +137,9 @@ export class NpmClient {
       throw new Error(`npm pack of directory ${d} returned ${String(parsed.data.length)} items (expected 1)`)
     }
 
-    fs.cpSync(path.join(d, ret.filename), tarballPath)
+    if (!options?.dryRun) {
+      fs.cpSync(path.join(d, ret.filename), tarballPath)
+    }
     ret.filename = tarballPath
     return ret
   }
