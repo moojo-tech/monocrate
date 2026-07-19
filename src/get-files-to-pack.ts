@@ -10,7 +10,7 @@ import type { NpmClient } from './npm-client.js'
  * @example getFilesToPack("/home/user/my-package") => ["dist/index.js", "README.md", "package.json"]
  */
 export async function getFilesToPack(npmClient: NpmClient, packageDir: AbsolutePath): Promise<string[]> {
-  const o = await npmClient.pack(packageDir, { dryRun: true })
+  const o = await npmClient.pack(packageDir, '', { dryRun: true })
   if (o.length !== 1) {
     throw new Error(`Expected npm pack to return a single element array`)
   }

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { AbsolutePath } from './paths.js'
-import type { NpmOptionsBase} from './run-npm.js';
+import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
 
 const NpmErrorResponse = z.object({
@@ -29,9 +29,7 @@ export class NpmClient {
 
     if (!ok) {
       const registry = this.npmOptions?.userconfig ? ` (using config: ${this.npmOptions.userconfig})` : ''
-      throw new Error(
-        `Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`
-      )
+      throw new Error(`Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`)
     }
 
     return stdout.trim()
@@ -79,8 +77,20 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, options?: { dryRun?: boolean }) {
-    const { stdout, ok } = await runNpm('pack', ['--json', ...(options?.dryRun ? ['--dry-run'] : [])], dir, {
+  async pack(dir: AbsolutePath, tarballPath: string, options?: { dryRun?: boolean; ignoreScripts?: boolean }) {
+    const d = ''
+    // if (d) {
+    //   const d = this.dispenser.create()
+    //   throw new Error('&& failMe')
+    // }
+    const cliOptions = [
+      '--json',
+      '--pack-destination',
+      d,
+      options?.dryRun ? '--dry-run' : '',
+      options?.ignoreScripts ? '--ignore-scripts' : '',
+    ].filter(Boolean)
+    const { stdout, ok } = await runNpm('pack', cliOptions, dir, {
       ...this.npmOptions,
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
@@ -100,14 +110,14 @@ export class NpmClient {
     const parsed = z
       .array(
         z.object({
-          id: z.string(),
-          name: z.string(),
-          version: z.string(),
-          size: z.number(),
-          unpackedSize: z.number(),
-          shasum: z.string(),
-          integrity: z.string(),
-          filename: z.string(),
+          // id: z.string(),
+          // name: z.string(),
+          // version: z.string(),
+          // size: z.number(),
+          // unpackedSize: z.number(),
+          // shasum: z.string(),
+          // integrity: z.string(),
+          // filename: z.string(),
           files: z.array(
             z.object({
               path: z.string(),

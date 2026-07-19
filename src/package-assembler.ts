@@ -1,4 +1,4 @@
-import tar from 'tar'
+// import tar from 'tar'
 import * as fsPromises from 'node:fs/promises'
 import * as path from 'node:path'
 import { collectPackageLocations } from './collect-package-locations.js'
@@ -41,7 +41,10 @@ export class PackageAssembler {
     return await resolveVersion(this.npmClient, this.fromDir, this.publishAs, versionSpecifier, packageJsonVersion)
   }
 
-  async assemble(newVersion: string | undefined, tarballPath: string): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
+  async assemble(
+    newVersion: string | undefined,
+    tarballPath: string
+  ): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
     const locations = await collectPackageLocations(this.npmClient, closure, outputDir)
@@ -72,7 +75,7 @@ export class PackageAssembler {
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
     rewritePackageJson(closure, newVersion, outputDir)
 
-
+    await this.npmClient.pack(outputDir, tarballPath, { ignoreScripts: true })
 
     return { compiletimeMembers: closure.compiletimeMembers }
   }
