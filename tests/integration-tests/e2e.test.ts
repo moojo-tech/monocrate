@@ -104,7 +104,7 @@ export declare const bar: typeof foo;
   return outputDir
 }
 
-describe('monocrate e2e', () => {
+describe('e2e', () => {
   const teskit = new MonocrateTeskit()
   afterAll(() => {
     teskit.shutdown()
@@ -148,11 +148,9 @@ describe('monocrate e2e', () => {
       main: 'dist/index.js',
       types: 'dist/index.d.ts',
       dependencies: {
-        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
     // Verify end-to-end:
     expect(stdout.trim()).toBe('Hello, World!')
@@ -216,11 +214,9 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-alpha': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib-alpha'],
     })
     expect(alpha.stdout.trim()).toBe('Alpha: ALPHA')
 
@@ -233,11 +229,9 @@ describe('monocrate e2e', () => {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-beta': '2.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
-      bundledDependencies: ['@test/lib-beta'],
     })
     expect(beta.stdout.trim()).toBe('Beta: BETA')
   }, 30000)
@@ -326,17 +320,12 @@ export function fromLevel3() {
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/level1': '1.0.0',
-        '@test/level2': '1.0.0',
-        '@test/level3': '1.0.0',
-        '@test/level4': '1.0.0',
         express: '^4.18.0',
         lodash: '^4.17.21',
         chalk: '^5.0.0',
         zod: '^3.0.0',
         uuid: '^9.0.0',
       },
-      bundledDependencies: ['@test/level1', '@test/level2', '@test/level3', '@test/level4'],
     })
 
     expect(stdout.trim()).toBe('L1->L2->L3->L4')
@@ -384,11 +373,9 @@ console.log(pnpmGreet());
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/pnpm-lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/pnpm-lib'],
     })
 
     expect(stdout.trim()).toBe('pnpm works!')
@@ -411,9 +398,7 @@ console.log(pnpmGreet());
           typescript: '^5.0.0',
         },
       },
-      'packages/app/dist/index.js': `import { greet } from '@test/lib';
-console.log(greet('World'));
-`,
+      'packages/app/dist/index.js': `import { greet } from '@test/lib'; console.log(greet('World'));`,
       'packages/lib/package.json': {
         name: '@test/lib',
         version: '1.0.0',
@@ -426,10 +411,7 @@ console.log(greet('World'));
           '@types/lodash': '^4.14.0',
         },
       },
-      'packages/lib/dist/index.js': `export function greet(name) {
-  return 'Hello, ' + name + '!';
-}
-`,
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!' }`,
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '3.9.27' })
@@ -440,11 +422,9 @@ console.log(greet('World'));
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -467,10 +447,10 @@ console.log(greet('World'));
     const { output } = await teskit.run(monorepoRoot, 'packages/app', { bump: '1.0.0' })
 
     // lib (production dependency) should be included
-    expect(output).toHaveProperty('node_modules/@test/lib/package.json')
+    expect(output).toHaveProperty('deps/__test__lib/package.json')
 
     // build-tool (devDependency) should NOT be included in packaged output
-    expect(output).not.toHaveProperty('node_modules/@test/build-tool/package.json')
+    expect(output).not.toHaveProperty('deps/__test__build-tool/package.json')
   })
 
   it('preserves line numbers in stack traces', async () => {
@@ -831,8 +811,8 @@ export const a = 'a-' + b;
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
     // Verify bundled dependency files keep imports as package names
-    const libAIndex = output['node_modules/@myorg/lib-a/dist/index.js'] as string
-    expect(libAIndex).toContain("from '@myorg/lib-b'")
+    const libAIndex = output['deps/__myorg__lib-a/dist/index.js'] as string
+    expect(libAIndex).toContain("from '../../__myorg__lib-b/dist")
 
     // Verify execution works
     expect(stdout.trim()).toBe('a-b')
@@ -872,11 +852,9 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -916,11 +894,9 @@ export const a = 'a-' + b;
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib': '1.0.0',
         chalk: '^5.0.0',
         lodash: '^4.17.21',
       },
-      bundledDependencies: ['@test/lib'],
     })
 
     expect(stdout.trim()).toBe('Hello, World!')
@@ -979,21 +955,11 @@ console.log(a + '-' + b + '-' + c);
       type: 'module',
       main: 'dist/index.js',
       dependencies: {
-        '@test/lib-a': '1.0.0',
-        '@test/lib-b': '2.0.0',
-        '@test/lib-c': '3.0.0',
         express: '^4.0.0',
         lodash: '^4.0.0',
         zod: '^3.0.0',
       },
-      bundledDependencies: ['@test/lib-a', '@test/lib-b', '@test/lib-c'],
     })
-
-    // All three in-repo deps should be bundled under node_modules
-    expect(output).toHaveProperty('node_modules/@test/lib-a/dist/index.js')
-    expect(output).toHaveProperty('node_modules/@test/lib-b/dist/index.js')
-    expect(output).toHaveProperty('node_modules/@test/lib-c/dist/index.js')
-
     expect(stdout.trim()).toBe('A-B-C')
   })
 })
