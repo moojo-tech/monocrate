@@ -25,15 +25,14 @@ export type { MonocrateResult } from './monocrate-result.js'
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
   // This dispenser is used for the tarballs which are intentionally kept
-  const dispenser = new TempDirDispenser() 
-  const tarballsDir = dispenser.create()
-  return await monocrateImpl(options, tarballsDir)
+  const dispenser = new TempDirDispenser()
+  return await monocrateImpl(options, dispenser)
 }
 
-async function monocrateImpl(options: MonocrateOptions, tarballsDir: string): Promise<MonocrateResult> {
+async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
+  const tarballsDir = dispenser.create()
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
-
 
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
@@ -66,7 +65,7 @@ async function monocrateImpl(options: MonocrateOptions, tarballsDir: string): Pr
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
 
-  const npmClient = new NpmClient({ userconfig: options.npmrcPath })
+  const npmClient = new NpmClient(dispenser, { userconfig: options.npmrcPath })
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
@@ -93,7 +92,7 @@ async function monocrateImpl(options: MonocrateOptions, tarballsDir: string): Pr
 
   const resolvedPairs = pairs.map((at) => {
     const version = useMax ? max : at.version
-    return { ...at, version, tarballPath: path.join(tarballsDir, `${at.assembler.publishAs}-${version}.tgz`)  }
+    return { ...at, version, tarballPath: path.join(tarballsDir, `${at.assembler.publishAs}-${version}.tgz`) }
   })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
@@ -129,7 +128,7 @@ async function monocrateImpl(options: MonocrateOptions, tarballsDir: string): Pr
       outputDir: assembler.getOutputDir(),
       packageName: assembler.pkgName,
       version,
-      tarballPath
+      tarballPath,
     })),
   }
 }
