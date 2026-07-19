@@ -94,14 +94,7 @@ export class VerdaccioTestkit {
     }
     case 'bun': {
       fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-      try {
-        execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
-      } catch (e) {
-        const ee = e as { stdout: Buffer; stderr: Buffer }
-        console.error(`stdout=`, ee.stdout.toString())
-        console.error(`stderr=`, ee.stderr.toString())
-        throw e
-      }
+      execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
       return
     }
     default: {
