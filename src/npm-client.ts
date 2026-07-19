@@ -1,7 +1,10 @@
+import fs from 'fs'
+import path from 'path'
 import { z } from 'zod'
 import type { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 const NpmErrorResponse = z.object({
   error: z.object({
@@ -12,7 +15,10 @@ const NpmErrorResponse = z.object({
 })
 
 export class NpmClient {
-  constructor(private readonly npmOptions?: NpmOptionsBase) {}
+  constructor(
+    private readonly dispenser: TempDirDispenser,
+    private readonly npmOptions?: NpmOptionsBase
+  ) {}
 
   /**
    * Checks if the user is logged in to npm.
@@ -78,11 +84,7 @@ export class NpmClient {
   }
 
   async pack(dir: AbsolutePath, tarballPath: string, options?: { dryRun?: boolean; ignoreScripts?: boolean }) {
-    const d = ''
-    // if (d) {
-    //   const d = this.dispenser.create()
-    //   throw new Error('&& failMe')
-    // }
+    const d = this.dispenser.create()
     const cliOptions = [
       '--json',
       '--pack-destination',
@@ -110,14 +112,14 @@ export class NpmClient {
     const parsed = z
       .array(
         z.object({
-          // id: z.string(),
-          // name: z.string(),
-          // version: z.string(),
-          // size: z.number(),
-          // unpackedSize: z.number(),
-          // shasum: z.string(),
-          // integrity: z.string(),
-          // filename: z.string(),
+          id: z.string(),
+          name: z.string(),
+          version: z.string(),
+          size: z.number(),
+          unpackedSize: z.number(),
+          shasum: z.string(),
+          integrity: z.string(),
+          filename: z.string(),
           files: z.array(
             z.object({
               path: z.string(),
@@ -130,6 +132,13 @@ export class NpmClient {
       throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
     }
 
-    return parsed.data
+    const ret = parsed.data.at(0)
+    if (!ret || parsed.data.length !== 1) {
+      throw new Error(`npm pack of directory ${d} returned ${String(parsed.data.length)} items (expected 1)`)
+    }
+
+    fs.cpSync(path.join(d, ret.filename), tarballPath)
+    ret.filename = tarballPath
+    return ret
   }
 }
