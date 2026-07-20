@@ -42,7 +42,7 @@ export class NpmClient {
   }
 
   async publish(tarballPath: string, tag?: string, passThroughArgs?: string[]): Promise<void> {
-    const args = [tarballPath, ...(tag ? ['--tag', tag] : []), ...(passThroughArgs ?? [])]
+    const args = [tarballPath, ...(passThroughArgs ?? []), ...(tag ? ['--tag', tag] : [])]
     await runNpm('publish', args, AbsolutePath(path.dirname(tarballPath)), { ...this.npmOptions, stdio: 'inherit' })
   }
 
