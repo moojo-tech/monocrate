@@ -41,16 +41,27 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
     thirdPartyVersions?: Map<string, VersionInfo[]>
   ): Map<string, MonorepoPackage> {
     const visited = new Map<string, MonorepoPackage>()
+    const depPath: string[] = []
 
     function visit(pkg: MonorepoPackage): void {
+      const where = depPath.indexOf(pkg.name)
+      if (where >= 0) {
+        const cycle = [...depPath.slice(where), pkg.name]
+        throw new Error(
+          `Circular dependency detected:\n  ${cycle.join(' → ')}\n\nMonocrate cannot assemble packages with circular dependencies.`
+        )
+      }
+      depPath.push(pkg.name)
+
       if (visited.has(pkg.name)) {
+        depPath.pop()
         return
       }
       visited.set(pkg.name, pkg)
 
       const deps = includeDevDeps
         ? { ...pkg.packageJson.dependencies, ...pkg.packageJson.devDependencies }
-        : pkg.packageJson.dependencies ?? {}
+        : (pkg.packageJson.dependencies ?? {})
 
       for (const [depName, depVersion] of Object.entries(deps)) {
         const depPackage = repoExplorer.lookupPackage(depName)
@@ -66,6 +77,8 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
           thirdPartyVersions.set(depName, existing)
         }
       }
+
+      depPath.pop()
     }
 
     visit(root)
