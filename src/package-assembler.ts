@@ -1,4 +1,3 @@
-// import tar from 'tar'
 import * as fsPromises from 'node:fs/promises'
 import * as path from 'node:path'
 import { collectPackageLocations } from './collect-package-locations.js'
