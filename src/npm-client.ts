@@ -85,7 +85,7 @@ export class NpmClient {
 
   async pack(
     dir: AbsolutePath,
-    options?:
+    options:
       | { dryRun?: false; tarballPath: string; ignoreScripts?: boolean }
       | { dryRun: true; ignoreScripts?: boolean }
   ) {
