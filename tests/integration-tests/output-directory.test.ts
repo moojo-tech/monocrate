@@ -1,5 +1,6 @@
-import * as fs from 'node:fs'
-import * as path from 'node:path'
+import os from 'node:os'
+import fs from 'node:fs'
+import path from 'node:path'
 import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
@@ -61,5 +62,25 @@ describe('optional output directory', () => {
 
     const dir = unfolderify(specifiedPackDestination)
     expect(Object.keys(dir)).toEqual(['test-app-2.8.512.tgz'])
+  })
+
+  it('resolves a relative packDestination against cwd', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { name, workspaces: ['packages/*'] },
+      'packages/app-foo/package.json': pj('@acme/app-foo'),
+      'packages/app-foo/dist/index.js': `export const foo = 'foo';`,
+    })
+
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), '111'))
+
+    await monocrate({
+      cwd,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app-foo'),
+      packDestination: 'THIS_IS_THE_DIR',
+      monorepoRoot,
+      publish: false,
+      bump: '2.8.512',
+    })
+    expect(fs.readdirSync(path.join(cwd, 'THIS_IS_THE_DIR'))).toEqual(['acme-app-foo-2.8.512.tgz'])
   })
 })
