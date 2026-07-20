@@ -86,7 +86,6 @@ export class NpmClient {
   async pack(
     dir: AbsolutePath,
     options: {
-      dryRun?: boolean
       ignoreScripts?: boolean
       /**
        * Where to place the resulting tarball. If not specified, the tarball will be placed in a temp dir. The caller
@@ -97,13 +96,9 @@ export class NpmClient {
     }
   ) {
     const d = this.dispenser.create()
-    const cliOptions = [
-      '--json',
-      '--pack-destination',
-      d,
-      options?.dryRun ? '--dry-run' : '',
-      options?.ignoreScripts ? '--ignore-scripts' : '',
-    ].filter(Boolean)
+    const cliOptions = ['--json', '--pack-destination', d, options?.ignoreScripts ? '--ignore-scripts' : ''].filter(
+      Boolean
+    )
     const { stdout, ok } = await runNpm('pack', cliOptions, dir, {
       ...this.npmOptions,
       stdio: 'pipe',

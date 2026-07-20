@@ -13,7 +13,7 @@ import type { TempDirDispenser } from './temp-dir-dispenser.js'
  * @example getFilesToPack("/home/user/my-package") => ["dist/index.js", "README.md", "package.json"]
  */
 export async function getFilesToPack(npmClient: NpmClient, packageDir: AbsolutePath, dispenser: TempDirDispenser) {
-  const packRes = await npmClient.pack(packageDir, { dryRun: false, ignoreScripts: false })
+  const packRes = await npmClient.pack(packageDir, { ignoreScripts: false })
 
   const d = dispenser.create()
   await Tar.extract({ file: packRes.tarballPath, gzip: true, cwd: d })

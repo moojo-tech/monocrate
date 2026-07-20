@@ -24,7 +24,6 @@ export type { MonocrateResult } from './monocrate-result.js'
  * @throws Error if assembly or publishing fails
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
-  // This dispenser is used for the tarballs which are intentionally kept
   const dispenser = new TempDirDispenser()
   try {
     return await monocrateImpl(options, dispenser)

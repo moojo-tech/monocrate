@@ -18,6 +18,7 @@ export class PackageAssembler {
   readonly pkgName
   readonly publishAs
   private readonly pathInRepo
+
   constructor(
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
