@@ -73,7 +73,7 @@ describe('optional output directory', () => {
 
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), '111'))
 
-    await monocrate({
+    const { summaries } = await monocrate({
       cwd,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app-foo'),
       packDestination: 'THIS_IS_THE_DIR',
@@ -82,5 +82,6 @@ describe('optional output directory', () => {
       bump: '2.8.512',
     })
     expect(fs.readdirSync(path.join(cwd, 'THIS_IS_THE_DIR'))).toEqual(['acme-app-foo-2.8.512.tgz'])
+    expect(summaries).toMatchObject([{ tarballPath: path.join(cwd, 'THIS_IS_THE_DIR', 'acme-app-foo-2.8.512.tgz') }])
   })
 })
