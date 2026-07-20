@@ -89,7 +89,7 @@ export class NpmClient {
       ignoreScripts?: boolean
       /**
        * Where to place the resulting tarball. If not specified, the tarball will be placed in a temp dir. The caller
-       * can access it via the return value's .filename field, but it is subjected to cleanups (dictated by this
+       * can access it via the return value's .tarballPath field, but it is subjected to cleanups (dictated by this
        * instance's TempDirDispenser).
        */
       tarballPath?: string
