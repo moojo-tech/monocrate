@@ -72,7 +72,24 @@ export interface MonocrateOptions {
    */
   max?: boolean
 
+  /**
+   * Directory where the tarball of each assembly is placed, named `<name>-<version>.tgz`
+   * (scoped names have their `@` dropped and `/` replaced with `-`).
+   * If not specified, defaults to the cwd option.
+   */
   packDestination?: string
+  /**
+   * Extra CLI arguments appended to the `npm publish` invocation (e.g., ["--access", "public"]).
+   * Only relevant when publish is true.
+   */
   npmPublishArgs?: string[]
+  /**
+   * How to treat dynamic `import()` calls whose argument is not a string literal. Such imports
+   * cannot be rewritten, so if they resolve to an in-repo dependency they will break at runtime
+   * in the published package: "allow" leaves them as-is, "reject" fails the assembly.
+   * String-literal dynamic imports are always rewritten, regardless of this value.
+   *
+   * Defaults to "allow".
+   */
   dynamicImportsPolicy?: 'allow' | 'reject'
 }
