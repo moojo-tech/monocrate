@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    maxWorkers: 2,
+    minWorkers: 1,
     include: ['tests/**/*.test.ts'],
     reporters: ['basic'],
     coverage: {
