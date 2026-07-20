@@ -30,6 +30,10 @@ Usage: $0 [options]`
         type: 'string' as const,
         description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
       },
+      'pack-destination': {
+        type: 'string' as const,
+        description: 'Directory where the tarball(s) to publish will be placed at',
+      },
       'output-dir': {
         alias: 'o',
         type: 'string' as const,
@@ -74,13 +78,14 @@ Usage: $0 [options]`
       }
       const options: MonocrateOptions = {
         pathToSubjectPackages: packages,
-        outputRoot: args['output-dir'],
+        outputRoot: args.outputDir,
         monorepoRoot: args.root,
         bump: args.bump,
-        publish: !args['dry-run'],
+        publish: !args.dryRun,
         cwd: process.cwd(),
-        mirrorTo: args['mirror-to'],
+        mirrorTo: args.mirrorTo,
         max: args.max,
+        packDestination: args.packDestination,
       }
       const result = await monocrate(options)
       const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')

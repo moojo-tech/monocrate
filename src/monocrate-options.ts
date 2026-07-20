@@ -4,6 +4,7 @@ export interface MonocrateOptions {
    * Can be absolute or relative. Relative paths are resolved from the cwd option.
    */
   pathToSubjectPackages: string[] | string
+  // TODO(imaman): do we still need it?
   /**
    * Path to the output root directory where the assembly will be written.
    * The actual output will be placed in a subdirectory named after the package.
