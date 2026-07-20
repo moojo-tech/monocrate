@@ -85,9 +85,16 @@ export class NpmClient {
 
   async pack(
     dir: AbsolutePath,
-    options:
-      | { dryRun?: false; tarballPath: string; ignoreScripts?: boolean }
-      | { dryRun: true; ignoreScripts?: boolean }
+    options: {
+      dryRun?: boolean
+      ignoreScripts?: boolean
+      /**
+       * Where to place the resulting tarball. If not specified, the tarball will be placed in a temp dir. The caller
+       * can access it via the return value's .filename field, but it is subjected to cleanups (dictated by this
+       * instance's TempDirDispenser).
+       */
+      tarballPath?: string
+    }
   ) {
     const d = this.dispenser.create()
     const cliOptions = [
@@ -142,15 +149,11 @@ export class NpmClient {
       throw new Error(`npm pack of directory ${dir} returned ${String(parsed.data.length)} items (expected 1)`)
     }
 
-    if (options) {
-      if (options.dryRun) {
-        // do nothing
-      } else {
-        fs.cpSync(path.join(d, ret.filename), options.tarballPath)
-        // Unlike npm CLI, this class allows the caller to control the output tarball path. Hence, we overwrite the
-        // return value's field to make things consistent from the caller's standpoint.
-        ret.filename = options.tarballPath
-      }
+    if (options.tarballPath) {
+      fs.cpSync(path.join(d, ret.filename), options.tarballPath)
+      // Unlike npm CLI, this class allows the caller to control the output tarball path. Hence, we overwrite the
+      // return value's field to make things consistent from the caller's standpoint.
+      ret.filename = options.tarballPath
     }
     return ret
   }

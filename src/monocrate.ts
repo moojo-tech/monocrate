@@ -26,7 +26,11 @@ export type { MonocrateResult } from './monocrate-result.js'
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
   // This dispenser is used for the tarballs which are intentionally kept
   const dispenser = new TempDirDispenser()
-  return await monocrateImpl(options, dispenser)
+  try {
+    return await monocrateImpl(options, dispenser)
+  } finally {
+    dispenser.cleanup()
+  }
 }
 
 async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
