@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { z } from 'zod'
-import type { AbsolutePath } from './paths.js'
+import { AbsolutePath } from './paths.js'
 import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
 import type { TempDirDispenser } from './temp-dir-dispenser.js'
@@ -41,9 +41,9 @@ export class NpmClient {
     return stdout.trim()
   }
 
-  async publish(dir: AbsolutePath, tag?: string, passThroughArgs?: string[]): Promise<void> {
-    const args = [...(tag ? ['--tag', tag] : []), ...(passThroughArgs ?? [])]
-    await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
+  async publish(tarballPath: string, tag?: string, passThroughArgs?: string[]): Promise<void> {
+    const args = [tarballPath, ...(tag ? ['--tag', tag] : []), ...(passThroughArgs ?? [])]
+    await runNpm('publish', args, AbsolutePath(path.dirname(tarballPath)), { ...this.npmOptions, stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {

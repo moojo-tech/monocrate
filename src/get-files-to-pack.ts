@@ -10,6 +10,6 @@ import type { NpmClient } from './npm-client.js'
  * @example getFilesToPack("/home/user/my-package") => ["dist/index.js", "README.md", "package.json"]
  */
 export async function getFilesToPack(npmClient: NpmClient, packageDir: AbsolutePath): Promise<string[]> {
-  const { files } = await npmClient.pack(packageDir, { dryRun: true })
+  const { files } = await npmClient.pack(packageDir, { dryRun: true, ignoreScripts: false })
   return files.map((f) => f.path)
 }
