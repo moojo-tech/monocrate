@@ -1,11 +1,16 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
+import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
 
 const name = 'root-package'
 
 describe('--bump package option', () => {
+  const teskit = new MonocrateTeskit()
+  afterAll(() => {
+    teskit.shutdown()
+  })
   it('uses version from package.json when --bump package is specified', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
@@ -18,7 +23,7 @@ describe('--bump package option', () => {
       'packages/app/dist/index.js': `export const foo = 'foo';`,
     })
 
-    const { outputDir } = await monocrate({
+    const { outputDir } = await teskit.pack({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,

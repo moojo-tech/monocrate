@@ -11,16 +11,19 @@ import type { RepoExplorer, MonorepoPackage } from './repo-explorer.js'
 import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
 import { validateEsmOnly } from './validate-esm.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 export class PackageAssembler {
   readonly pkgName
   readonly publishAs
   private readonly pathInRepo
+
   constructor(
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath
+    private readonly outputRoot: AbsolutePath,
+    private readonly dynamicImportsPolicy: 'allow' | 'reject'
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
@@ -40,11 +43,15 @@ export class PackageAssembler {
     return await resolveVersion(this.npmClient, this.fromDir, this.publishAs, versionSpecifier, packageJsonVersion)
   }
 
-  async assemble(newVersion: string | undefined): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
+  async assemble(
+    newVersion: string | undefined,
+    tarballPath: string,
+    dispenser: TempDirDispenser
+  ): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir)
-    validateEsmOnly(locations, this.explorer.repoRootDir)
+    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, dispenser)
+    validateEsmOnly(locations)
 
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
 
@@ -66,10 +73,12 @@ export class PackageAssembler {
       }
       throw new Error(`Could not map output path to repo path: ${outputPath}`)
     }
-    await new ImportRewriter(packageMap, isInRepoPackage, toRepoPath).rewriteAll(copiedFiles)
+    await new ImportRewriter(packageMap, isInRepoPackage, toRepoPath, this.dynamicImportsPolicy).rewriteAll(copiedFiles)
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
     rewritePackageJson(closure, newVersion, outputDir)
+
+    await this.npmClient.pack(outputDir, { ignoreScripts: true, tarballPath })
 
     return { compiletimeMembers: closure.compiletimeMembers }
   }

@@ -1,3 +1,4 @@
+import path from 'path'
 import * as fs from 'node:fs'
 import * as ResolveExports from 'resolve.exports'
 import type { PackageLocation } from './package-location.js'
@@ -8,6 +9,7 @@ import { AbsolutePath, RelativePath } from './paths.js'
 import type { PackageJson } from './package-json.js'
 import type { NpmClient } from './npm-client.js'
 import { manglePackageName } from './name-mangler.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 /** Directory name where in-repo dependencies are placed in the output. */
 export const DEPS_DIR = 'deps'
@@ -45,21 +47,25 @@ export function resolveImport(packageJson: PackageJson, subpath: string): string
 async function createPackageLocation(
   npmClient: NpmClient,
   pkg: MonorepoPackage,
-  directoryInOutput: AbsolutePath
+  directoryInOutput: AbsolutePath,
+  dispenser: TempDirDispenser
 ): Promise<PackageLocation> {
-  const filesToCopy = await getFilesToPack(npmClient, pkg.fromDir)
+  const { files, dir } = await getFilesToPack(npmClient, pkg.fromDir, dispenser)
 
   // Add .npmrc if it exists (npm pack doesn't include it since it's a config file)
-  const npmrcPath = AbsolutePath.join(pkg.fromDir, RelativePath('.npmrc'))
-  if (fs.existsSync(npmrcPath)) {
-    filesToCopy.push('.npmrc')
+  const npmrcLocal = RelativePath('.npmrc')
+  const src = AbsolutePath.join(pkg.fromDir, npmrcLocal)
+  if (fs.existsSync(src)) {
+    fs.cpSync(src, path.join(dir, npmrcLocal))
+    files.push(npmrcLocal)
   }
 
   return {
     name: pkg.name,
-    fromDir: pkg.fromDir,
+    pathInRepo: pkg.pathInRepo,
+    fromDir: dir,
     toDir: directoryInOutput,
-    filesToCopy,
+    filesToCopy: files,
     packageJson: pkg.packageJson,
   }
 }
@@ -67,7 +73,8 @@ async function createPackageLocation(
 export async function collectPackageLocations(
   npmClient: NpmClient,
   closure: PackageClosure,
-  outputDir: AbsolutePath
+  outputDir: AbsolutePath,
+  dispenser: TempDirDispenser
 ): Promise<PackageLocation[]> {
   // TODO(imaman): use promises()
   return Promise.all(
@@ -77,7 +84,8 @@ export async function collectPackageLocations(
         dep,
         dep.name === closure.subjectPackageName
           ? outputDir
-          : AbsolutePath.join(outputDir, RelativePath(DEPS_DIR), RelativePath(manglePackageName(dep.name)))
+          : AbsolutePath.join(outputDir, RelativePath(DEPS_DIR), RelativePath(manglePackageName(dep.name))),
+        dispenser
       )
     )
   )

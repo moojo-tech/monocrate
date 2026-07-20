@@ -1,6 +1,5 @@
 import path from 'node:path'
 import type { PackageLocation } from './package-location.js'
-import type { AbsolutePath } from './paths.js'
 
 /**
  * Validates that all packages contain only ES module files.
@@ -8,16 +7,16 @@ import type { AbsolutePath } from './paths.js'
  *
  * This check happens early, before file copying, to fail fast.
  */
-export function validateEsmOnly(locations: PackageLocation[], repoRoot: AbsolutePath): void {
+export function validateEsmOnly(locations: PackageLocation[]): void {
   for (const location of locations) {
     for (const file of location.filesToCopy) {
-      validateFile(file, location, repoRoot)
+      validateFile(file, location)
     }
   }
 }
 
-function validateFile(file: string, location: PackageLocation, repoRoot: AbsolutePath): void {
-  const filePath = path.relative(repoRoot, path.join(location.fromDir, file))
+function validateFile(file: string, location: PackageLocation): void {
+  const filePath = path.join(location.pathInRepo, file)
   const ext = path.extname(file)
 
   // .cjs and .d.cts files are always CommonJS

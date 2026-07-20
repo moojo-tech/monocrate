@@ -1,7 +1,10 @@
+import fs from 'fs'
+import path from 'path'
 import { z } from 'zod'
-import type { AbsolutePath } from './paths.js'
-import type { NpmOptionsBase} from './run-npm.js';
+import { AbsolutePath } from './paths.js'
+import type { NpmOptionsBase } from './run-npm.js'
 import { runNpm } from './run-npm.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 const NpmErrorResponse = z.object({
   error: z.object({
@@ -12,7 +15,10 @@ const NpmErrorResponse = z.object({
 })
 
 export class NpmClient {
-  constructor(private readonly npmOptions?: NpmOptionsBase) {}
+  constructor(
+    private readonly dispenser: TempDirDispenser,
+    private readonly npmOptions?: NpmOptionsBase
+  ) {}
 
   /**
    * Checks if the user is logged in to npm.
@@ -29,17 +35,15 @@ export class NpmClient {
 
     if (!ok) {
       const registry = this.npmOptions?.userconfig ? ` (using config: ${this.npmOptions.userconfig})` : ''
-      throw new Error(
-        `Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`
-      )
+      throw new Error(`Not logged in to npm${registry}. Run 'npm login' to authenticate before publishing.`)
     }
 
     return stdout.trim()
   }
 
-  async publish(dir: AbsolutePath, tag?: string): Promise<void> {
-    const args = tag ? ['--tag', tag] : []
-    await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
+  async publish(tarballPath: string, tag?: string): Promise<void> {
+    const args = [tarballPath, ...(tag ? ['--tag', tag] : [])]
+    await runNpm('publish', args, AbsolutePath(path.dirname(tarballPath)), { ...this.npmOptions, stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
@@ -79,8 +83,23 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, options?: { dryRun?: boolean }) {
-    const { stdout, ok } = await runNpm('pack', ['--json', ...(options?.dryRun ? ['--dry-run'] : [])], dir, {
+  async pack(
+    dir: AbsolutePath,
+    options: {
+      ignoreScripts?: boolean
+      /**
+       * Where to place the resulting tarball. If not specified, the tarball will be placed in a temp dir. The caller
+       * can access it via the return value's .tarballPath field, but it is subjected to cleanups (dictated by this
+       * instance's TempDirDispenser).
+       */
+      tarballPath?: string
+    }
+  ) {
+    const d = this.dispenser.create()
+    const cliOptions = ['--json', '--pack-destination', d, options?.ignoreScripts ? '--ignore-scripts' : ''].filter(
+      Boolean
+    )
+    const { stdout, ok } = await runNpm('pack', cliOptions, dir, {
       ...this.npmOptions,
       stdio: 'pipe',
       nonZeroExitCodePolicy: 'return',
@@ -94,7 +113,7 @@ export class NpmClient {
 
       const code = parsed.data.error.code ?? 'UNKNOWN'
       const detail = parsed.data.error.detail ?? parsed.data.error.summary ?? '<No Further Details>'
-      throw new Error(`The 'npm view' command failed (code: ${code}): ${detail}`)
+      throw new Error(`The 'npm pack' command failed (code: ${code}): ${detail}`)
     }
 
     const parsed = z
@@ -120,6 +139,17 @@ export class NpmClient {
       throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
     }
 
-    return parsed.data
+    const packRes = parsed.data.at(0)
+    if (!packRes || parsed.data.length !== 1) {
+      throw new Error(`npm pack of directory ${dir} returned ${String(parsed.data.length)} items (expected 1)`)
+    }
+
+    const where = path.join(d, packRes.filename)
+    const tarballPath = options.tarballPath ?? where
+    if (tarballPath !== where) {
+      fs.cpSync(where, tarballPath)
+    }
+
+    return { ...packRes, tarballPath }
   }
 }

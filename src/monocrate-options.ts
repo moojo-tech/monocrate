@@ -4,6 +4,7 @@ export interface MonocrateOptions {
    * Can be absolute or relative. Relative paths are resolved from the cwd option.
    */
   pathToSubjectPackages: string[] | string
+  // TODO(imaman): do we still need it?
   /**
    * Path to the output root directory where the assembly will be written.
    * The actual output will be placed in a subdirectory named after the package.
@@ -71,4 +72,20 @@ export interface MonocrateOptions {
    * and you want to preserve meaningful versioning per package.
    */
   max?: boolean
+
+  /**
+   * Directory where the tarball of each assembly is placed, named `<name>-<version>.tgz`
+   * (scoped names have their `@` dropped and `/` replaced with `-`).
+   * If not specified, defaults to the cwd option.
+   */
+  packDestination?: string
+  /**
+   * How to treat dynamic `import()` calls whose argument is not a string literal. Such imports
+   * cannot be rewritten, so if they resolve to an in-repo dependency they will break at runtime
+   * in the published package: "allow" leaves them as-is, "reject" fails the assembly.
+   * String-literal dynamic imports are always rewritten, regardless of this value.
+   *
+   * Defaults to "allow".
+   */
+  dynamicImportsPolicy?: 'allow' | 'reject'
 }

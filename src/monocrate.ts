@@ -1,10 +1,9 @@
-import * as fs from 'node:fs/promises'
+import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
-import { publish } from './publish.js'
 import { parseVersionSpecifier } from './version-specifier.js'
 import { AbsolutePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
@@ -12,6 +11,7 @@ import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
+import { TempDirDispenser } from './temp-dir-dispenser.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
@@ -23,20 +23,32 @@ export type { MonocrateResult } from './monocrate-result.js'
  * @throws Error if assembly or publishing fails
  */
 export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
-  // Determine whether to use unified max version or individual versions per package
-  const useMax = options.max ?? false
+  const dispenser = new TempDirDispenser()
+  try {
+    return await monocrateImpl(options, dispenser)
+  } finally {
+    dispenser.cleanup()
+  }
+}
 
+async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
-  const cwdExists = await fs
-    .stat(cwd)
-    .then(() => true)
-    .catch(() => false)
+  const cwdExists = fs.existsSync(cwd)
   if (!cwdExists) {
     throw new Error(`cwd does not exist: ${cwd}`)
   }
+  if (!fs.statSync(cwd).isDirectory()) {
+    throw new Error(`cwd is not a directory: ${cwd}`)
+  }
+  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'allow'
+  const tarballsDir = path.resolve(cwd, options.packDestination ?? cwd)
+  fs.mkdirSync(tarballsDir, { recursive: true })
+  // Determine whether to use unified max version or individual versions per package
+  const useMax = options.max ?? false
+
   const outputRoot = AbsolutePath(
-    options.outputRoot ? path.resolve(cwd, options.outputRoot) : await fs.mkdtemp(path.join(os.tmpdir(), 'monocrate-'))
+    options.outputRoot ? path.resolve(cwd, options.outputRoot) : fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-'))
   )
 
   // Validate bump argument before any side effects (defaults to 'minor')
@@ -57,14 +69,16 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
 
-  const npmClient = new NpmClient({ userconfig: options.npmrcPath })
+  const npmClient = new NpmClient(dispenser, { userconfig: options.npmrcPath })
 
   // Check npm login status early before any heavy operations
   if (options.publish) {
     await npmClient.whoami(cwd)
   }
 
-  const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot))
+  const assemblers = sourceDirs.map(
+    (at) => new PackageAssembler(npmClient, explorer, at, outputRoot, dynamicImportsPolicy)
+  )
   const a0 = assemblers.at(0)
   if (!a0) {
     throw new Error(`Incosistency - could not find an assembler for the first package`)
@@ -82,18 +96,30 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
     max = maxVersion(max, at.version)
   }
 
-  const resolvedPairs = pairs.map((at) => ({ ...at, version: useMax ? max : at.version }))
+  const resolvedPairs = pairs.map((at) => {
+    const version = useMax ? max : at.version
+    let pn = at.assembler.publishAs
+    if (pn.startsWith('@')) {
+      const [a, b] = pn.slice(1).split('/')
+      if (!a || !b) {
+        throw new Error(`Illegal package name: ${pn}`)
+      }
+
+      pn = a + '-' + b
+    }
+    return { ...at, version, tarballPath: path.join(tarballsDir, `${pn}-${version}.tgz`) }
+  })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
   // Phase 1: Assemble all packages and publish with --tag pending
-  for (const { assembler, version } of resolvedPairs) {
-    const { compiletimeMembers } = await assembler.assemble(version)
+  for (const { assembler, version, tarballPath } of resolvedPairs) {
+    const { compiletimeMembers } = await assembler.assemble(version, tarballPath, dispenser)
     for (const pkg of compiletimeMembers) {
       allPackagesForMirror.set(pkg.name, pkg)
     }
 
     if (options.publish) {
-      await publish(npmClient, assembler.getOutputDir(), 'pending')
+      await npmClient.publish(tarballPath, 'pending')
     }
   }
 
@@ -113,10 +139,11 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
   return {
     outputDir: a0.getOutputDir(),
     resolvedVersion: useMax ? max : undefined,
-    summaries: resolvedPairs.map(({ assembler, version }) => ({
+    summaries: resolvedPairs.map(({ assembler, version, tarballPath }) => ({
       outputDir: assembler.getOutputDir(),
       packageName: assembler.pkgName,
       version,
+      tarballPath,
     })),
   }
 }

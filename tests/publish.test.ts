@@ -30,7 +30,7 @@ describe('npm login check', () => {
         publish: true,
         npmrcPath,
       })
-    ).rejects.toThrow("Not logged in to npm")
+    ).rejects.toThrow('Not logged in to npm')
 
     // Should not throw when publish is false
     const result = await monocrate({
@@ -81,8 +81,44 @@ describe('npm publishing with Verdaccio', () => {
     })
     expect(verdaccio.runView('@test/mylib')).toMatchObject({ name: '@test/mylib', version: '99.99.99' })
     expect(
-      verdaccio.runConumser(`@test/mylib@99.99.99`, `import { hello } from '@test/mylib'; console.log(hello())`)
+      verdaccio.runConsumer(`@test/mylib@99.99.99`, `import { hello } from '@test/mylib'; console.log(hello())`)
     ).toBe('Hello from mylib!')
+  }, 60000)
+
+  it('dry-run creates a tarball that can be manually published and consumed', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/dry-lib/package.json': {
+        name: '@test/dry-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/dry-lib/dist/index.js': `export function hello() { return 'Hello from dry-run tarball!'; }`,
+    })
+
+    const result = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/dry-lib'),
+      monorepoRoot,
+      bump: '77.77.77',
+      publish: false,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    const summary = result.summaries.at(0)
+    if (!summary) {
+      throw new Error('Expected one package summary')
+    }
+
+    expect(summary.tarballPath).toBe(path.join(monorepoRoot, 'test-dry-lib-77.77.77.tgz'))
+
+    verdaccio.publishTarball(summary.tarballPath)
+
+    expect(verdaccio.runView('@test/dry-lib')).toMatchObject({ name: '@test/dry-lib', version: '77.77.77' })
+    expect(
+      verdaccio.runConsumer(`@test/dry-lib@77.77.77`, `import { hello } from '@test/dry-lib'; console.log(hello())`)
+    ).toBe('Hello from dry-run tarball!')
   }, 60000)
 
   it('publishes a simple non-scoped package', async () => {
@@ -101,7 +137,7 @@ describe('npm publishing with Verdaccio', () => {
       npmrcPath: verdaccio.npmrcPath(),
     })
     expect(verdaccio.runView('mylib')).toMatchObject({ name: 'mylib', version: '99.99.99' })
-    expect(verdaccio.runConumser(`mylib@99.99.99`, `import { hello } from 'mylib'; console.log(hello())`)).toBe(
+    expect(verdaccio.runConsumer(`mylib@99.99.99`, `import { hello } from 'mylib'; console.log(hello())`)).toBe(
       'Hello from mylib!'
     )
   }, 60000)
@@ -130,11 +166,73 @@ describe('npm publishing with Verdaccio', () => {
     })
     expect(verdaccio.runView('@test/app')).toMatchObject({ name: '@test/app', version: '88.88.88' })
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@test/app@88.88.88',
         `import { sayHello } from '@test/app'; console.log(sayHello('World'))`
       )
     ).toBe('Hello, World!')
+  }, 60000)
+
+  it('publishes a package that uses computed dynamic import of an in-repo dependency', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/dynamic-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/dynamic-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `export async function run(name) {
+  const scope = '@test'
+  const pkg = 'dynamic-lib'
+  const lib = await import(scope + '/' + pkg)
+  return lib.greet(name)
+}`,
+      'packages/lib/package.json': {
+        name: '@test/dynamic-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await expect(
+      monocrate({
+        cwd: monorepoRoot,
+        pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+        monorepoRoot,
+        bump: '1.2.3',
+        publish: true,
+        npmrcPath: verdaccio.npmrcPath(),
+        dynamicImportsPolicy: 'reject',
+      })
+    ).rejects.toThrow('A dynamic import was found in packages/app/dist/index.js')
+  }, 60000)
+
+  it('refuses to publish a CJS package', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/my-app-foo/package.json': {
+        name: 'my-app-foo',
+        version: '1.0.0',
+        main: 'dist/index.js',
+        dependencies: {},
+      },
+      'packages/my-app-foo/dist/index.js': `const { greet } = require('@test/cjs-lib'); module.exports = greet`,
+    })
+
+    await expect(
+      monocrate({
+        cwd: monorepoRoot,
+        pathToSubjectPackages: path.join(monorepoRoot, 'packages/my-app-foo'),
+        monorepoRoot,
+        bump: '5.6.7',
+        publish: true,
+        npmrcPath: verdaccio.npmrcPath(),
+      })
+    ).rejects.toThrow('Cannot process a .js file in a CommonJS package: packages/my-app-foo/dist/index.js')
   }, 60000)
 
   it('includes deps in tarball when subject has files field and in-repo dependencies', async () => {
@@ -164,7 +262,7 @@ describe('npm publishing with Verdaccio', () => {
 
     // deps/ must be included in the tarball for the rewritten imports to work
     expect(
-      verdaccio.runConumser(
+      verdaccio.runConsumer(
         '@test/files-app@2.0.0',
         `import { sayHello } from '@test/files-app'; console.log(sayHello('World'))`
       )
@@ -257,7 +355,7 @@ describe('npm publishing with Verdaccio', () => {
       dependencies: { 'is-even': '~2.4.0', naturals: '^3.0.0' },
     })
 
-    expect(verdaccio.runConumser('foo', `import { analyze } from 'foo'`, `console.log(analyze(24))`)).toBe(
+    expect(verdaccio.runConsumer('foo', `import { analyze } from 'foo'`, `console.log(analyze(24))`)).toBe(
       '24 is even. Divisors: 1, 2, 3, 4, 6, 8, 12, 24'
     )
   }, 90000)
@@ -346,40 +444,259 @@ describe('npm publishing with Verdaccio', () => {
     await monocrate(opts)
 
     expect(
-      verdaccio.runConumser('calculator@1.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
+      verdaccio.runConsumer('calculator@1.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
     ).toBe('7')
     expect(
-      verdaccio.runConumser('calculator@2.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
+      verdaccio.runConsumer('calculator@2.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
     ).toBe('12')
     expect(
-      verdaccio.runConumser('calculator@3.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
+      verdaccio.runConsumer('calculator@3.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
     ).toBe('81')
   }, 120000)
 
-  it('uses two-phase publishing: publishes with pending tag first, then moves latest tag', async () => {
+  it('uses two-phase publishing for multi-package: publishes with pending tag first, then moves latest tag', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
-      'packages/twophase/package.json': pj('twophase', '1.0.0'),
-      'packages/twophase/dist/index.js': `export const value = 'v1'`,
+      'packages/twophase-a/package.json': pj('twophase-a', '1.0.0'),
+      'packages/twophase-a/dist/index.js': `export const a = 'A'`,
+      'packages/twophase-b/package.json': pj('twophase-b', '1.0.0'),
+      'packages/twophase-b/dist/index.js': `export const b = 'B'`,
     })
 
     await monocrate({
       cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/twophase',
+      pathToSubjectPackages: ['packages/twophase-a', 'packages/twophase-b'],
       monorepoRoot,
       bump: '1.0.0',
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
     })
 
-    const viewResult = verdaccio.runView('twophase')
+    const viewA = verdaccio.runView('twophase-a')
+    const viewB = verdaccio.runView('twophase-b')
 
     // Both 'pending' and 'latest' tags should point to the published version
-    expect(viewResult['dist-tags']).toMatchObject({
-      pending: '1.0.0',
-      latest: '1.0.0',
-    })
+    expect(viewA['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
+    expect(viewB['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
   }, 60000)
+
+  it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/yarn-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/yarn-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/yarn-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': { name: '@test/yarn-lib', version: '1.0.0', type: 'module', main: 'dist/index.js' },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '11.11.11',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    // Yarn v1 must be able to install the published package without trying to resolve bundled
+    // in-repo dependencies from the registry. If in-repo deps are listed in `dependencies`,
+    // yarn v1 tries to fetch them from the registry (where they don't exist) and fails.
+    // See: https://github.com/yarnpkg/yarn/issues/5998
+    // See: https://github.com/yarnpkg/yarn/issues/8436
+    expect(
+      verdaccio.runConsumer(
+        '@test/yarn-app@11.11.11',
+        { manager: 'yarn@v1' },
+        `import { sayHello } from '@test/yarn-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
+  it('yarn berry can install a simple published package', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/mylib/package.json': {
+        name: '@test/yarn-berry-simple',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/mylib/dist/index.js': `export function hello() { return 'Hello from yarn berry!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
+      monorepoRoot,
+      bump: '12.12.12',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/yarn-berry-simple@12.12.12',
+        { manager: 'yarn@berry' },
+        `import { hello } from '@test/yarn-berry-simple'; console.log(hello())`
+      )
+    ).toBe('Hello from yarn berry!')
+  }, 90000)
+
+  // Yarn berry (like yarn v1) does not respect bundledDependencies: it still tries to
+  // resolve bundled in-repo deps from the registry, where they don't exist.
+  // See the analogous yarn v1 test above for details.
+  it.skip('yarn berry can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/yarn-berry-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/yarn-berry-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/yarn-berry-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': {
+        name: '@test/yarn-berry-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '14.14.14',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/yarn-berry-app@14.14.14',
+        { manager: 'yarn@berry' },
+        `import { sayHello } from '@test/yarn-berry-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
+  it('pnpm can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/pnpm-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/pnpm-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/pnpm-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': {
+        name: '@test/pnpm-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '13.13.13',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/pnpm-app@13.13.13',
+        { manager: 'pnpm' },
+        `import { sayHello } from '@test/pnpm-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
+
+  it('bun can install a simple published package', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/mylib/package.json': {
+        name: '@test/bun-simple',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/mylib/dist/index.js': `export function hello() { return 'Hello from bun!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
+      monorepoRoot,
+      bump: '15.15.15',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/bun-simple@15.15.15',
+        { manager: 'bun' },
+        `import { hello } from '@test/bun-simple'; console.log(hello())`
+      )
+    ).toBe('Hello from bun!')
+  }, 90000)
+
+  // Bun (like yarn v1 and yarn berry) does not respect bundledDependencies: it still tries to
+  // resolve bundled in-repo deps from the registry, where they don't exist.
+  // See the analogous yarn v1 test above for details.
+  it.skip('bun can install a package with bundled in-repo dependencies', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/app/package.json': {
+        name: '@test/bun-app',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+        dependencies: { '@test/bun-lib': 'workspace:*' },
+      },
+      'packages/app/dist/index.js': `import { greet } from '@test/bun-lib'; export function sayHello(name) { return greet(name); }`,
+      'packages/lib/package.json': {
+        name: '@test/bun-lib',
+        version: '1.0.0',
+        type: 'module',
+        main: 'dist/index.js',
+      },
+      'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+      monorepoRoot,
+      bump: '16.16.16',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(
+      verdaccio.runConsumer(
+        '@test/bun-app@16.16.16',
+        { manager: 'bun' },
+        `import { sayHello } from '@test/bun-app'; console.log(sayHello('World'))`
+      )
+    ).toBe('Hello, World!')
+  }, 90000)
 
   it('does not move latest tag when second package fails to publish', async () => {
     // Pre-publish both packages so they have existing latest tags

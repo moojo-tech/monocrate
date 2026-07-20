@@ -3,6 +3,7 @@ import { Project, SyntaxKind } from 'ts-morph'
 import type { PackageMap } from './package-location.js'
 import { resolveImport } from './collect-package-locations.js'
 import { AbsolutePath, RelativePath } from './paths.js'
+import { shouldNeverHappen } from './should-never-happen.js'
 
 export type InRepoPackageChecker = (packageName: string) => boolean
 export type OutputPathToRepoPath = (outputPath: AbsolutePath) => string
@@ -11,7 +12,8 @@ export class ImportRewriter {
   constructor(
     private packageMap: PackageMap,
     private isInRepoPackage: InRepoPackageChecker,
-    private toRepoPath: OutputPathToRepoPath
+    private toRepoPath: OutputPathToRepoPath,
+    private readonly dynamicImportsPolicy: 'allow' | 'reject'
   ) {}
 
   async rewriteAll(files: AbsolutePath[]): Promise<void> {
@@ -66,8 +68,13 @@ export class ImportRewriter {
             modified = true
           }
         } else if (firstArg) {
-          // Computed imports are not rewritten
-          continue
+          if (this.dynamicImportsPolicy === 'allow') {
+            continue
+          } else if (this.dynamicImportsPolicy === 'reject') {
+            throw new Error(`A dynamic import was found in ${this.toRepoPath(pathToImporter)}`)
+          } else {
+            shouldNeverHappen(this.dynamicImportsPolicy)
+          }
         }
       }
     }
