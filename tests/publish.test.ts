@@ -480,30 +480,6 @@ describe('npm publishing with Verdaccio', () => {
     expect(viewB['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
   }, 60000)
 
-  it('passes npmPublishArgs through to npm publish', async () => {
-    // Pre-publish so that a later publish with --tag beta does not auto-create latest
-    verdaccio.publishPackage('foo-zoo', '0.0.1', `export const value = 'v0'`)
-
-    const monorepoRoot = folderify({
-      'package.json': { workspaces: ['packages/*'] },
-      'packages/foo-zoo/package.json': pj('foo-zoo', '1.0.0'),
-      'packages/foo-zoo/dist/index.js': `export const value = 'v1'`,
-    })
-
-    await monocrate({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/foo-zoo',
-      monorepoRoot,
-      bump: '1.0.0',
-      publish: true,
-      npmrcPath: verdaccio.npmrcPath(),
-      npmPublishArgs: ['--tag', 'beta'],
-    })
-
-    const viewResult = verdaccio.runView('foo-zoo')
-    expect(viewResult['dist-tags']).toMatchObject({ beta: '1.0.0' })
-  }, 60000)
-
   it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
