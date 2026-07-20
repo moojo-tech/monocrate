@@ -111,7 +111,7 @@ export class NpmClient {
 
       const code = parsed.data.error.code ?? 'UNKNOWN'
       const detail = parsed.data.error.detail ?? parsed.data.error.summary ?? '<No Further Details>'
-      throw new Error(`The 'npm view' command failed (code: ${code}): ${detail}`)
+      throw new Error(`The 'npm pack' command failed (code: ${code}): ${detail}`)
     }
 
     const parsed = z
