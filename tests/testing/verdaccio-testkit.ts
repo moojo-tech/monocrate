@@ -93,9 +93,16 @@ export class VerdaccioTestkit {
       return
     }
     case 'bun': {
-      fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-      execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
-      return
+      try {
+        fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
+        execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+        return
+      } catch (e) {
+        const ee = e as { stdout: Buffer; stderr: Buffer }
+        console.error(ee.stdout.toString())
+        console.error(ee.stderr.toString())
+        throw new Error(`bun command failed: ${String(e)}`)
+      }
     }
     default: {
       execSync(`npm install ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
