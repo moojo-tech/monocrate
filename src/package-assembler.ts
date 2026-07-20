@@ -76,7 +76,7 @@ export class PackageAssembler {
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
     rewritePackageJson(closure, newVersion, outputDir)
 
-    await this.npmClient.pack(outputDir, tarballPath, { ignoreScripts: false })
+    await this.npmClient.pack(outputDir, { ignoreScripts: false, tarballPath })
 
     return { compiletimeMembers: closure.compiletimeMembers }
   }

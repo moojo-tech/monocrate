@@ -83,7 +83,12 @@ export class NpmClient {
     return parsed.data
   }
 
-  async pack(dir: AbsolutePath, tarballPath: string, options?: { dryRun?: boolean; ignoreScripts?: boolean }) {
+  async pack(
+    dir: AbsolutePath,
+    options?:
+      | { dryRun?: false; tarballPath: string; ignoreScripts?: boolean }
+      | { dryRun: true; ignoreScripts?: boolean }
+  ) {
     const d = this.dispenser.create()
     const cliOptions = [
       '--json',
@@ -137,10 +142,16 @@ export class NpmClient {
       throw new Error(`npm pack of directory ${d} returned ${String(parsed.data.length)} items (expected 1)`)
     }
 
-    if (!options?.dryRun) {
-      fs.cpSync(path.join(d, ret.filename), tarballPath)
+    if (options) {
+      if (options.dryRun) {
+        // do nothing
+      } else {
+        fs.cpSync(path.join(d, ret.filename), options.tarballPath)
+        // Unlike npm CLI, this class allows the caller to control the output tarball path. Hence, we overwrite the
+        // return value's field to make things consistent from the caller's standpoint.
+        ret.filename = options.tarballPath
+      }
     }
-    ret.filename = tarballPath
     return ret
   }
 }
