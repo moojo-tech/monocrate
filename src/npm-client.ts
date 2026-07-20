@@ -139,7 +139,7 @@ export class NpmClient {
 
     const ret = parsed.data.at(0)
     if (!ret || parsed.data.length !== 1) {
-      throw new Error(`npm pack of directory ${d} returned ${String(parsed.data.length)} items (expected 1)`)
+      throw new Error(`npm pack of directory ${dir} returned ${String(parsed.data.length)} items (expected 1)`)
     }
 
     if (options) {
