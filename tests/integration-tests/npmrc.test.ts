@@ -39,6 +39,6 @@ describe('.npmrc file handling', () => {
       'packages/lib/.npmrc': 'registry=https://lib.registry.com',
     })
 
-    expect((await teskit.run(monorepoRoot, 'packages/app')).output).not.toHaveProperty('node_modules/lib/.npmrc')
+    expect((await teskit.run(monorepoRoot, 'packages/app')).output).not.toHaveProperty('deps/lib/.npmrc')
   })
 })
