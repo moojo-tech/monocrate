@@ -80,11 +80,6 @@ export interface MonocrateOptions {
    */
   packDestination?: string
   /**
-   * Extra CLI arguments appended to the `npm publish` invocation (e.g., ["--access", "public"]).
-   * Only relevant when publish is true.
-   */
-  npmPublishArgs?: string[]
-  /**
    * How to treat dynamic `import()` calls whose argument is not a string literal. Such imports
    * cannot be rewritten, so if they resolve to an in-repo dependency they will break at runtime
    * in the published package: "allow" leaves them as-is, "reject" fails the assembly.

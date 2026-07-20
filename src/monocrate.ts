@@ -4,7 +4,6 @@ import * as path from 'node:path'
 import { RepoExplorer } from './repo-explorer.js'
 import type { MonorepoPackage } from './repo-explorer.js'
 import { PackageAssembler } from './package-assembler.js'
-import { publish } from './publish.js'
 import { parseVersionSpecifier } from './version-specifier.js'
 import { AbsolutePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
@@ -120,7 +119,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     }
 
     if (options.publish) {
-      await publish(npmClient, 'pending', options.npmPublishArgs ?? [], tarballPath)
+      await npmClient.publish(tarballPath, 'pending')
     }
   }
 
