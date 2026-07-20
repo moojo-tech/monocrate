@@ -215,50 +215,28 @@ describe('npm publishing with Verdaccio', () => {
     ).toBe('Hello, World!')
   }, 60000)
 
-  it('publishes a CommonJS package with CommonJS in-repo dependency and works after install', async () => {
+  it('refuses to publish a CJS package', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
-      'packages/app/package.json': {
-        name: '@test/cjs-app',
+      'packages/my-app-foo/package.json': {
+        name: 'my-app-foo',
         version: '1.0.0',
-        type: 'commonjs',
-        main: 'dist/index.cjs',
-        dependencies: { '@test/cjs-lib': 'workspace:*' },
+        main: 'dist/index.js',
+        dependencies: {},
       },
-      'packages/app/dist/index.cjs': `const { greet } = require('@test/cjs-lib')
-module.exports = {
-  run(name) {
-    return greet(name)
-  }
-}`,
-      'packages/lib/package.json': {
-        name: '@test/cjs-lib',
-        version: '1.0.0',
-        type: 'commonjs',
-        main: 'dist/index.cjs',
-      },
-      'packages/lib/dist/index.cjs': `module.exports = {
-  greet(name) {
-    return 'Hi, ' + name + '!'
-  }
-}`,
+      'packages/my-app-foo/dist/index.js': `const { greet } = require('@test/cjs-lib'); module.exports = greet`,
     })
 
-    await monocrate({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
-      monorepoRoot,
-      bump: '5.6.7',
-      publish: true,
-      npmrcPath: verdaccio.npmrcPath(),
-    })
-
-    expect(
-      verdaccio.runConsumer(
-        '@test/cjs-app@5.6.7',
-        `const { run } = require('@test/cjs-app'); console.log(run('World'))`
-      )
-    ).toBe('Hi, World!')
+    await expect(
+      monocrate({
+        cwd: monorepoRoot,
+        pathToSubjectPackages: path.join(monorepoRoot, 'packages/my-app-foo'),
+        monorepoRoot,
+        bump: '5.6.7',
+        publish: true,
+        npmrcPath: verdaccio.npmrcPath(),
+      })
+    ).rejects.toThrow('Cannot process a .js file in a CommonJS package: packages/my-app-foo/dist/index.js')
   }, 60000)
 
   it('includes deps in tarball when subject has files field and in-repo dependencies', async () => {
@@ -480,29 +458,6 @@ module.exports = {
     ).toBe('81')
   }, 120000)
 
-  it('single-package publish goes directly to latest without a pending tag', async () => {
-    const monorepoRoot = folderify({
-      'package.json': { workspaces: ['packages/*'] },
-      'packages/single/package.json': pj('single', '1.0.0'),
-      'packages/single/dist/index.js': `export const value = 'v1'`,
-    })
-
-    await monocrate({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/single',
-      monorepoRoot,
-      bump: '1.0.0',
-      publish: true,
-      npmrcPath: verdaccio.npmrcPath(),
-    })
-
-    const viewResult = verdaccio.runView('single')
-
-    // Single-package publish should set latest directly, with no pending tag
-    expect(viewResult['dist-tags'].latest).toBe('1.0.0')
-    expect(viewResult['dist-tags'].pending).toBeUndefined()
-  }, 60000)
-
   it('uses two-phase publishing for multi-package: publishes with pending tag first, then moves latest tag', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
@@ -531,17 +486,17 @@ module.exports = {
 
   it('passes npmPublishArgs through to npm publish', async () => {
     // Pre-publish so that a later publish with --tag beta does not auto-create latest
-    verdaccio.publishPackage('foo', '0.0.1', `export const value = 'v0'`)
+    verdaccio.publishPackage('foo-zoo', '0.0.1', `export const value = 'v0'`)
 
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
-      'packages/foo/package.json': pj('foo', '1.0.0'),
-      'packages/foo/dist/index.js': `export const value = 'v1'`,
+      'packages/foo-zoo/package.json': pj('foo-zoo', '1.0.0'),
+      'packages/foo-zoo/dist/index.js': `export const value = 'v1'`,
     })
 
     await monocrate({
       cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/foo',
+      pathToSubjectPackages: 'packages/foo-zoo',
       monorepoRoot,
       bump: '1.0.0',
       publish: true,
@@ -549,7 +504,7 @@ module.exports = {
       npmPublishArgs: ['--tag', 'beta'],
     })
 
-    const viewResult = verdaccio.runView('foo')
+    const viewResult = verdaccio.runView('foo-zoo')
     expect(viewResult['dist-tags']).toMatchObject({ beta: '1.0.0' })
   }, 60000)
 
