@@ -41,8 +41,8 @@ export class NpmClient {
     return stdout.trim()
   }
 
-  async publish(dir: AbsolutePath, tag?: string): Promise<void> {
-    const args = tag ? ['--tag', tag] : []
+  async publish(dir: AbsolutePath, tag?: string, passThroughArgs?: string[]): Promise<void> {
+    const args = [...(tag ? ['--tag', tag] : []), ...(passThroughArgs ?? [])]
     await runNpm('publish', args, dir, { ...this.npmOptions, stdio: 'inherit' })
   }
 

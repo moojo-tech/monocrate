@@ -113,7 +113,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     }
 
     if (options.publish) {
-      await publish(npmClient, assembler.getOutputDir(), 'pending')
+      await publish(npmClient, assembler.getOutputDir(), 'pending', options.npmPublishArgs ?? [])
     }
   }
 

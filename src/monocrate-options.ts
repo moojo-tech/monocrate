@@ -73,9 +73,5 @@ export interface MonocrateOptions {
   max?: boolean
 
   packDestination?: string
-
-  /**
-   * @deprecated ignored
-   */
-  npmPublishArgs?: unknown[]
+  npmPublishArgs?: string[]
 }

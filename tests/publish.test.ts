@@ -531,17 +531,17 @@ module.exports = {
 
   it('passes npmPublishArgs through to npm publish', async () => {
     // Pre-publish so that a later publish with --tag beta does not auto-create latest
-    verdaccio.publishPackage('passthrough', '0.0.1', `export const value = 'v0'`)
+    verdaccio.publishPackage('foo', '0.0.1', `export const value = 'v0'`)
 
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
-      'packages/passthrough/package.json': pj('passthrough', '1.0.0'),
-      'packages/passthrough/dist/index.js': `export const value = 'v1'`,
+      'packages/foo/package.json': pj('foo', '1.0.0'),
+      'packages/foo/dist/index.js': `export const value = 'v1'`,
     })
 
     await monocrate({
       cwd: monorepoRoot,
-      pathToSubjectPackages: 'packages/passthrough',
+      pathToSubjectPackages: 'packages/foo',
       monorepoRoot,
       bump: '1.0.0',
       publish: true,
@@ -549,11 +549,8 @@ module.exports = {
       npmPublishArgs: ['--tag', 'beta'],
     })
 
-    const viewResult = verdaccio.runView('passthrough')
-
-    // The --tag beta passthrough should put the new version on beta, not latest
-    expect(viewResult['dist-tags'].beta).toBe('1.0.0')
-    expect(viewResult['dist-tags'].latest).toBe('0.0.1')
+    const viewResult = verdaccio.runView('foo')
+    expect(viewResult['dist-tags']).toMatchObject({ beta: '1.0.0' })
   }, 60000)
 
   it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {

@@ -45,7 +45,7 @@ describe('file format support', () => {
   })
 
   describe('CommonJS support', () => {
-    it('supports in-repo dependencies with .cjs files', async () => {
+    it('rejects in-repo dependencies with .cjs files', async () => {
       const monorepoRoot = folderify({
         'package.json': { name, workspaces: ['packages/*'] },
         'packages/app/package.json': {
