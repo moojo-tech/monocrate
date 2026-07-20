@@ -44,6 +44,26 @@ describe('file format support', () => {
     })
   })
 
+  describe('declaration files', () => {
+    it('rewrites imports in .d.mts files', async () => {
+      const monorepoRoot = folderify({
+        'package.json': { name, workspaces: ['packages/*'] },
+        'packages/app-foo/package.json': pj('@acme/app-foo', { dependencies: { '@acme/lib-foo': '*' } }),
+        'packages/app-foo/dist/index.js': `import { greet } from '@acme/lib-foo'; console.log(greet());`,
+        'packages/app-foo/dist/index.d.mts': `import { greet } from '@acme/lib-foo';\nexport declare function main(): string;\n`,
+        'packages/lib-foo/package.json': pj('@acme/lib-foo'),
+        'packages/lib-foo/dist/index.js': `export function greet() { return 'Hello!' }`,
+      })
+
+      const { output } = await teskit.run(monorepoRoot, 'packages/app-foo')
+
+      // Declaration files never execute, so the rewrite must be verified by inspecting file content
+      const indexDmts = output['dist/index.d.mts'] as string
+      expect(indexDmts).toContain(`'../deps/__acme__lib-foo/dist/index.js'`)
+      expect(indexDmts).not.toContain(`'@acme/lib-foo'`)
+    })
+  })
+
   describe('CommonJS support', () => {
     it('rejects in-repo dependencies with .cjs files', async () => {
       const monorepoRoot = folderify({
