@@ -12,6 +12,7 @@ import type { RepoExplorer, MonorepoPackage } from './repo-explorer.js'
 import { computePackageClosure } from './compute-package-closure.js'
 import type { NpmClient } from './npm-client.js'
 import { validateEsmOnly } from './validate-esm.js'
+import type { TempDirDispenser } from './temp-dir-dispenser.js'
 
 export class PackageAssembler {
   readonly pkgName
@@ -44,12 +45,13 @@ export class PackageAssembler {
 
   async assemble(
     newVersion: string | undefined,
-    tarballPath: string
+    tarballPath: string,
+    dispenser: TempDirDispenser
   ): Promise<{ compiletimeMembers: MonorepoPackage[] }> {
     const closure = computePackageClosure(this.pkgName, this.explorer)
     const outputDir = this.getOutputDir()
-    const locations = await collectPackageLocations(this.npmClient, closure, outputDir)
-    validateEsmOnly(locations, this.explorer.repoRootDir)
+    const locations = await collectPackageLocations(this.npmClient, closure, outputDir, dispenser)
+    validateEsmOnly(locations)
 
     const packageMap = new Map(locations.map((at) => [at.name, at] as const))
 

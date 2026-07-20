@@ -1,3 +1,4 @@
+import fs from 'fs'
 import * as fsPromises from 'node:fs/promises'
 import * as path from 'node:path'
 import type { PackageMap } from './package-location.js'
@@ -23,7 +24,7 @@ export class FileCopier {
     // Phase 2: Copy all files
     const copiedFiles: AbsolutePath[] = []
     for (const op of operations) {
-      await fsPromises.copyFile(op.source, op.destination)
+      fs.copyFileSync(op.source, op.destination)
       copiedFiles.push(op.destination)
     }
     return copiedFiles

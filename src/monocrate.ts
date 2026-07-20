@@ -114,7 +114,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
 
   // Phase 1: Assemble all packages and publish with --tag pending
   for (const { assembler, version, tarballPath } of resolvedPairs) {
-    const { compiletimeMembers } = await assembler.assemble(version, tarballPath)
+    const { compiletimeMembers } = await assembler.assemble(version, tarballPath, dispenser)
     for (const pkg of compiletimeMembers) {
       allPackagesForMirror.set(pkg.name, pkg)
     }

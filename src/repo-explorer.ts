@@ -16,10 +16,7 @@ export interface MonorepoPackage {
 }
 
 export class RepoExplorer {
-  constructor(
-    readonly repoRootDir: AbsolutePath,
-    private readonly map: Map<string, MonorepoPackage>
-  ) {
+  constructor(private readonly map: Map<string, MonorepoPackage>) {
     validatePublishNames(map)
   }
 
@@ -38,7 +35,7 @@ export class RepoExplorer {
       }
     }
 
-    return new RepoExplorer(monorepoRoot, map)
+    return new RepoExplorer(map)
   }
 
   listNames() {

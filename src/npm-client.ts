@@ -144,17 +144,17 @@ export class NpmClient {
       throw new Error(`Response of 'npm pack' could not be parsed: ${parsed.error.message}`)
     }
 
-    const ret = parsed.data.at(0)
-    if (!ret || parsed.data.length !== 1) {
+    const packRes = parsed.data.at(0)
+    if (!packRes || parsed.data.length !== 1) {
       throw new Error(`npm pack of directory ${dir} returned ${String(parsed.data.length)} items (expected 1)`)
     }
 
-    if (options.tarballPath) {
-      fs.cpSync(path.join(d, ret.filename), options.tarballPath)
-      // Unlike npm CLI, this class allows the caller to control the output tarball path. Hence, we overwrite the
-      // return value's field to make things consistent from the caller's standpoint.
-      ret.filename = options.tarballPath
+    const where = path.join(d, packRes.filename)
+    const tarballPath = options.tarballPath ?? where
+    if (tarballPath !== where) {
+      fs.cpSync(where, tarballPath)
     }
-    return ret
+
+    return { ...packRes, tarballPath }
   }
 }

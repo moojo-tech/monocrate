@@ -3,13 +3,17 @@ import type { AbsolutePath } from './paths.js'
 
 export interface PackageLocation {
   /**
+   * Relative path from the repo's root dir to the package's dir.
+   */
+  pathInRepo: string
+  /**
    * The package name from package.json
    * @example "@myorg/utils"
    */
   name: string
 
   /**
-   * Absolute path to the package's directory in the repo.
+   * Absolute path where the package's initial tarball was extracted to.
    * @example "/home/user/monorepo/packages/my-package"
    */
   fromDir: AbsolutePath

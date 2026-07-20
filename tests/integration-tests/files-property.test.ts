@@ -136,14 +136,12 @@ describe('files property support', () => {
           postpack: 'bash -c "echo \\"console.log(\'reverted\');\\" > dist/index.js"',
         },
       },
-      'packages/app/dist/index.js': `console.log('original');
-`,
+      'packages/app/dist/index.js': `console.log('original');`,
     })
 
     const { stdout, output } = await teskit.run(monorepoRoot, 'packages/app')
 
-    expect(output['dist/index.js']).toBe(`console.log('packed');
-`)
+    expect(output['dist/index.js']).toBe(`console.log('packed');\n`)
     expect(stdout.trim()).toBe('packed')
   })
 })
