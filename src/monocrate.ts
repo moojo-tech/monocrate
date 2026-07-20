@@ -33,18 +33,21 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 }
 
 async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
-  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'allow'
-  const tarballsDir = options.packDestination ?? options.cwd
-  fs.mkdirSync(tarballsDir, { recursive: true })
-  // Determine whether to use unified max version or individual versions per package
-  const useMax = options.max ?? false
-
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
   const cwdExists = fs.existsSync(cwd)
   if (!cwdExists) {
     throw new Error(`cwd does not exist: ${cwd}`)
   }
+  if (!fs.statSync(cwd).isDirectory()) {
+    throw new Error(`cwd is not a directory: ${cwd}`)
+  }
+  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'allow'
+  const tarballsDir = options.packDestination ?? cwd
+  fs.mkdirSync(tarballsDir, { recursive: true })
+  // Determine whether to use unified max version or individual versions per package
+  const useMax = options.max ?? false
+
   const outputRoot = AbsolutePath(
     options.outputRoot ? path.resolve(cwd, options.outputRoot) : fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-'))
   )
