@@ -174,6 +174,33 @@ describe('error handling', () => {
     expect(stdout.trim()).toBe('Hello!')
   })
 
+  it.each([
+    ['static import', `import { greet } from '@acme/lib-foo'; console.log(greet());`],
+    ['re-export', `export { greet } from '@acme/lib-foo';`],
+    ['dynamic import', `const { greet } = await import('@acme/lib-foo'); console.log(greet());`],
+  ])('throws when code imports an in-repo package not listed in dependencies (%s)', async (_flavor, code) => {
+    const monorepoRoot = folderify({
+      'package.json': { name, workspaces: ['packages/*'] },
+      'packages/app-foo/package.json': pj('@acme/app-foo'),
+      'packages/app-foo/dist/index.js': code,
+      'packages/lib-foo/package.json': pj('@acme/lib-foo'),
+      'packages/lib-foo/dist/index.js': `export function greet() { return 'Hello!' }`,
+    })
+
+    await expect(
+      monocrate({
+        cwd: monorepoRoot,
+        pathToSubjectPackages: 'packages/app-foo',
+        monorepoRoot,
+        publish: false,
+        bump: '1.0.0',
+      })
+    ).rejects.toThrow(
+      'Import of in-repo package "@acme/lib-foo" found in packages/app-foo/dist/index.js, ' +
+        'but "@acme/lib-foo" is not listed in package.json dependencies'
+    )
+  })
+
   it('throws when workspace: dependency points to non-existent package', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
