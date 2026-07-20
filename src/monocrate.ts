@@ -30,6 +30,7 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 }
 
 async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
+  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'allow'
   const tarballsDir = options.packDestination ?? options.cwd
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
@@ -72,7 +73,9 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     await npmClient.whoami(cwd)
   }
 
-  const assemblers = sourceDirs.map((at) => new PackageAssembler(npmClient, explorer, at, outputRoot))
+  const assemblers = sourceDirs.map(
+    (at) => new PackageAssembler(npmClient, explorer, at, outputRoot, dynamicImportsPolicy)
+  )
   const a0 = assemblers.at(0)
   if (!a0) {
     throw new Error(`Incosistency - could not find an assembler for the first package`)

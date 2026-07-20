@@ -34,6 +34,7 @@ export default tseslint.config(
         { prefer: 'type-imports' },
       ],
       '@typescript-eslint/no-import-type-side-effects': 'error',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
     },
   },
   {

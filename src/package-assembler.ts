@@ -21,7 +21,8 @@ export class PackageAssembler {
     private readonly npmClient: NpmClient,
     private readonly explorer: RepoExplorer,
     private readonly fromDir: AbsolutePath,
-    private readonly outputRoot: AbsolutePath
+    private readonly outputRoot: AbsolutePath,
+    private readonly dynamicImportsPolicy: 'allow' | 'reject'
   ) {
     const found = this.explorer.listPackages().find((at) => at.fromDir === fromDir)
     if (!found) {
@@ -70,7 +71,7 @@ export class PackageAssembler {
       }
       throw new Error(`Could not map output path to repo path: ${outputPath}`)
     }
-    await new ImportRewriter(packageMap, isInRepoPackage, toRepoPath).rewriteAll(copiedFiles)
+    await new ImportRewriter(packageMap, isInRepoPackage, toRepoPath, this.dynamicImportsPolicy).rewriteAll(copiedFiles)
 
     // This must happen after file copying completes (otherwise the rewritten package.json could be overwritten)
     rewritePackageJson(closure, newVersion, outputDir)

@@ -198,21 +198,17 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monocrate({
-      cwd: monorepoRoot,
-      pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
-      monorepoRoot,
-      bump: '1.2.3',
-      publish: true,
-      npmrcPath: verdaccio.npmrcPath(),
-    })
-
-    expect(
-      verdaccio.runConsumer(
-        '@test/dynamic-app@1.2.3',
-        `import { run } from '@test/dynamic-app'; console.log(await run('World'))`
-      )
-    ).toBe('Hello, World!')
+    await expect(
+      monocrate({
+        cwd: monorepoRoot,
+        pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
+        monorepoRoot,
+        bump: '1.2.3',
+        publish: true,
+        npmrcPath: verdaccio.npmrcPath(),
+        dynamicImportsPolicy: 'reject',
+      })
+    ).rejects.toThrow('A dynamic import was found in packages/app/dist/index.js')
   }, 60000)
 
   it('refuses to publish a CJS package', async () => {

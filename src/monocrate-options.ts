@@ -74,4 +74,5 @@ export interface MonocrateOptions {
 
   packDestination?: string
   npmPublishArgs?: string[]
+  dynamicImportsPolicy?: 'allow' | 'reject'
 }
