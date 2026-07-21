@@ -34,11 +34,6 @@ Usage: $0 [options]`
         type: 'string' as const,
         description: 'Directory where the tarball(s) to publish will be placed at',
       },
-      'output-dir': {
-        alias: 'o',
-        type: 'string' as const,
-        description: 'Output directory',
-      },
       root: {
         alias: 'r',
         type: 'string' as const,
@@ -78,7 +73,6 @@ Usage: $0 [options]`
       }
       const options: MonocrateOptions = {
         pathToSubjectPackages: packages,
-        outputRoot: args.outputDir,
         monorepoRoot: args.root,
         bump: args.bump,
         publish: !args.dryRun,
