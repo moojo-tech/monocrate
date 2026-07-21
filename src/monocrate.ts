@@ -112,8 +112,9 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
 
       pn = a + '-' + b
     }
-    const tarballPath = path.join(tarballsDir, `${pn}-${version}.tgz`)
-    const finalTarballPath = packDestinationDir ? path.join(packDestinationDir, `${pn}-${version}.tgz`) : tarballPath
+    const name = `${pn}-${version}.tgz`
+    const tarballPath = path.join(tarballsDir, name)
+    const finalTarballPath = packDestinationDir ? path.join(packDestinationDir, name) : undefined
     return { ...at, version, tarballPath, finalTarballPath }
   })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
@@ -125,7 +126,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
       allPackagesForMirror.set(pkg.name, pkg)
     }
 
-    if (finalTarballPath !== tarballPath) {
+    if (finalTarballPath) {
       fs.cpSync(tarballPath, finalTarballPath)
     }
     if (options.publish) {

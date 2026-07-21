@@ -133,7 +133,7 @@ export class VerdaccioTestkit {
     execSync(`npm publish --registry=${this.get().url}`, { cwd: dir, stdio: 'pipe' })
   }
 
-  publishTarball(tarballPath: string) {
+  publishTarball(tarballPath: string | undefined) {
     execSync(`npm publish ${JSON.stringify(tarballPath)} --userconfig ${JSON.stringify(this.get().npmrcPath)}`, {
       stdio: 'pipe',
     })
@@ -162,7 +162,10 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
   fs.mkdirSync(storageDir, { recursive: true })
 
   const port = await getPort()
-  const url = `http://localhost:${String(port)}`
+  // Use an explicit IPv4 address (and bind verdaccio to it, below): "localhost" resolves to either ::1 or
+  // 127.0.0.1 depending on the system resolver, so verdaccio and its clients can otherwise end up on
+  // different loopback interfaces, yielding ECONNREFUSED for the whole suite.
+  const url = `http://127.0.0.1:${String(port)}`
 
   // Create htpasswd file with a test user
   // Using SHA1 format ({SHA}base64hash) which is supported by Apache htpasswd and Verdaccio
@@ -213,10 +216,14 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
   return new Promise((resolve, reject) => {
     // Spawn the local verdaccio bin directly (not via npx): npx interposes an npx -> sh -> verdaccio
     // process chain, so killing the spawned process leaves the actual verdaccio grandchild running.
-    const verdaccioProcess = spawn(process.execPath, [verdaccioBin, '--config', configPath, '--listen', String(port)], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env },
-    })
+    const verdaccioProcess = spawn(
+      process.execPath,
+      [verdaccioBin, '--config', configPath, '--listen', `127.0.0.1:${String(port)}`],
+      {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env },
+      }
+    )
 
     let started = false
     const timeout = setTimeout(() => {
@@ -275,6 +282,7 @@ function writeYarnBerryConfig(dir: string, registry: string) {
       'httpsProxy: ""',
       'unsafeHttpWhitelist:',
       '  - localhost',
+      '  - 127.0.0.1',
     ].join('\n')
   )
 }

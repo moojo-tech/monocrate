@@ -111,8 +111,10 @@ describe('npm publishing with Verdaccio', () => {
       throw new Error('Expected one package summary')
     }
 
+    if (!summary.tarballPath) {
+      throw new Error(`tarballPath is falsy`)
+    }
     expect(summary.tarballPath).toBe(path.join(monorepoRoot, 'test-dry-lib-77.77.77.tgz'))
-
     verdaccio.publishTarball(summary.tarballPath)
 
     expect(verdaccio.runView('@test/dry-lib')).toMatchObject({ name: '@test/dry-lib', version: '77.77.77' })

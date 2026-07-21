@@ -12,5 +12,5 @@ export interface MonocrateResult {
   /**
    * Details about each individual package that was assembled/published.
    */
-  summaries: { packageName: string; outputDir: string; version: string; tarballPath: string }[]
+  summaries: { packageName: string; outputDir: string; version: string; tarballPath?: string }[]
 }
