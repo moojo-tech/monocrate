@@ -532,8 +532,6 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mylib/dist/index.js': `export function hello() { return 'Hello from yarn berry!'; }`,
     })
 
-    console.error('monorepoRoot=', monorepoRoot)
-
     await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
@@ -575,7 +573,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    const { summaries } = await monocrate({
+    await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -583,8 +581,6 @@ describe('npm publishing with Verdaccio', () => {
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
     })
-
-    console.error(`L.587 summaries=${JSON.stringify(summaries)}`)
 
     expect(
       verdaccio.runConsumer(
