@@ -22,7 +22,10 @@ export function rewritePackageJson(closure: PackageClosure, version: string | un
     rewritten.version = version
   }
 
-  // Replace dependencies with flattened third-party deps (no workspace deps)
+  // Replace dependencies with the flattened third-party deps. In-repo deps must NOT appear here:
+  // package managers resolve everything listed in `dependencies` from the registry, where in-repo
+  // packages don't exist, so installs would fail (see docs/approaches-considered.md). The
+  // manager-matrix install tests in tests/publish.test.ts guard this.
   if (Object.keys(closure.allThirdPartyDeps).length > 0) {
     rewritten.dependencies = closure.allThirdPartyDeps
   }
