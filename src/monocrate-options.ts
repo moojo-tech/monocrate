@@ -21,7 +21,7 @@ export interface MonocrateOptions {
    */
   bump?: string
   /**
-   * Whether to publish the assemblies to npm after building.
+   * Whether to publish the assemblies to npm after packing.
    * When false, the assembly is prepared with the resolved version but not published
    * (useful for inspection or manual publishing).
    */

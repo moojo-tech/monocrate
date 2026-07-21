@@ -21,10 +21,6 @@ const addSharedOptions = (y: Argv) =>
         type: 'string' as const,
         description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
       },
-      'pack-destination': {
-        type: 'string' as const,
-        description: 'Directory where the tarball(s) to publish will be placed at',
-      },
       root: {
         alias: 'r',
         type: 'string' as const,
@@ -76,7 +72,7 @@ Usage: $0 <command> [options]`
     .command(
       'publish <packages...>',
       'Assemble package(s) with their in-repo dependencies and publish to npm',
-      addSharedOptions,
+      (y) => addSharedOptions(y),
       (args) =>
         runMonocrate(
           {
@@ -87,7 +83,6 @@ Usage: $0 <command> [options]`
             cwd: process.cwd(),
             mirrorTo: args.mirrorTo,
             max: args.max,
-            packDestination: args.packDestination,
             dynamicImportsPolicy: args.dynamicImportsPolicy,
           },
           args.report
@@ -96,7 +91,11 @@ Usage: $0 <command> [options]`
     .command(
       'pack <packages...>',
       'Assemble package(s) and create tarball(s) without publishing',
-      addSharedOptions,
+      (y) =>
+        addSharedOptions(y).option('pack-destination', {
+          type: 'string' as const,
+          description: 'Directory where the tarball(s) to publish will be placed at',
+        }),
       (args) =>
         runMonocrate(
           {

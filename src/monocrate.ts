@@ -43,8 +43,14 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     throw new Error(`cwd is not a directory: ${cwd}`)
   }
   const dynamicImportsPolicy = options.dynamicImportsPolicy ?? defaultDynamicImportsPolicy
-  const tarballsDir = path.resolve(cwd, options.packDestination ?? cwd)
+  const tarballsDir = dispenser.create()
   fs.mkdirSync(tarballsDir, { recursive: true })
+
+  const packDestinationDir = options.publish ? undefined : path.resolve(cwd, options.packDestination ?? cwd)
+  if (packDestinationDir) {
+    fs.mkdirSync(tarballsDir, { recursive: true })
+  }
+
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
@@ -117,6 +123,9 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
       allPackagesForMirror.set(pkg.name, pkg)
     }
 
+    if (packDestinationDir) {
+      fs.cpSync(tarballPath, packDestinationDir)
+    }
     if (options.publish) {
       await npmClient.publish(tarballPath, 'pending')
     }
