@@ -774,6 +774,10 @@ console.log(helper);
     await expect(teskit.run(monorepoRoot, 'packages/a')).rejects.toThrow(
       'A dynamic import was found in packages/a/dist/index.js'
     )
+    // Same behavior, just explictly set the default value.
+    await expect(
+      teskit.run(monorepoRoot, 'packages/a', { optionsMutator: (o) => (o.dynamicImportsPolicy = 'reject') })
+    ).rejects.toThrow('A dynamic import was found in packages/a/dist/index.js')
 
     // This test case's logic is a bit convoluted: we allow dynamic imports, so the packging succeeds. But then, when
     // we run it tries to import the imaginary package, which - of course - is notfound and the run fails which proves
