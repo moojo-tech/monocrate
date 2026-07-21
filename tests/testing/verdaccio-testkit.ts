@@ -80,11 +80,18 @@ export class VerdaccioTestkit {
     }
     case 'yarn@berry': {
       writeYarnBerryConfig(dir, registry)
-      execSync(`node ${yarnBerryBin} add ${packageName}`, {
-        cwd: dir,
-        stdio: 'pipe',
-        env: noProxyEnv(),
-      })
+      try {
+        execSync(`node ${yarnBerryBin} add ${packageName}`, {
+          cwd: dir,
+          stdio: 'pipe',
+          env: noProxyEnv(),
+        })
+      } catch (e) {
+        const ee = e as {stdout: Buffer, stderr: Buffer}
+        console.error(ee.stdout.toString())
+        console.error(ee.stderr.toString())
+      }
+      console.error(`L.94 - yarn berry installed is done`)
       return
     }
     case 'pnpm': {
@@ -132,8 +139,10 @@ export class VerdaccioTestkit {
       [fileName]: allCode.join('\n'),
     })
 
+    console.error(`L.141 running install`)
     this.runInstall(dir, depToInstall, options)
 
+    console.error(`L.144 running execsync`)
     return execSync(`node ${fileName}`, { cwd: dir, encoding: 'utf-8' }).trim()
   }
 }
