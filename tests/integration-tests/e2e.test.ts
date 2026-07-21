@@ -1,5 +1,4 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
 import fs from 'node:fs'
@@ -750,46 +749,45 @@ console.log(helper);
     expect(stdout.trim()).toBe('subpath-works')
   })
 
-  it('resolves dynamic imports of in-repo dependencies', async () => {
+  it('allows dynamic imports when the import value is a string literal', async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
-      'packages/a/dist/index.js': `const b = await import('@myorg/b');
-console.log(b.foo);
-`,
+      'packages/a/dist/index.js': `const b = await import('@myorg/b'); console.log('_' + b.val + '_')`,
       'packages/b/package.json': pj('@myorg/b'),
-      'packages/b/dist/index.js': `export const foo = 'dynamic-import-works';
-`,
+      'packages/b/dist/index.js': `export const val = 'foo'`,
     })
 
     const { stdout } = await teskit.run(monorepoRoot, 'packages/a')
-
-    expect(stdout.trim()).toBe('dynamic-import-works')
+    expect(stdout.trim()).toBe('_foo_')
   })
 
-  it('allows computed dynamic imports', async () => {
+  it(`rejects dynamic imports when the import value is a computed string unless dynamicImportsPolicy is 'allow'`, async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
-      'packages/a/dist/index.js': `const modulePath = '@myorg/b';
-const b = await import(modulePath);
-export const foo = b.foo;
-`,
+      'packages/a/dist/index.js': `const s = 'an-imaginary-package'; const b = await import(s); export const val = '_' + b.val + '_'`,
       'packages/b/package.json': pj('@myorg/b'),
-      'packages/b/dist/index.js': `export const foo = 'foo';
-`,
+      'packages/b/dist/index.js': `export const val = 'foo'`,
     })
 
+    await expect(teskit.run(monorepoRoot, 'packages/a')).rejects.toThrow(
+      'A dynamic import was found in packages/a/dist/index.js'
+    )
+    // Same behavior as above, but with the default value set explicitly.
     await expect(
-      monocrate({
-        cwd: monorepoRoot,
-        pathToSubjectPackages: 'packages/a',
-        publish: false,
-        bump: '2.8.512',
-      })
-    ).resolves.toMatchObject({
-      summaries: [{ packageName: '@myorg/a', version: '2.8.512' }],
+      teskit.run(monorepoRoot, 'packages/a', { optionsMutator: (o) => (o.dynamicImportsPolicy = 'reject') })
+    ).rejects.toThrow('A dynamic import was found in packages/a/dist/index.js')
+
+    // This last assertion is a bit convoluted: with the 'allow' policy, packaging succeeds, but we still need to
+    // prove the dynamic import was left untouched. So we run the output and check that it fails to resolve the
+    // imaginary package by its original name — which is only possible if the import survived rewriting verbatim.
+    const { stderr } = await teskit.run(monorepoRoot, 'packages/a', {
+      optionsMutator: (o) => {
+        o.dynamicImportsPolicy = 'allow'
+      },
     })
+    expect(stderr.trim()).toMatch(/Cannot find package 'an-imaginary-package' imported from .*dist\/index.js/)
   })
 
   it('handles cross-dependency imports between in-repo deps', async () => {
