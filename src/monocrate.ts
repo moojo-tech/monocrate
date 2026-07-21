@@ -48,7 +48,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
 
   const packDestinationDir = options.publish ? undefined : path.resolve(cwd, options.packDestination ?? cwd)
   if (packDestinationDir) {
-    fs.mkdirSync(tarballsDir, { recursive: true })
+    fs.mkdirSync(packDestinationDir, { recursive: true })
   }
 
   // Determine whether to use unified max version or individual versions per package
@@ -112,19 +112,21 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
 
       pn = a + '-' + b
     }
-    return { ...at, version, tarballPath: path.join(tarballsDir, `${pn}-${version}.tgz`) }
+    const tarballPath = path.join(tarballsDir, `${pn}-${version}.tgz`)
+    const finalTarballPath = packDestinationDir ? path.join(packDestinationDir, `${pn}-${version}.tgz`) : tarballPath
+    return { ...at, version, tarballPath, finalTarballPath }
   })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
   // Phase 1: Assemble all packages and publish with --tag pending
-  for (const { assembler, version, tarballPath } of resolvedPairs) {
+  for (const { assembler, version, tarballPath, finalTarballPath } of resolvedPairs) {
     const { compiletimeMembers } = await assembler.assemble(version, tarballPath, dispenser)
     for (const pkg of compiletimeMembers) {
       allPackagesForMirror.set(pkg.name, pkg)
     }
 
-    if (packDestinationDir) {
-      fs.cpSync(tarballPath, packDestinationDir)
+    if (finalTarballPath !== tarballPath) {
+      fs.cpSync(tarballPath, finalTarballPath)
     }
     if (options.publish) {
       await npmClient.publish(tarballPath, 'pending')
@@ -147,11 +149,11 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   return {
     outputDir: a0.getOutputDir(),
     resolvedVersion: useMax ? max : undefined,
-    summaries: resolvedPairs.map(({ assembler, version, tarballPath }) => ({
+    summaries: resolvedPairs.map(({ assembler, version, finalTarballPath }) => ({
       outputDir: assembler.getOutputDir(),
       packageName: assembler.pkgName,
       version,
-      tarballPath,
+      tarballPath: finalTarballPath,
     })),
   }
 }

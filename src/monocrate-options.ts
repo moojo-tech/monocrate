@@ -66,9 +66,9 @@ export interface MonocrateOptions {
   max?: boolean
 
   /**
-   * Directory where the tarball of each published package is placed, named `<name>-<version>.tgz`
+   * Directory where the tarball of each assembled package is placed, named `<name>-<version>.tgz`
    * (scoped names have their `@` dropped and `/` replaced with `-`).
-   * If not specified, defaults to the cwd option.
+   * Only applies when publish is false. If not specified, defaults to the cwd option.
    */
   packDestination?: string
   /**
