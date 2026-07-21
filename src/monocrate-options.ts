@@ -66,18 +66,20 @@ export interface MonocrateOptions {
   max?: boolean
 
   /**
-   * Directory where the tarball of each assembly is placed, named `<name>-<version>.tgz`
+   * Directory where the tarball of each published package is placed, named `<name>-<version>.tgz`
    * (scoped names have their `@` dropped and `/` replaced with `-`).
    * If not specified, defaults to the cwd option.
    */
   packDestination?: string
   /**
-   * How to treat dynamic `import()` calls whose argument is not a string literal. Such imports
-   * cannot be rewritten, so if they resolve to an in-repo dependency they will break at runtime
-   * in the published package: "allow" leaves them as-is, "reject" fails the assembly.
+   * How to treat dynamic `import()` calls whose argument is not a string literal. Such imports cannot be rewritten,
+   * so if they resolve to an in-repo dependency they will break at runtime in the published package. "reject" fails
+   * the packaging process. "allow" leaves them as-is, Use "allow" if you are sure the imported string value is resolved
+   * to an externally published package.
+   *
    * String-literal dynamic imports are always rewritten, regardless of this value.
    *
-   * Defaults to "allow".
+   * Defaults to "reject".
    */
   dynamicImportsPolicy?: 'allow' | 'reject'
 }
