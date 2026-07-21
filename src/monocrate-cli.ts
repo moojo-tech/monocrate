@@ -62,7 +62,8 @@ Usage: $0 [options]`
       },
       'dynamic-imports-policy': {
         choices: ['allow', 'reject'] as const,
-        description: 'Whether to allow files to dynamically import a module name which is a computed string',
+        description:
+          'How to treat dynamic import() calls with computed (non-literal) module names: "reject" fails the packaging process, "allow" leaves them as-is',
         default: defaultDynamicImportsPolicy,
       },
     })
