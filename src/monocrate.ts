@@ -12,6 +12,7 @@ import { mirrorSources } from './mirror-sources.js'
 import type { MonocrateResult } from './monocrate-result.js'
 import type { MonocrateOptions } from './monocrate-options.js'
 import { TempDirDispenser } from './temp-dir-dispenser.js'
+import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
 export type { MonocrateOptions } from './monocrate-options.js'
 export type { MonocrateResult } from './monocrate-result.js'
@@ -41,7 +42,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   if (!fs.statSync(cwd).isDirectory()) {
     throw new Error(`cwd is not a directory: ${cwd}`)
   }
-  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'reject'
+  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? defaultDynamicImportsPolicy
   const tarballsDir = path.resolve(cwd, options.packDestination ?? cwd)
   fs.mkdirSync(tarballsDir, { recursive: true })
   // Determine whether to use unified max version or individual versions per package

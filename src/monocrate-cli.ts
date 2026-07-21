@@ -4,6 +4,7 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
+import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
 export function monocrateCli(): void {
   const parser = yargs(hideBin(process.argv))
@@ -59,6 +60,12 @@ Usage: $0 [options]`
         description: 'Use max version across all packages (default: false)',
         default: false,
       },
+      'dynamic-imports-policy': {
+        choices: ['allow', 'reject'] as const,
+        description:
+          'How to treat dynamic import() calls with computed (non-literal) module names: "reject" fails the packaging process, "allow" leaves them as-is',
+        default: defaultDynamicImportsPolicy,
+      },
     })
     .strict()
     .help()
@@ -80,6 +87,7 @@ Usage: $0 [options]`
         mirrorTo: args.mirrorTo,
         max: args.max,
         packDestination: args.packDestination,
+        dynamicImportsPolicy: args.dynamicImportsPolicy,
       }
       const result = await monocrate(options)
       const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
