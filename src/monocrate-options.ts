@@ -1,3 +1,4 @@
+// TODO(imaman): split to two types to reflect the difference in shapes (publish vs. pack)
 export interface MonocrateOptions {
   /**
    * Paths to the directories of the various package to assemble. If a string, it is transformed to a single element array.
