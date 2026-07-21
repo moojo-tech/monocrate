@@ -41,7 +41,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   if (!fs.statSync(cwd).isDirectory()) {
     throw new Error(`cwd is not a directory: ${cwd}`)
   }
-  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'reject'
+  const dynamicImportsPolicy = options.dynamicImportsPolicy ?? 'allow'
   const tarballsDir = path.resolve(cwd, options.packDestination ?? cwd)
   fs.mkdirSync(tarballsDir, { recursive: true })
   // Determine whether to use unified max version or individual versions per package
