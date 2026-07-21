@@ -654,9 +654,6 @@ describe('npm publishing with Verdaccio', () => {
     ).toBe('Hello from bun!')
   }, 90000)
 
-  // Bun (like yarn v1 and yarn berry) does not respect bundledDependencies: it still tries to
-  // resolve bundled in-repo deps from the registry, where they don't exist.
-  // See the analogous yarn v1 test above for details.
   it('bun can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
