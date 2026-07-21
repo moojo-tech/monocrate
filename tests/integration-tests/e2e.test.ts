@@ -762,7 +762,7 @@ console.log(helper);
     expect(stdout.trim()).toBe('_foo_')
   })
 
-  it(`rejects dynamic imports when the import value is a computed string unless dynamicImportsPolicy is 'allows'`, async () => {
+  it(`rejects dynamic imports when the import value is a computed string unless dynamicImportsPolicy is 'allow'`, async () => {
     const monorepoRoot = folderify({
       'package.json': { name, workspaces: ['packages/*'] },
       'packages/a/package.json': pj('@myorg/a', { dependencies: { '@myorg/b': '*' } }),
@@ -774,14 +774,14 @@ console.log(helper);
     await expect(teskit.run(monorepoRoot, 'packages/a')).rejects.toThrow(
       'A dynamic import was found in packages/a/dist/index.js'
     )
-    // Same behavior, just explictly set the default value.
+    // Same behavior as above, but with the default value set explicitly.
     await expect(
       teskit.run(monorepoRoot, 'packages/a', { optionsMutator: (o) => (o.dynamicImportsPolicy = 'reject') })
     ).rejects.toThrow('A dynamic import was found in packages/a/dist/index.js')
 
-    // This test case's logic is a bit convoluted: we allow dynamic imports, so the packging succeeds. But then, when
-    // we run it tries to import the imaginary package, which - of course - is notfound and the run fails which proves
-    // the that dynamic import was allowed and kept unchaged.
+    // This last assertion is a bit convoluted: with the 'allow' policy, packaging succeeds, but we still need to
+    // prove the dynamic import was left untouched. So we run the output and check that it fails to resolve the
+    // imaginary package by its original name — which is only possible if the import survived rewriting verbatim.
     const { stderr } = await teskit.run(monorepoRoot, 'packages/a', {
       optionsMutator: (o) => {
         o.dynamicImportsPolicy = 'allow'
