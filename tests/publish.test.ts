@@ -555,7 +555,7 @@ describe('npm publishing with Verdaccio', () => {
   // Yarn berry (like yarn v1) does not respect bundledDependencies: it still tries to
   // resolve bundled in-repo deps from the registry, where they don't exist.
   // See the analogous yarn v1 test above for details.
-  it('yarn berry can install a package with bundled in-repo dependencies', async () => {
+  it('yarn berry can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -575,7 +575,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    const {summaries} = await monocrate({
+    const { summaries } = await monocrate({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,

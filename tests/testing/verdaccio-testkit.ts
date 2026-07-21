@@ -84,10 +84,10 @@ export class VerdaccioTestkit {
         execSync(`node ${yarnBerryBin} add ${packageName}`, {
           cwd: dir,
           stdio: 'pipe',
-          env: noProxyEnv(),
+          env: { ...noProxyEnv(), YARN_GLOBAL_FOLDER: createTempDir('yarn-global-') },
         })
       } catch (e) {
-        const ee = e as {stdout: Buffer, stderr: Buffer}
+        const ee = e as { stdout: Buffer; stderr: Buffer }
         console.error(ee.stdout.toString())
         console.error(ee.stderr.toString())
       }
@@ -150,6 +150,8 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
   const configDir = createTempDir('verdaccio-config-')
   const storageDir = path.join(configDir, 'storage')
   fs.mkdirSync(storageDir, { recursive: true })
+
+  console.error(`L.154 verdaccio storageDir= ${storageDir}`)
 
   const port = await getPort()
   const url = `http://localhost:${String(port)}`
