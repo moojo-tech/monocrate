@@ -7,8 +7,6 @@ import { pj, createTempDir } from './testing/monocrate-teskit.js'
 import { folderify } from './testing/folderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
-// TODO(imaman): rethink .skip()-ing in this file
-
 describe('npm login check', () => {
   it('fails early with actionable message when not logged in to npm, but skips check when publish is false', async () => {
     const monorepoRoot = folderify({
