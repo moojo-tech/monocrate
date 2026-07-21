@@ -7,8 +7,6 @@ import { pj, createTempDir } from './testing/monocrate-teskit.js'
 import { folderify } from './testing/folderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
-// TODO(imaman): rethink .skip()-ing in this file
-
 describe('npm login check', () => {
   it('fails early with actionable message when not logged in to npm, but skips check when publish is false', async () => {
     const monorepoRoot = folderify({
@@ -482,7 +480,7 @@ describe('npm publishing with Verdaccio', () => {
     expect(viewB['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
   }, 60000)
 
-  it.skip('yarn v1 can install a package with bundled in-repo dependencies', async () => {
+  it('yarn v1 can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -553,7 +551,7 @@ describe('npm publishing with Verdaccio', () => {
   // Yarn berry (like yarn v1) does not respect bundledDependencies: it still tries to
   // resolve bundled in-repo deps from the registry, where they don't exist.
   // See the analogous yarn v1 test above for details.
-  it.skip('yarn berry can install a package with bundled in-repo dependencies', async () => {
+  it('yarn berry can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
@@ -662,7 +660,7 @@ describe('npm publishing with Verdaccio', () => {
   // Bun (like yarn v1 and yarn berry) does not respect bundledDependencies: it still tries to
   // resolve bundled in-repo deps from the registry, where they don't exist.
   // See the analogous yarn v1 test above for details.
-  it.skip('bun can install a package with bundled in-repo dependencies', async () => {
+  it('bun can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
