@@ -75,7 +75,11 @@ export class VerdaccioTestkit {
     const registry = this.get().url
     switch (options?.manager) {
     case 'yarn@v1': {
-      execSync(`node ${yarnV1Bin} add ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
+      const cacheFolder = createTempDir('yarn1-cache-')
+      execSync(`node ${yarnV1Bin} add ${packageName} --registry=${registry} --cache-folder ${cacheFolder}`, {
+        cwd: dir,
+        stdio: 'pipe',
+      })
       return
     }
     case 'yarn@berry': {
@@ -96,16 +100,27 @@ export class VerdaccioTestkit {
     }
     case 'pnpm': {
       fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-      execSync(`pnpm add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+      const storeDir = createTempDir('pnpm-store-')
+      const cacheDir = createTempDir('pnpm-cache-')
+      execSync(`pnpm add ${packageName} --store-dir ${storeDir} --cache-dir ${cacheDir}`, {
+        cwd: dir,
+        stdio: 'pipe',
+        env: noProxyEnv(),
+      })
       return
     }
     case 'bun': {
       fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-      execSync(`${bunBin} add ${packageName}`, { cwd: dir, stdio: 'pipe', env: noProxyEnv() })
+      execSync(`${bunBin} add ${packageName}`, {
+        cwd: dir,
+        stdio: 'pipe',
+        env: { ...noProxyEnv(), BUN_INSTALL_CACHE_DIR: createTempDir('bun-cache-') },
+      })
       return
     }
     default: {
-      execSync(`npm install ${packageName} --registry=${registry}`, { cwd: dir, stdio: 'pipe' })
+      const cacheDir = createTempDir('npm-cache-')
+      execSync(`npm install ${packageName} --registry=${registry} --cache ${cacheDir}`, { cwd: dir, stdio: 'pipe' })
     }
     }
   }
