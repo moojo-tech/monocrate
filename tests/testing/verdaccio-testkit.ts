@@ -1,5 +1,5 @@
 import type { ChildProcess } from 'node:child_process'
-import { execSync, spawn } from 'node:child_process'
+import { execSync, spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { createTempDir } from './monocrate-teskit.js'
 import getPort from 'get-port'
@@ -7,6 +7,8 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { folderify } from './folderify.js'
 import { z } from 'zod'
+import { shouldNeverHappen } from '../../src/should-never-happen.js'
+import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 
 interface VerdaccioServer {
   process: ChildProcess
@@ -36,18 +38,9 @@ const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarn
 const bunBin = path.resolve(import.meta.dirname, '../../node_modules/.bin/bun')
 const verdaccioBin = path.resolve(import.meta.dirname, '../../node_modules/verdaccio/bin/verdaccio')
 
-// Verdaccio processes that were started and not yet stopped. Killed on process exit so that runs
-// which never reach afterAll (test timeouts, Ctrl-C, worker crashes) don't leave orphaned registry
-// instances behind. Such orphans keep serving their (by then stale) storage on their port forever.
-const liveVerdaccioProcesses = new Set<ChildProcess>()
-process.on('exit', () => {
-  for (const p of liveVerdaccioProcesses) {
-    p.kill('SIGKILL')
-  }
-})
-
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
+  private readonly dispenser = new TempDirDispenser()
 
   async start() {
     this.server = await startVerdaccio()
@@ -67,6 +60,7 @@ export class VerdaccioTestkit {
 
   async shutdown() {
     await stopVerdaccio(this.get())
+    this.dispenser.cleanup()
   }
 
   runView(packageName: string): NpmViewResult {
@@ -83,50 +77,49 @@ export class VerdaccioTestkit {
   }
 
   runInstall(dir: string, packageName: string, options?: RunConsumerOptions) {
+    const mySpawn = (executable: string, args: string[], env?: Partial<Record<string, string>>) => {
+      const out = spawnSync(executable, args, { cwd: dir, stdio: 'pipe', env })
+      if (out.status === null || out.status) {
+        throw (
+          out.error ??
+          new Error(`Execution failed for command ${executable} ${args.join(' ')}: ${out.stderr.toString()}`)
+        )
+      }
+    }
+
+    const man = options?.manager ?? 'npm'
     const registry = this.get().url
-    switch (options?.manager) {
-    case 'yarn@v1': {
-      const cacheFolder = createTempDir('yarn1-cache-')
-      execSync(`node ${yarnV1Bin} add ${packageName} --registry=${registry} --cache-folder ${cacheFolder}`, {
-        cwd: dir,
-        stdio: 'pipe',
-      })
+    if (man === 'yarn@v1') {
+      const cacheFolder = this.dispenser.create()
+      mySpawn('node', [yarnV1Bin, 'add', packageName, '--registry', registry, '--cache-folder', cacheFolder])
       return
     }
-    case 'yarn@berry': {
+    if (man === 'yarn@berry') {
       writeYarnBerryConfig(dir, registry)
-      execSync(`node ${yarnBerryBin} add ${packageName}`, {
-        cwd: dir,
-        stdio: 'pipe',
-        env: { ...noProxyEnv(), YARN_GLOBAL_FOLDER: createTempDir('yarn-global-') },
+      mySpawn('node', [yarnBerryBin, 'add', packageName], {
+        ...noProxyEnv(),
+        YARN_GLOBAL_FOLDER: this.dispenser.create(),
       })
       return
     }
-    case 'pnpm': {
+    if (man === 'pnpm') {
       fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-      const storeDir = createTempDir('pnpm-store-')
-      const cacheDir = createTempDir('pnpm-cache-')
-      execSync(`pnpm add ${packageName} --store-dir ${storeDir} --cache-dir ${cacheDir}`, {
-        cwd: dir,
-        stdio: 'pipe',
-        env: noProxyEnv(),
-      })
+      const storeDir = this.dispenser.create()
+      const cacheDir = this.dispenser.create()
+      mySpawn('pnpm', ['add', packageName, '--store-dir', storeDir, '--cache-dir', cacheDir], noProxyEnv())
       return
     }
-    case 'bun': {
+    if (man === 'bun') {
       fs.copyFileSync(this.get().npmrcPath, path.join(dir, '.npmrc'))
-      execSync(`${bunBin} add ${packageName}`, {
-        cwd: dir,
-        stdio: 'pipe',
-        env: { ...noProxyEnv(), BUN_INSTALL_CACHE_DIR: createTempDir('bun-cache-') },
-      })
+      mySpawn(bunBin, ['add', packageName], { ...noProxyEnv(), BUN_INSTALL_CACHE_DIR: this.dispenser.create() })
       return
     }
-    default: {
-      const cacheDir = createTempDir('npm-cache-')
-      execSync(`npm install ${packageName} --registry=${registry} --cache ${cacheDir}`, { cwd: dir, stdio: 'pipe' })
+    if (man === 'npm') {
+      const cacheDir = this.dispenser.create()
+      mySpawn(`npm`, ['install', packageName, '--registry', registry, '--cache', cacheDir])
+      return
     }
-    }
+    shouldNeverHappen(man)
   }
 
   publishPackage(name: string, version: string, jsSourceCode: string) {
@@ -223,10 +216,6 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
     const verdaccioProcess = spawn(process.execPath, [verdaccioBin, '--config', configPath, '--listen', String(port)], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env },
-    })
-    liveVerdaccioProcesses.add(verdaccioProcess)
-    verdaccioProcess.on('exit', () => {
-      liveVerdaccioProcesses.delete(verdaccioProcess)
     })
 
     let started = false
