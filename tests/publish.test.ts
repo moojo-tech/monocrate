@@ -504,11 +504,6 @@ describe('npm publishing with Verdaccio', () => {
       npmrcPath: verdaccio.npmrcPath(),
     })
 
-    // Yarn v1 must be able to install the published package without trying to resolve bundled
-    // in-repo dependencies from the registry. If in-repo deps are listed in `dependencies`,
-    // yarn v1 tries to fetch them from the registry (where they don't exist) and fails.
-    // See: https://github.com/yarnpkg/yarn/issues/5998
-    // See: https://github.com/yarnpkg/yarn/issues/8436
     expect(
       verdaccio.runConsumer(
         '@test/yarn-app@11.11.11',

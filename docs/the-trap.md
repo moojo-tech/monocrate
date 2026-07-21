@@ -35,3 +35,5 @@ npm error 404  '@acme/internal-utils@1.0.0' is not in this registry.
 
 **This is the big "oh-no" moment.** Your package is live but broken for every consumer.
 
+(And the obvious escape hatches — `bundledDependencies`, `file:` dependencies — don't get you out of it either. See [approaches-considered.md](approaches-considered.md) for why.)
+
