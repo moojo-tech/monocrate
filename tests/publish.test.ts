@@ -586,7 +586,7 @@ describe('npm publishing with Verdaccio', () => {
     ).toBe('Hello, World!')
   }, 90000)
 
-  it('pnpm can install a package with bundled in-repo dependencies', async () => {
+  it('pnpm can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/app/package.json': {
