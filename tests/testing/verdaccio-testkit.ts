@@ -38,16 +38,6 @@ const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarn
 const bunBin = path.resolve(import.meta.dirname, '../../node_modules/.bin/bun')
 const verdaccioBin = path.resolve(import.meta.dirname, '../../node_modules/verdaccio/bin/verdaccio')
 
-// Verdaccio processes that were started and not yet stopped. Killed on process exit so that runs
-// which never reach afterAll (test timeouts, Ctrl-C, worker crashes) don't leave orphaned registry
-// instances behind. Such orphans keep serving their (by then stale) storage on their port forever.
-const liveVerdaccioProcesses = new Set<ChildProcess>()
-process.on('exit', () => {
-  for (const p of liveVerdaccioProcesses) {
-    p.kill('SIGKILL')
-  }
-})
-
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
   private readonly dispenser = new TempDirDispenser()
@@ -226,10 +216,6 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
     const verdaccioProcess = spawn(process.execPath, [verdaccioBin, '--config', configPath, '--listen', String(port)], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env },
-    })
-    liveVerdaccioProcesses.add(verdaccioProcess)
-    verdaccioProcess.on('exit', () => {
-      liveVerdaccioProcesses.delete(verdaccioProcess)
     })
 
     let started = false
