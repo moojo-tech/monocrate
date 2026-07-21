@@ -34,6 +34,17 @@ interface RunConsumerOptions {
 const yarnV1Bin = path.resolve(import.meta.dirname, '../../node_modules/yarn/bin/yarn.js')
 const yarnBerryBin = path.resolve(import.meta.dirname, '../../node_modules/@yarnpkg/cli-dist/bin/yarn.js')
 const bunBin = path.resolve(import.meta.dirname, '../../node_modules/.bin/bun')
+const verdaccioBin = path.resolve(import.meta.dirname, '../../node_modules/verdaccio/bin/verdaccio')
+
+// Verdaccio processes that were started and not yet stopped. Killed on process exit so that runs
+// which never reach afterAll (test timeouts, Ctrl-C, worker crashes) don't leave orphaned registry
+// instances behind. Such orphans keep serving their (by then stale) storage on their port forever.
+const liveVerdaccioProcesses = new Set<ChildProcess>()
+process.on('exit', () => {
+  for (const p of liveVerdaccioProcesses) {
+    p.kill('SIGKILL')
+  }
+})
 
 export class VerdaccioTestkit {
   private server: VerdaccioServer | undefined = undefined
@@ -218,9 +229,15 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
   fs.writeFileSync(npmrcPath, npmrcContent)
 
   return new Promise((resolve, reject) => {
-    const verdaccioProcess = spawn('npx', ['verdaccio', '--config', configPath, '--listen', String(port)], {
+    // Spawn the local verdaccio bin directly (not via npx): npx interposes an npx -> sh -> verdaccio
+    // process chain, so killing the spawned process leaves the actual verdaccio grandchild running.
+    const verdaccioProcess = spawn(process.execPath, [verdaccioBin, '--config', configPath, '--listen', String(port)], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env },
+    })
+    liveVerdaccioProcesses.add(verdaccioProcess)
+    verdaccioProcess.on('exit', () => {
+      liveVerdaccioProcesses.delete(verdaccioProcess)
     })
 
     let started = false
