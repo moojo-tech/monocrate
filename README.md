@@ -45,10 +45,10 @@ pnpm add --save-dev monocrate
 npm run build
 
 # Publish
-npx monocrate packages/my-awesome-package --bump patch
+npx monocrate publish packages/my-awesome-package --bump patch
 
-# Or use --dry-run to do everything short of publishing
-npx monocrate packages/my-awesome-package --dry-run --output-dir /tmp/inspect --bump patch
+# Or use "pack" to do everything short of publishing
+npx monocrate pack packages/my-awesome-package --pack-destination /tmp/inspect --bump patch
 ```
 
 ### What Gets Published
@@ -67,7 +67,7 @@ Given this monorepo structure:
             └── index.ts
 ```
 
-Running `npx monocrate packages/my-awesome-package` produces:
+Running `npx monocrate publish packages/my-awesome-package` produces:
 ```
 /tmp/monocrate-xxxxxx/
 └── packages/
@@ -102,22 +102,25 @@ etc.), you can use `--bump package` to read the version directly from there:
 
 ```bash
 npm version minor --no-git-tag-version   # Sets version in package.json
-npx monocrate . --bump package           # Uses that version
+npx monocrate publish . --bump package   # Uses that version
 ```
 
 ## Examples
 
 ```bash
 # --bump defaults to "minor", so these two are equivalent:
-npx monocrate packages/my-awesome-package --bump minor
-npx monocrate packages/my-awesome-package
+npx monocrate publish packages/my-awesome-package --bump minor
+npx monocrate publish packages/my-awesome-package
 
 # Explicit version
-npx monocrate packages/my-awesome-package --bump 2.3.0
+npx monocrate publish packages/my-awesome-package --bump 2.3.0
+
+# Prepare everything (including the tarball) without publishing
+npx monocrate pack packages/my-awesome-package --bump 2.3.0
 
 # Package location is resolved relative to CWD
 cd /path/to/my-monorepo/packages
-npx monocrate my-awesome-package --bump 2.3.0
+npx monocrate publish my-awesome-package --bump 2.3.0
 ```
 
 ## Programmatic API
@@ -138,7 +141,7 @@ const result = await monocrate({
 console.log(result.summaries[0].version) // '1.3.0'
 ```
 
-The above snippet is the programmatic equivalent of `npx monocrate packages/my-awesome-package --bump minor`.
+The above snippet is the programmatic equivalent of `npx monocrate publish packages/my-awesome-package --bump minor`.
 
 ## Advanced Features
 
@@ -162,7 +165,7 @@ Want to open-source your package while keeping your monorepo private? Use `--mir
 in-repo dependencies to a separate public repository:
 
 ```bash
-npx monocrate packages/my-awesome-package --mirror-to ../public-repo
+npx monocrate publish packages/my-awesome-package --mirror-to ../public-repo
 ```
 
 This way, your public repo stays in sync with what you publish—all necessary packages included. Contributors can
@@ -175,7 +178,7 @@ Requires a clean working tree. Only committed files (from `git HEAD`) are mirror
 If you have several public packages in your monorepo, publish them in one go by listing multiple directories:
 
 ```bash
-npx monocrate packages/lib-a packages/lib-b --bump patch
+npx monocrate publish packages/lib-a packages/lib-b --bump patch
 ```
 
 By default, each package will be published at its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
@@ -186,7 +189,7 @@ You can also publish all specified packages at the same version (unified version
 
 ```bash
 # Now both will be published at 2.0.1 (the max)
-npx monocrate packages/lib-a packages/lib-b --bump patch --max
+npx monocrate publish packages/lib-a packages/lib-b --bump patch --max
 ```
 
 This is purely a stylistic choice; correctness is unaffected since in-repo dependencies are always embedded.
@@ -216,26 +219,36 @@ A few constraints to be aware of:
 ## CLI Reference
 
 ```
-monocrate <packages...> [options]
+monocrate publish <packages...> [options]
+monocrate pack <packages...> [options]
 ```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `publish` | Assemble package(s) with their in-repo dependencies and publish to npm |
+| `pack` | Assemble package(s) and create tarball(s) without publishing |
 
 ### Arguments
 
 | Argument | Description |
 |----------|-------------|
-| `packages` | One or more package directories to publish (required) |
+| `packages` | One or more package directories to assemble (required) |
 
 ### Options
+
+Both commands accept the same options:
 
 | Option | Alias | Type | Default | Description |
 |--------|-------|------|---------|-------------|
 | `--bump` | `-b` | `string` | `minor` | Version bump strategy: `patch`, `minor`, `major`, `package`, or explicit semver (e.g., `2.3.0`). Use `package` to read version from `package.json`. |
 | `--max` | | `boolean` | `false` | Use max version across all packages (unified versioning). When false, each package uses its own version. |
-| `--dry-run` | `-d` | `boolean` | `false` | Prepare the package without publishing to npm |
-| `--output-dir` | `-o` | `string` | (temp dir) | Directory where assembled package is written |
+| `--pack-destination` | | `string` | (cwd) | Directory where the tarball(s) are placed |
 | `--root` | `-r` | `string` | (auto) | Monorepo root directory (auto-detected if omitted) |
 | `--mirror-to` | `-m` | `string` | — | Mirror source files to a directory (for public repos) |
 | `--report` | | `string` | — | Write resolved version to a file instead of stdout |
+| `--dynamic-imports-policy` | | `allow \| reject` | `reject` | How to treat dynamic `import()` calls with computed (non-literal) module names: `reject` fails the packaging process, `allow` leaves them as-is |
 | `--help` | | | | Show help |
 | `--version` | | | | Show version number |
 
