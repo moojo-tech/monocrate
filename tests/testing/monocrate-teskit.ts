@@ -34,15 +34,22 @@ export class MonocrateTeskit {
   async run(
     monorepoRoot: string,
     sourcePackage: string,
-    { entryPoint = 'dist/index.js', bump = '2.8.512' }: { entryPoint?: string; bump?: string } = {}
+    {
+      entryPoint = 'dist/index.js',
+      bump = '2.8.512',
+      optionsMutator = () => {},
+    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonocrateOptions) => void } = {}
   ) {
-    const result = await monocrate({
+    const options = {
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, sourcePackage),
       monorepoRoot,
       bump,
       publish: false,
-    })
+    }
+
+    optionsMutator(options)
+    const result = await monocrate(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')
