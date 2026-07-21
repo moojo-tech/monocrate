@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import yargs from 'yargs'
-import type { ArgumentsCamelCase, Argv } from 'yargs'
+import type { Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
@@ -52,24 +52,11 @@ const addSharedOptions = (y: Argv) =>
       },
     })
 
-type CliArgs = ArgumentsCamelCase<ReturnType<typeof addSharedOptions> extends Argv<infer T> ? T : never>
-
-async function runMonocrate(args: CliArgs, publish: boolean): Promise<void> {
-  const options: MonocrateOptions = {
-    pathToSubjectPackages: args.packages,
-    monorepoRoot: args.root,
-    bump: args.bump,
-    publish,
-    cwd: process.cwd(),
-    mirrorTo: args.mirrorTo,
-    max: args.max,
-    packDestination: args.packDestination,
-    dynamicImportsPolicy: args.dynamicImportsPolicy,
-  }
+async function runMonocrate(options: MonocrateOptions, report: string | undefined): Promise<void> {
   const result = await monocrate(options)
   const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
-  if (args.report) {
-    const outputFilePath = path.resolve(process.cwd(), args.report)
+  if (report) {
+    const outputFilePath = path.resolve(process.cwd(), report)
     fs.writeFileSync(outputFilePath, output)
   } else {
     console.log(output)
@@ -90,13 +77,41 @@ Usage: $0 <command> [options]`
       'publish <packages...>',
       'Assemble package(s) with their in-repo dependencies and publish to npm',
       addSharedOptions,
-      (args) => runMonocrate(args, true)
+      (args) =>
+        runMonocrate(
+          {
+            pathToSubjectPackages: args.packages,
+            monorepoRoot: args.root,
+            bump: args.bump,
+            publish: true,
+            cwd: process.cwd(),
+            mirrorTo: args.mirrorTo,
+            max: args.max,
+            packDestination: args.packDestination,
+            dynamicImportsPolicy: args.dynamicImportsPolicy,
+          },
+          args.report
+        )
     )
     .command(
       'pack <packages...>',
       'Assemble package(s) and create tarball(s) without publishing',
       addSharedOptions,
-      (args) => runMonocrate(args, false)
+      (args) =>
+        runMonocrate(
+          {
+            pathToSubjectPackages: args.packages,
+            monorepoRoot: args.root,
+            bump: args.bump,
+            publish: false,
+            cwd: process.cwd(),
+            mirrorTo: args.mirrorTo,
+            max: args.max,
+            packDestination: args.packDestination,
+            dynamicImportsPolicy: args.dynamicImportsPolicy,
+          },
+          args.report
+        )
     )
     .example('$0 publish pkg/foo --bump patch', 'Bump to next patch and publish')
     .example('$0 publish libs/a libs/b', 'Multi-package (defaults to minor bump)')
