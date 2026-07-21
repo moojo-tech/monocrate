@@ -59,6 +59,11 @@ Usage: $0 [options]`
         description: 'Use max version across all packages (default: false)',
         default: false,
       },
+      dynamicImportsPolicy: {
+        choices: ['allow', 'reject'] as const,
+        description: 'Whether to allow files to dynamically import a module name which is a computed string',
+        default: 'reject' as const,
+      },
     })
     .strict()
     .help()
@@ -80,6 +85,7 @@ Usage: $0 [options]`
         mirrorTo: args.mirrorTo,
         max: args.max,
         packDestination: args.packDestination,
+        dynamicImportsPolicy: args.dynamicImportsPolicy,
       }
       const result = await monocrate(options)
       const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
