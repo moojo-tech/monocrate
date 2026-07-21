@@ -47,9 +47,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
-  const outputRoot = AbsolutePath(
-    options.outputRoot ? path.resolve(cwd, options.outputRoot) : fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-'))
-  )
+  const outputRoot = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-')))
 
   // Validate bump argument before any side effects (defaults to 'minor')
   const versionSpecifier = parseVersionSpecifier(options.bump ?? 'minor')
