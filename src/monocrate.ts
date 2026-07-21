@@ -44,7 +44,6 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   }
   const dynamicImportsPolicy = options.dynamicImportsPolicy ?? defaultDynamicImportsPolicy
   const tarballsDir = dispenser.create()
-  fs.mkdirSync(tarballsDir, { recursive: true })
 
   const packDestinationDir = options.publish ? undefined : path.resolve(cwd, options.packDestination ?? cwd)
   if (packDestinationDir) {

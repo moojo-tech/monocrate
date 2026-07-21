@@ -11,6 +11,8 @@ export interface MonocrateResult {
   resolvedVersion?: string
   /**
    * Details about each individual package that was assembled/published.
+   * tarballPath is the tarball copied to the pack destination; it is undefined when publishing,
+   * as the tarball is deleted once publishing completes.
    */
   summaries: { packageName: string; outputDir: string; version: string; tarballPath?: string }[]
 }

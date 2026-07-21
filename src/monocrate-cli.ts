@@ -94,7 +94,7 @@ Usage: $0 <command> [options]`
       (y) =>
         addSharedOptions(y).option('pack-destination', {
           type: 'string' as const,
-          description: 'Directory where the tarball(s) to publish will be placed at',
+          description: 'Directory where publishable tarball(s) will be placed',
         }),
       (args) =>
         runMonocrate(
