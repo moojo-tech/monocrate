@@ -111,14 +111,37 @@ describe('npm publishing with Verdaccio', () => {
       throw new Error('Expected one package summary')
     }
 
+    if (!summary.tarballPath) {
+      throw new Error(`tarballPath is falsy`)
+    }
     expect(summary.tarballPath).toBe(path.join(monorepoRoot, 'test-dry-lib-77.77.77.tgz'))
-
     verdaccio.publishTarball(summary.tarballPath)
 
     expect(verdaccio.runView('@test/dry-lib')).toMatchObject({ name: '@test/dry-lib', version: '77.77.77' })
     expect(
       verdaccio.runConsumer(`@test/dry-lib@77.77.77`, `import { hello } from '@test/dry-lib'; console.log(hello())`)
     ).toBe('Hello from dry-run tarball!')
+  }, 60000)
+
+  it('publishing leaves no tarball behind and reports no tarballPath in the summaries', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/mylib/package.json': pj('no-leftovers-lib', '1.0.0'),
+      'packages/mylib/dist/index.js': `export const foo = 'foo'`,
+    })
+
+    const result = await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
+      monorepoRoot,
+      bump: '6.6.6',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    expect(verdaccio.runView('no-leftovers-lib')).toMatchObject({ version: '6.6.6' })
+    expect(result.summaries.map((s) => s.tarballPath)).toEqual([undefined])
+    expect(fs.readdirSync(monorepoRoot).filter((f) => f.endsWith('.tgz'))).toEqual([])
   }, 60000)
 
   it('publishes a simple non-scoped package', async () => {

@@ -1,39 +1,25 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import yargs from 'yargs'
+import type { Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import type { MonocrateOptions } from './monocrate.js'
 import { monocrate } from './monocrate.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
-export function monocrateCli(): void {
-  const parser = yargs(hideBin(process.argv))
-    .scriptName('monocrate')
-    .usage(
-      `From monorepo to npm in one command.
-
-Point at your packages. That's it.
-
-Usage: $0 [options]`
-    )
-    .example('$0 pkg/foo --bump patch', 'Bump to next patch and publish')
-    .example('$0 libs/a libs/b', 'Multi-package (defaults to minor bump)')
-    .example('$0 pkg/foo --dry-run', 'Prepare without publishing')
-    .example('$0 pkg/foo --bump package', 'Use version from package.json')
+const addSharedOptions = (y: Argv) =>
+  y
+    .positional('packages', {
+      describe: 'Package directories to assemble',
+      type: 'string',
+      array: true,
+      demandOption: true,
+    })
     .options({
-      packages: {
-        describe: 'Package directories to publish',
-        type: 'string',
-        array: true,
-      },
       bump: {
         alias: 'b',
         type: 'string' as const,
         description: 'Version, increment (patch/minor/major), or "package" to use package.json version',
-      },
-      'pack-destination': {
-        type: 'string' as const,
-        description: 'Directory where the tarball(s) to publish will be placed at',
       },
       root: {
         alias: 'r',
@@ -49,12 +35,6 @@ Usage: $0 [options]`
         type: 'string' as const,
         description: 'Mirror source files to directory',
       },
-      'dry-run': {
-        alias: 'd',
-        type: 'boolean' as const,
-        description: 'Prepare without publishing',
-        default: false,
-      },
       max: {
         type: 'boolean' as const,
         description: 'Use max version across all packages (default: false)',
@@ -67,39 +47,82 @@ Usage: $0 [options]`
         default: defaultDynamicImportsPolicy,
       },
     })
+
+async function runMonocrate(options: MonocrateOptions, report: string | undefined): Promise<void> {
+  const result = await monocrate(options)
+  const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
+  if (report) {
+    const outputFilePath = path.resolve(process.cwd(), report)
+    fs.writeFileSync(outputFilePath, output)
+  } else {
+    console.log(output)
+  }
+}
+
+export function monocrateCli(): void {
+  const parser = yargs(hideBin(process.argv))
+    .scriptName('monocrate')
+    .usage(
+      `From monorepo to npm in one command.
+
+Point at your packages. That's it.
+
+Usage: $0 <command> [options]`
+    )
+    .command(
+      'publish <packages...>',
+      'Assemble package(s) with their in-repo dependencies and publish to npm',
+      (y) => addSharedOptions(y),
+      (args) =>
+        runMonocrate(
+          {
+            pathToSubjectPackages: args.packages,
+            monorepoRoot: args.root,
+            bump: args.bump,
+            publish: true,
+            cwd: process.cwd(),
+            mirrorTo: args.mirrorTo,
+            max: args.max,
+            dynamicImportsPolicy: args.dynamicImportsPolicy,
+          },
+          args.report
+        )
+    )
+    .command(
+      'pack <packages...>',
+      'Assemble package(s) and create tarball(s) without publishing',
+      (y) =>
+        addSharedOptions(y).option('pack-destination', {
+          type: 'string' as const,
+          description: 'Directory where publishable tarball(s) will be placed',
+        }),
+      (args) =>
+        runMonocrate(
+          {
+            pathToSubjectPackages: args.packages,
+            monorepoRoot: args.root,
+            bump: args.bump,
+            publish: false,
+            cwd: process.cwd(),
+            mirrorTo: args.mirrorTo,
+            max: args.max,
+            packDestination: args.packDestination,
+            dynamicImportsPolicy: args.dynamicImportsPolicy,
+          },
+          args.report
+        )
+    )
+    .example('$0 publish pkg/foo --bump patch', 'Bump to next patch and publish')
+    .example('$0 publish libs/a libs/b', 'Multi-package (defaults to minor bump)')
+    .example('$0 pack pkg/foo', 'Prepare without publishing')
+    .example('$0 publish pkg/foo --bump package', 'Use version from package.json')
+    .demandCommand(1, 'Specify a command: publish or pack')
     .strict()
     .help()
     .option('help', { hidden: true })
 
-  void Promise.resolve(parser.parse())
-    .then(async (args) => {
-      const packages = args.packages ?? []
-
-      if (packages.length === 0) {
-        throw new Error('At least one package directory must be specified')
-      }
-      const options: MonocrateOptions = {
-        pathToSubjectPackages: packages,
-        monorepoRoot: args.root,
-        bump: args.bump,
-        publish: !args.dryRun,
-        cwd: process.cwd(),
-        mirrorTo: args.mirrorTo,
-        max: args.max,
-        packDestination: args.packDestination,
-        dynamicImportsPolicy: args.dynamicImportsPolicy,
-      }
-      const result = await monocrate(options)
-      const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
-      if (args.report) {
-        const outputFilePath = path.resolve(process.cwd(), args.report)
-        fs.writeFileSync(outputFilePath, output)
-      } else {
-        console.log(output)
-      }
-    })
-    .catch((error: unknown) => {
-      console.error('Fatal error:', error instanceof Error ? error.stack : error)
-      process.exit(1)
-    })
+  void parser.parseAsync().catch((error: unknown) => {
+    console.error('Fatal error:', error instanceof Error ? error.stack : error)
+    process.exit(1)
+  })
 }

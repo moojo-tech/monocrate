@@ -43,8 +43,13 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     throw new Error(`cwd is not a directory: ${cwd}`)
   }
   const dynamicImportsPolicy = options.dynamicImportsPolicy ?? defaultDynamicImportsPolicy
-  const tarballsDir = path.resolve(cwd, options.packDestination ?? cwd)
-  fs.mkdirSync(tarballsDir, { recursive: true })
+  const tarballsDir = dispenser.create()
+
+  const packDestinationDir = options.publish ? undefined : path.resolve(cwd, options.packDestination ?? cwd)
+  if (packDestinationDir) {
+    fs.mkdirSync(packDestinationDir, { recursive: true })
+  }
+
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
@@ -106,17 +111,23 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
 
       pn = a + '-' + b
     }
-    return { ...at, version, tarballPath: path.join(tarballsDir, `${pn}-${version}.tgz`) }
+    const name = `${pn}-${version}.tgz`
+    const tarballPath = path.join(tarballsDir, name)
+    const finalTarballPath = packDestinationDir ? path.join(packDestinationDir, name) : undefined
+    return { ...at, version, tarballPath, finalTarballPath }
   })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
   // Phase 1: Assemble all packages and publish with --tag pending
-  for (const { assembler, version, tarballPath } of resolvedPairs) {
+  for (const { assembler, version, tarballPath, finalTarballPath } of resolvedPairs) {
     const { compiletimeMembers } = await assembler.assemble(version, tarballPath, dispenser)
     for (const pkg of compiletimeMembers) {
       allPackagesForMirror.set(pkg.name, pkg)
     }
 
+    if (finalTarballPath) {
+      fs.cpSync(tarballPath, finalTarballPath)
+    }
     if (options.publish) {
       await npmClient.publish(tarballPath, 'pending')
     }
@@ -138,11 +149,11 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   return {
     outputDir: a0.getOutputDir(),
     resolvedVersion: useMax ? max : undefined,
-    summaries: resolvedPairs.map(({ assembler, version, tarballPath }) => ({
+    summaries: resolvedPairs.map(({ assembler, version, finalTarballPath }) => ({
       outputDir: assembler.getOutputDir(),
       packageName: assembler.pkgName,
       version,
-      tarballPath,
+      tarballPath: finalTarballPath,
     })),
   }
 }

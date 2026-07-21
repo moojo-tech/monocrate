@@ -25,7 +25,10 @@ export class MonocrateTeskit {
     return { ...result, outputDir: this.extractTarball(summary.tarballPath) }
   }
 
-  private extractTarball(tarballPath: string): string {
+  private extractTarball(tarballPath: string | undefined): string {
+    if (!tarballPath) {
+      throw new Error(`tarballPath is falsy`)
+    }
     const tempDir = this.tempDirDispenser.create()
     tar.extract({ file: tarballPath, cwd: tempDir, sync: true })
     return path.join(tempDir, 'package')

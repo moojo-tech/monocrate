@@ -1,3 +1,4 @@
+// TODO(imaman): split to two types to reflect the difference in shapes (publish vs. pack)
 export interface MonocrateOptions {
   /**
    * Paths to the directories of the various package to assemble. If a string, it is transformed to a single element array.
@@ -21,7 +22,7 @@ export interface MonocrateOptions {
    */
   bump?: string
   /**
-   * Whether to publish the assemblies to npm after building.
+   * Whether to publish the assemblies to npm after packing.
    * When false, the assembly is prepared with the resolved version but not published
    * (useful for inspection or manual publishing).
    */
@@ -66,9 +67,9 @@ export interface MonocrateOptions {
   max?: boolean
 
   /**
-   * Directory where the tarball of each published package is placed, named `<name>-<version>.tgz`
+   * Directory where the tarball of each assembled package is placed, named `<name>-<version>.tgz`
    * (scoped names have their `@` dropped and `/` replaced with `-`).
-   * If not specified, defaults to the cwd option.
+   * Only applies when publish is false. If not specified, defaults to the cwd option.
    */
   packDestination?: string
   /**
