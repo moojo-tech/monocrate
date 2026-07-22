@@ -5,12 +5,12 @@ import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { createTempDir, MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { createTempDir, MonopushTeskit, pj } from '../testing/monopush-teskit.js'
 
 const name = 'root-package'
 
 describe('optional output directory', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonopushTeskit()
   afterAll(() => {
     teskit.shutdown()
   })

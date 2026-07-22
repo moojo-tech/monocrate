@@ -144,7 +144,7 @@ export class RepoExplorer {
       if (packageJson.name) {
         packages.set(packageJson.name, {
           name: packageJson.name,
-          publishAs: packageJson.monocrate?.publishName ?? packageJson.name,
+          publishAs: packageJson.monopush?.publishName ?? packageJson.name,
           fromDir: packageDir,
           pathInRepo: RelativePath(path.dirname(match)),
           packageJson,

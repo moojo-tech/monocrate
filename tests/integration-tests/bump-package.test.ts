@@ -2,12 +2,12 @@ import { afterAll, describe, it, expect } from 'vitest'
 import { monocrate } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
+import { MonopushTeskit } from '../testing/monopush-teskit.js'
 
 const name = 'root-package'
 
 describe('--bump package option', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonopushTeskit()
   afterAll(() => {
     teskit.shutdown()
   })

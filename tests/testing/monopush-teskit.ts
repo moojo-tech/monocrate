@@ -1,7 +1,7 @@
 import { execSync } from 'child_process'
 import { unfolderify } from './unfolderify.js'
 import { monopush } from '../../src/monopush.js'
-import type { MonocrateOptions, MonocrateResult } from '../../src/monopush.js'
+import type { MonopushOptions, MonopushResult } from '../../src/monopush.js'
 import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
@@ -9,14 +9,14 @@ import fs from 'node:fs'
 import * as tar from 'tar'
 import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 
-export class MonocrateTeskit {
+export class MonopushTeskit {
   private readonly tempDirDispenser = new TempDirDispenser()
 
   shutdown() {
     this.tempDirDispenser.cleanup()
   }
 
-  async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
+  async pack(options: MonopushOptions): Promise<MonopushResult & { outputDir: string }> {
     const result = await monopush(options)
     const summary = result.summaries.at(0)
     if (!summary) {
@@ -41,7 +41,7 @@ export class MonocrateTeskit {
       entryPoint = 'dist/index.js',
       bump = '2.8.512',
       optionsMutator = () => {},
-    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonocrateOptions) => void } = {}
+    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonopushOptions) => void } = {}
   ) {
     const options = {
       cwd: monorepoRoot,

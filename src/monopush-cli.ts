@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import yargs from 'yargs'
 import type { Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import type { MonocrateOptions } from './monopush.js'
+import type { MonopushOptions } from './monopush.js'
 import { monopush } from './monopush.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
@@ -48,7 +48,7 @@ const addSharedOptions = (y: Argv) =>
       },
     })
 
-async function runMonocrate(options: MonocrateOptions, report: string | undefined): Promise<void> {
+async function runMonocrate(options: MonopushOptions, report: string | undefined): Promise<void> {
   const result = await monopush(options)
   const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
   if (report) {
@@ -59,7 +59,7 @@ async function runMonocrate(options: MonocrateOptions, report: string | undefine
   }
 }
 
-export function monocrateCli(): void {
+export function monopushCli(): void {
   const parser = yargs(hideBin(process.argv))
     .scriptName('monocrate')
     .usage(

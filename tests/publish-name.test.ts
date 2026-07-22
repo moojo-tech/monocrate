@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import { describe, expect, test, beforeAll, afterAll } from 'vitest'
 import { monopush } from '../src/monopush.js'
 import { folderify } from './testing/folderify.js'
-import { pj } from './testing/monocrate-teskit.js'
+import { pj } from './testing/monopush-teskit.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
 describe('publishName feature', () => {

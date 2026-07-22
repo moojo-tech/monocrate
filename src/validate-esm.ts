@@ -23,7 +23,7 @@ function validateFile(file: string, location: PackageLocation): void {
   if (file.endsWith('.cjs') || file.endsWith('.d.cts')) {
     throw new Error(
       `Cannot process a ${ext} file: ${filePath}\n` +
-        `Monocrate only supports ES modules. Use .mjs extension or set "type": "module" in package.json.`
+        `Monopush only supports ES modules. Use .mjs extension or set "type": "module" in package.json.`
     )
   }
 
@@ -32,7 +32,7 @@ function validateFile(file: string, location: PackageLocation): void {
     throw new Error(
       `Cannot process a .js file in a CommonJS package: ${filePath}\n` +
         `Package "${location.name}" does not have "type": "module" in package.json.\n` +
-        `Monocrate only supports ES modules. Set "type": "module" in package.json or use .mjs extension.`
+        `Monopush only supports ES modules. Set "type": "module" in package.json or use .mjs extension.`
     )
   }
 }

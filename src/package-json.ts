@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const MonocrateConfig = z
+export const MonopushConfig = z
   .object({
     publishName: z.string().optional(),
   })
@@ -29,7 +29,11 @@ export const PackageJson = z
     type: z.enum(['module', 'commonjs']).optional(),
     workspaces: z.union([z.array(z.string()), z.object({ packages: z.array(z.string()) })]).optional(),
     files: z.array(z.string()).optional(),
-    monocrate: MonocrateConfig,
+    monopush: MonopushConfig,
+    /** 
+     * Introduced for generating an intentional break when reading a package.json that uses the obsolete "monocrate" terminology 
+     */
+    monocrate: z.object({this_field_was_retired_use_monopush_instead: z.nan() }).optional()
   })
   .loose()
 

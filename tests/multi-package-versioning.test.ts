@@ -1,8 +1,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { monocrate } from '../src/index.js'
-import { pj } from './testing/monocrate-teskit.js'
+import { monopush } from '../src/index.js'
+import { pj } from './testing/monopush-teskit.js'
 import { folderify } from './testing/folderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 

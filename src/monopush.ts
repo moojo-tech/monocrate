@@ -14,8 +14,8 @@ import type { MonopushOptions } from './monopush-options.js'
 import { TempDirDispenser } from './temp-dir-dispenser.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
-export type { MonopushOptions as MonocrateOptions } from './monopush-options.js'
-export type { MonopushResult as MonocrateResult } from './monopush-result.js'
+export type { MonopushOptions } from './monopush-options.js'
+export type { MonopushResult } from './monopush-result.js'
 
 /**
  * Assembles a monorepo package and its in-repo dependencies for npm publishing.

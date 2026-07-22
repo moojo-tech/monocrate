@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type { MonocrateOptions } from '../src/index.js'
 import { monocrate } from '../src/index.js'
-import { pj, createTempDir } from './testing/monocrate-teskit.js'
+import { pj, createTempDir } from './testing/monopush-teskit.js'
 import { folderify } from './testing/folderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
