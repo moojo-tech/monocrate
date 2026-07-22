@@ -131,10 +131,13 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   }
 
   if (options.publish) {
-    const first = resolvedPairs[0]
-    // Special case - if there is just one package to publish, we can publish immediately.
-    if (first && resolvedPairs.length === 1) {
-      await npmClient.publish(first.tarballPath)
+    if (resolvedPairs.length === 1) {
+      const only = resolvedPairs.at(0)
+      if (!only) {
+        throw new Error('Inconsistency - no packages to publish')
+      }
+      // Single package: publish directly, skipping the pending phase.
+      await npmClient.publish(only.tarballPath, 'latest')
     } else {
       // Otherwise - publish as 'pending' and only if all publishes succeeded move the 'latest' tag.
       for (const { tarballPath } of resolvedPairs) {
