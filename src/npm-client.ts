@@ -49,7 +49,7 @@ export class NpmClient {
     const buf = fs.readFileSync(tarballPath)
     
     const manifest = JSON.parse((await readFileFromTarball(tarballPath, 'package/package.json')).toString())
-    const opts = {registry: this.registryUrl, _authToken: this.authToken && Buffer.from(this.authToken, 'base64').toString()}
+    const opts = {registry: this.registryUrl, ...(this.authToken ? {forceAuth: {_auth: this.authToken}} : {})}
     console.log(`L.53 calling: ${JSON.stringify({manifest, opts})}`)    
     const ret = await publish(manifest, buf, opts)
     console.log(`L.55= ${JSON.stringify(ret)}`)
