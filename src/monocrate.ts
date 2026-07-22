@@ -118,7 +118,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   })
   const allPackagesForMirror = new Map<string, MonorepoPackage>()
 
-  // Phase 1: Assemble all packages and publish with --tag pending
+  // Assemble all packages
   for (const { assembler, version, tarballPath, finalTarballPath } of resolvedPairs) {
     const { compiletimeMembers } = await assembler.assemble(version, tarballPath, dispenser)
     for (const pkg of compiletimeMembers) {
@@ -128,15 +128,24 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     if (finalTarballPath) {
       fs.cpSync(tarballPath, finalTarballPath)
     }
-    if (options.publish) {
-      await npmClient.publish(tarballPath, 'pending')
-    }
   }
 
-  // Phase 2: Move 'latest' tag to all published packages (only if all publishes succeeded)
   if (options.publish) {
-    for (const { assembler, version } of resolvedPairs) {
-      await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+    if (resolvedPairs.length === 1) {
+      const only = resolvedPairs.at(0)
+      if (!only) {
+        throw new Error('Inconsistency - no packages to publish')
+      }
+      // Single package: publish directly, skipping the pending phase.
+      await npmClient.publish(only.tarballPath, 'latest')
+    } else {
+      // Otherwise - publish as 'pending' and only if all publishes succeeded move the 'latest' tag.
+      for (const { tarballPath } of resolvedPairs) {
+        await npmClient.publish(tarballPath, 'pending')
+      }
+      for (const { assembler, version } of resolvedPairs) {
+        await npmClient.distTagAdd(`${assembler.publishAs}@${version}`, 'latest', assembler.getOutputDir())
+      }
     }
   }
 

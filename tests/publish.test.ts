@@ -503,6 +503,26 @@ describe('npm publishing with Verdaccio', () => {
     expect(viewB['dist-tags']).toMatchObject({ pending: '1.0.0', latest: '1.0.0' })
   }, 60000)
 
+  it('publishes a single package directly to latest, skipping the pending phase', async () => {
+    const monorepoRoot = folderify({
+      'package.json': { workspaces: ['packages/*'] },
+      'packages/onephase/package.json': pj('onephase', '1.0.0'),
+      'packages/onephase/dist/index.js': `export const a = 'A'`,
+    })
+
+    await monocrate({
+      cwd: monorepoRoot,
+      pathToSubjectPackages: 'packages/onephase',
+      monorepoRoot,
+      bump: '1.0.0',
+      publish: true,
+      npmrcPath: verdaccio.npmrcPath(),
+    })
+
+    // Only 'latest' should exist - no 'pending' tag is ever created
+    expect(verdaccio.runView('onephase')['dist-tags']).toEqual({ latest: '1.0.0' })
+  }, 60000)
+
   it('yarn v1 can install a package with in-repo dependencies', async () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
