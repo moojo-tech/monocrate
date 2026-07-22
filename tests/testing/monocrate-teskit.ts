@@ -1,7 +1,7 @@
 import { execSync } from 'child_process'
 import { unfolderify } from './unfolderify.js'
-import { monocrate } from '../../src/monocrate.js'
-import type { MonocrateOptions, MonocrateResult } from '../../src/monocrate.js'
+import { monopush } from '../../src/monopush.js'
+import type { MonocrateOptions, MonocrateResult } from '../../src/monopush.js'
 import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
@@ -17,7 +17,7 @@ export class MonocrateTeskit {
   }
 
   async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
-    const result = await monocrate(options)
+    const result = await monopush(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')
@@ -52,7 +52,7 @@ export class MonocrateTeskit {
     }
 
     optionsMutator(options)
-    const result = await monocrate(options)
+    const result = await monopush(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')

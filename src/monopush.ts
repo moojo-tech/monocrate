@@ -9,13 +9,13 @@ import { AbsolutePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
-import type { MonocrateResult } from './monocrate-result.js'
-import type { MonocrateOptions } from './monocrate-options.js'
+import type { MonopushResult } from './monopush-result.js'
+import type { MonopushOptions } from './monopush-options.js'
 import { TempDirDispenser } from './temp-dir-dispenser.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
-export type { MonocrateOptions } from './monocrate-options.js'
-export type { MonocrateResult } from './monocrate-result.js'
+export type { MonopushOptions as MonocrateOptions } from './monopush-options.js'
+export type { MonopushResult as MonocrateResult } from './monopush-result.js'
 
 /**
  * Assembles a monorepo package and its in-repo dependencies for npm publishing.
@@ -23,16 +23,16 @@ export type { MonocrateResult } from './monocrate-result.js'
  * @returns The result of the assembly operation
  * @throws Error if assembly or publishing fails
  */
-export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
+export async function monopush(options: MonopushOptions): Promise<MonopushResult> {
   const dispenser = new TempDirDispenser()
   try {
-    return await monocrateImpl(options, dispenser)
+    return await monopushImpl(options, dispenser)
   } finally {
     dispenser.cleanup()
   }
 }
 
-async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
+async function monopushImpl(options: MonopushOptions, dispenser: TempDirDispenser): Promise<MonopushResult> {
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
   const cwdExists = fs.existsSync(cwd)

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { monocrateCli } from './monocrate-cli.js'
+import { monocrateCli } from './monopush-cli.js'
 
 monocrateCli()

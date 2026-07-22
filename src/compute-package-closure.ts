@@ -49,7 +49,7 @@ export function computePackageClosure(pkgName: string, repoExplorer: RepoExplore
       if (where >= 0 && !includeDevDeps) {
         const cycle = [...depPath.slice(where), pkg.name]
         throw new Error(
-          `Circular dependency detected:\n  ${cycle.join(' → ')}\n\nMonocrate cannot assemble packages with circular dependencies.`
+          `Circular dependency detected:\n  ${cycle.join(' → ')}\n\nMonopush cannot assemble packages with circular dependencies.`
         )
       }
       depPath.push(pkg.name)

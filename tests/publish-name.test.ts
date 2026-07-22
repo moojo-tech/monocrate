@@ -1,6 +1,6 @@
 import * as path from 'node:path'
 import { describe, expect, test, beforeAll, afterAll } from 'vitest'
-import { monocrate } from '../src/monocrate.js'
+import { monopush } from '../src/monopush.js'
 import { folderify } from './testing/folderify.js'
 import { pj } from './testing/monocrate-teskit.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
@@ -18,7 +18,7 @@ describe('publishName feature', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: repoDir,
         pathToSubjectPackages: path.join(repoDir, 'packages/package-b'),
         monorepoRoot: repoDir,
@@ -41,7 +41,7 @@ describe('publishName feature', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: repoDir,
         pathToSubjectPackages: path.join(repoDir, 'packages/package-a'),
         monorepoRoot: repoDir,
@@ -80,7 +80,7 @@ describe('publishName integration with npm registry', () => {
       'packages/mylib/dist/index.js': `export function getPublished() { return 'Published under custom name!'; }`,
     })
 
-    await monocrate({
+    await monopush({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -127,7 +127,7 @@ describe('publishName integration with npm registry', () => {
     })
 
     // Publish first package
-    await monocrate({
+    await monopush({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/lib-a'),
       monorepoRoot,
@@ -137,7 +137,7 @@ describe('publishName integration with npm registry', () => {
     })
 
     // Publish second package
-    await monocrate({
+    await monopush({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/lib-b'),
       monorepoRoot,
@@ -182,7 +182,7 @@ describe('publishName integration with npm registry', () => {
     })
 
     // Publish both packages together
-    await monocrate({
+    await monopush({
       cwd: monorepoRoot,
       pathToSubjectPackages: [path.join(monorepoRoot, 'packages/shared'), path.join(monorepoRoot, 'packages/app')],
       monorepoRoot,

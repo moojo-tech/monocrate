@@ -1,12 +1,12 @@
 {
-  "name": "monocrate",
+  "name": "monopush",
   "version": "0.2.0",
   "description": "From monorepo to npm in one command",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "bin": {
-    "monocrate": "./dist/src/main.js"
+    "monopush": "./dist/src/main.js"
   },
   "exports": {
     ".": {

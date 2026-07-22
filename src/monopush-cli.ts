@@ -3,8 +3,8 @@ import * as path from 'node:path'
 import yargs from 'yargs'
 import type { Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import type { MonocrateOptions } from './monocrate.js'
-import { monocrate } from './monocrate.js'
+import type { MonocrateOptions } from './monopush.js'
+import { monopush } from './monopush.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
 const addSharedOptions = (y: Argv) =>
@@ -49,7 +49,7 @@ const addSharedOptions = (y: Argv) =>
     })
 
 async function runMonocrate(options: MonocrateOptions, report: string | undefined): Promise<void> {
-  const result = await monocrate(options)
+  const result = await monopush(options)
   const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
   if (report) {
     const outputFilePath = path.resolve(process.cwd(), report)

@@ -1,5 +1,5 @@
 // TODO(imaman): reflect in the type system that tarballPath is not available on publish
-export interface MonocrateResult {
+export interface MonopushResult {
   /**
    * The output directory path where the assembly of the first package was created.
    */
