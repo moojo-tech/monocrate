@@ -186,6 +186,7 @@ describe('npm publishing with Verdaccio', () => {
       bump: '88.88.88',
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
+      authToken: verdaccio.authToken(),
     })
     expect(verdaccio.runView('@test/app')).toMatchObject({ name: '@test/app', version: '88.88.88' })
     expect(

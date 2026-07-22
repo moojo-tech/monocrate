@@ -1,3 +1,5 @@
+import * as Tar from 'tar'
+import {publish} from 'libnpmpublish'
 import fs from 'fs'
 import path from 'path'
 import { z } from 'zod'
@@ -17,7 +19,9 @@ const NpmErrorResponse = z.object({
 export class NpmClient {
   constructor(
     private readonly dispenser: TempDirDispenser,
-    private readonly npmOptions?: NpmOptionsBase
+    private readonly npmOptions?: NpmOptionsBase,
+    private readonly registryUrl?: string,
+    private readonly authToken?: string
   ) {}
 
   /**
@@ -42,8 +46,15 @@ export class NpmClient {
   }
 
   async publish(tarballPath: string, tag?: string): Promise<void> {
-    const args = [tarballPath, ...(tag ? ['--tag', tag] : [])]
-    await runNpm('publish', args, AbsolutePath(path.dirname(tarballPath)), { ...this.npmOptions, stdio: 'inherit' })
+    const buf = fs.readFileSync(tarballPath)
+    
+    const manifest = JSON.parse((await readFileFromTarball(tarballPath, 'package/package.json')).toString())
+    const opts = {registry: this.registryUrl, _authToken: this.authToken && Buffer.from(this.authToken, 'base64').toString()}
+    console.log(`L.53 calling: ${JSON.stringify({manifest, opts})}`)    
+    const ret = await publish(manifest, buf, opts)
+    console.log(`L.55= ${JSON.stringify(ret)}`)
+    // const args = [tarballPath, ...(tag ? ['--tag', tag] : [])]
+    // await runNpm('publish', args, AbsolutePath(path.dirname(tarballPath)), { ...this.npmOptions, stdio: 'inherit' })
   }
 
   async distTagAdd(packageNameAtVersion: string, tag: string, cwd: AbsolutePath): Promise<void> {
@@ -152,4 +163,20 @@ export class NpmClient {
 
     return { ...packRes, tarballPath }
   }
+}
+
+
+async function readFileFromTarball(tarballPath: string, targetPath: string) {
+  const chunks: Buffer[] = [];
+  await Tar.t({
+    file: tarballPath,
+    onReadEntry: (entry) => {
+      if (entry.path === targetPath) {
+        entry.on('data', (chunk) => chunks.push(chunk));
+      } else {
+        entry.resume(); // skip other entries
+      }
+    },
+  });
+  return Buffer.concat(chunks)
 }

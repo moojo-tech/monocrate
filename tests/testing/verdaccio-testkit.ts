@@ -15,6 +15,7 @@ interface VerdaccioServer {
   url: string
   configDir: string
   npmrcPath: string
+  authToken: string
 }
 
 const NpmViewResult = z.object({
@@ -56,6 +57,10 @@ export class VerdaccioTestkit {
 
   npmrcPath() {
     return this.get().npmrcPath
+  }
+  
+  authToken() {
+    return this.get().authToken
   }
 
   async shutdown() {
@@ -245,6 +250,7 @@ async function startVerdaccio(): Promise<VerdaccioServer> {
             url,
             configDir,
             npmrcPath,
+            authToken
           })
         }, 500)
       }
