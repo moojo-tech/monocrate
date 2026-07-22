@@ -50,7 +50,6 @@
     "@eslint/js": "^9.0.0",
     "@types/libnpmpublish": "^11.2.0",
     "@types/node": "^20.19.29",
-    "@types/npmcli__config": "^6.0.4",
     "@types/yargs": "^17.0.35",
     "@vitest/coverage-v8": "^1.2.0",
     "eslint": "^9.0.0",
@@ -78,7 +77,6 @@
     ]
   },
   "dependencies": {
-    "@npmcli/config": "^11.0.0",
     "libnpmpublish": "^12.0.0",
     "tar": "^7.5.20",
     "esbuild": "^0.24.0",
