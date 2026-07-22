@@ -1,4 +1,3 @@
-import * as ini from 'ini'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -34,11 +33,6 @@ export async function monocrate(options: MonocrateOptions): Promise<MonocrateRes
 }
 
 async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
-  let registryUrl = undefined
-  if (options.npmrcPath) {
-    const parsed = ini.parse(fs.readFileSync(options.npmrcPath, 'utf-8'))
-    registryUrl = String(parsed.registry)
-  }
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
   const cwdExists = fs.existsSync(cwd)
@@ -79,7 +73,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
     : RepoExplorer.findMonorepoRoot(sourceDir0)
   const explorer = await RepoExplorer.create(monorepoRoot)
 
-  const npmClient = new NpmClient(dispenser, { userconfig: options.npmrcPath }, registryUrl, options.authToken)
+  const npmClient = new NpmClient(dispenser, { userconfig: options.npmrcPath })
 
   // Check npm login status early before any heavy operations
   if (options.publish) {

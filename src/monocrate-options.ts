@@ -39,8 +39,6 @@ export interface MonocrateOptions {
    */
   npmrcPath?: string
 
-  authToken?: string
-
   /**
    * Path to a directory where source files should be mirrored.
    *

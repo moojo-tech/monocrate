@@ -48,8 +48,6 @@
   "homepage": "https://github.com/moojo-tech/monocrate#readme",
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@types/ini": "^4.1.1",
-    "@types/libnpmpublish": "^11.2.0",
     "@types/node": "^20.19.29",
     "@types/yargs": "^17.0.35",
     "@vitest/coverage-v8": "^1.2.0",
@@ -78,8 +76,6 @@
     ]
   },
   "dependencies": {
-    "ini": "^7.0.0",
-    "libnpmpublish": "^12.0.0",
     "tar": "^7.5.20",
     "esbuild": "^0.24.0",
     "resolve.exports": "^2.0.3",
