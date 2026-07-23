@@ -40,7 +40,7 @@ cp README.md "$PUBLISH_DIR/" 2>/dev/null || true
 cp LICENSE "$PUBLISH_DIR/" 2>/dev/null || true
 
 echo "==> Getting latest published version..."
-LATEST_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || echo "0.17.0")
+LATEST_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || echo "0.0.0")
 echo "    Latest published version: $LATEST_VERSION"
 
 echo "==> Setting version and bumping minor..."
