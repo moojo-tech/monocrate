@@ -4,7 +4,7 @@
 [![CI](https://github.com/moojo-tech/monodrop/actions/workflows/ci.yml/badge.svg)](https://github.com/moojo-tech/monodrop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-*Monorepos? Great. Publishing from a monorepo? Comically hard.*
+*Monorepos? Great. Publishing from one? Now also great.*
 
 ## The Problem
 
