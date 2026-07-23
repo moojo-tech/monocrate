@@ -1,5 +1,5 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monopush } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
 import { MonopushTeskit } from '../testing/monopush-teskit.js'
@@ -46,7 +46,7 @@ describe('--bump package option', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -68,7 +68,7 @@ describe('--bump package option', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -92,7 +92,7 @@ describe('--bump package option', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -122,7 +122,7 @@ describe('--bump package option', () => {
       'packages/app2/dist/index.js': `export const app2 = 'app2';`,
     })
 
-    const { resolvedVersion } = await monocrate({
+    const { resolvedVersion } = await monopush({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/app1', 'packages/app2'],
       publish: false,

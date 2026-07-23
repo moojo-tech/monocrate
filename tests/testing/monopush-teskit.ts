@@ -12,6 +12,10 @@ import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 export class MonopushTeskit {
   private readonly tempDirDispenser = new TempDirDispenser()
 
+  createTempDir() {
+    return this.tempDirDispenser.create()
+  }
+
   shutdown() {
     this.tempDirDispenser.cleanup()
   }
@@ -74,7 +78,7 @@ export class MonopushTeskit {
   }
 }
 
-export function createTempDir(prefix = 'monocrate-testing-'): string {
+export function createTempDir(prefix = 'monopush-testing-'): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix))
 }
 

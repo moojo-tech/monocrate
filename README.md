@@ -131,7 +131,7 @@ CLI:
 ```typescript
 import { monocrate } from 'monocrate'
 
-const result = await monocrate({
+const result = await monopush({
   pathToSubjectPackages: ['packages/my-awesome-package'],
   publish: true,
   bump: 'minor',

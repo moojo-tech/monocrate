@@ -1,5 +1,5 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monopush } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { MonopushTeskit, pj } from '../testing/monopush-teskit.js'
 
@@ -20,7 +20,7 @@ describe('circular dependency detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/a',
         publish: false,
@@ -29,7 +29,7 @@ describe('circular dependency detection', () => {
     ).rejects.toThrow(
       'Circular dependency detected:\n' +
         '  @test/a → @test/b → @test/a\n\n' +
-        'Monocrate cannot assemble packages with circular dependencies.'
+        'Monopush cannot assemble packages with circular dependencies.'
     )
   })
 
@@ -45,7 +45,7 @@ describe('circular dependency detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/a',
         publish: false,
@@ -54,7 +54,7 @@ describe('circular dependency detection', () => {
     ).rejects.toThrow(
       'Circular dependency detected:\n' +
         '  @test/a → @test/b → @test/c → @test/a\n\n' +
-        'Monocrate cannot assemble packages with circular dependencies.'
+        'Monopush cannot assemble packages with circular dependencies.'
     )
   })
 
@@ -66,7 +66,7 @@ describe('circular dependency detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/a',
         publish: false,
@@ -75,7 +75,7 @@ describe('circular dependency detection', () => {
     ).rejects.toThrow(
       'Circular dependency detected:\n' +
         '  @test/a → @test/a\n\n' +
-        'Monocrate cannot assemble packages with circular dependencies.'
+        'Monopush cannot assemble packages with circular dependencies.'
     )
   })
 
@@ -132,7 +132,7 @@ describe('circular dependency detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/a',
         publish: false,
@@ -141,7 +141,7 @@ describe('circular dependency detection', () => {
     ).rejects.toThrow(
       'Circular dependency detected:\n' +
         '  @test/c → @test/d → @test/c\n\n' +
-        'Monocrate cannot assemble packages with circular dependencies.'
+        'Monopush cannot assemble packages with circular dependencies.'
     )
   })
 })

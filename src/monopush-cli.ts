@@ -48,7 +48,7 @@ const addSharedOptions = (y: Argv) =>
       },
     })
 
-async function runMonocrate(options: MonopushOptions, report: string | undefined): Promise<void> {
+async function runMonopush(options: MonopushOptions, report: string | undefined): Promise<void> {
   const result = await monopush(options)
   const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
   if (report) {
@@ -61,7 +61,7 @@ async function runMonocrate(options: MonopushOptions, report: string | undefined
 
 export function monopushCli(): void {
   const parser = yargs(hideBin(process.argv))
-    .scriptName('monocrate')
+    .scriptName('monopush')
     .usage(
       `From monorepo to npm in one command.
 
@@ -74,7 +74,7 @@ Usage: $0 <command> [options]`
       'Assemble package(s) with their in-repo dependencies and publish to npm',
       (y) => addSharedOptions(y),
       (args) =>
-        runMonocrate(
+        runMonopush(
           {
             pathToSubjectPackages: args.packages,
             monorepoRoot: args.root,
@@ -97,7 +97,7 @@ Usage: $0 <command> [options]`
           description: 'Directory where publishable tarball(s) will be placed',
         }),
       (args) =>
-        runMonocrate(
+        runMonopush(
           {
             pathToSubjectPackages: args.packages,
             monorepoRoot: args.root,

@@ -53,7 +53,7 @@ async function monopushImpl(options: MonopushOptions, dispenser: TempDirDispense
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
-  const outputRoot = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-')))
+  const outputRoot = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monopush-')))
 
   // Validate bump argument before any side effects (defaults to 'minor')
   const versionSpecifier = parseVersionSpecifier(options.bump ?? 'minor')

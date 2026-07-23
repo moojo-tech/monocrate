@@ -90,7 +90,7 @@ console.log(greet());`,
         [
           'Cannot process a .js file in a CommonJS package: packages/app/dist/index.js',
           'Package "@test/app" does not have "type": "module" in package.json.',
-          'Monocrate only supports ES modules. Set "type": "module" in package.json or use .mjs extension.',
+          'Monopush only supports ES modules. Set "type": "module" in package.json or use .mjs extension.',
         ].join('\n')
       )
     })

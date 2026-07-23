@@ -1,5 +1,5 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monopush } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { MonopushTeskit, pj } from '../testing/monopush-teskit.js'
 
@@ -22,7 +22,7 @@ describe('version conflict detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -46,7 +46,7 @@ describe('version conflict detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -86,7 +86,7 @@ describe('version conflict detection', () => {
     })
 
     await expect(
-      monocrate({
+      monopush({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,

@@ -10,7 +10,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 describe('TempDirDispenser', () => {
   describe('create', () => {
     it('creates a directory that exists on disk', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
 
       const dir = dispenser.create()
 
@@ -21,20 +21,20 @@ describe('TempDirDispenser', () => {
     })
 
     it('creates subdirectories under a single root in os.tmpdir() with the given prefix', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
 
       const dir1 = dispenser.create()
       const dir2 = dispenser.create()
 
       const root = path.dirname(dir1)
-      expect(root).toContain(path.join(os.tmpdir(), 'monocrate-test-'))
+      expect(root).toContain(path.join(os.tmpdir(), 'my-temp-dir'))
       expect(path.dirname(dir2)).toBe(root)
 
       dispenser.cleanup()
     })
 
     it('names each subdirectory with a UUID', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
 
       const dir = dispenser.create()
 
@@ -44,7 +44,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('creates distinct subdirectories on each call', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
 
       const dir1 = dispenser.create()
       const dir2 = dispenser.create()
@@ -55,7 +55,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('only calls mkdtempSync once for the root directory', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
 
       const dir1 = dispenser.create()
       const dir2 = dispenser.create()
@@ -71,7 +71,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('is cleaned up by cleanup()', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir = dispenser.create()
 
       dispenser.cleanup()
@@ -82,7 +82,7 @@ describe('TempDirDispenser', () => {
 
   describe('cleanup', () => {
     it('removes a single directory', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir = dispenser.create()
 
       dispenser.cleanup()
@@ -91,7 +91,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('removes all created directories', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir1 = dispenser.create()
       const dir2 = dispenser.create()
       const dir3 = dispenser.create()
@@ -104,7 +104,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('removes directories including all nested contents', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir = dispenser.create()
       const deepDir = path.join(dir, 'a', 'b', 'c')
       fs.mkdirSync(deepDir, { recursive: true })
@@ -120,7 +120,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('tolerates the root directory having been deleted externally', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir = dispenser.create()
 
       fs.rmSync(path.dirname(dir), { recursive: true, force: true })
@@ -131,7 +131,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('is a no-op when no directories have been created', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
 
       expect(() => {
         dispenser.cleanup()
@@ -139,7 +139,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('is a no-op when called a second time', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir = dispenser.create()
 
       dispenser.cleanup()
@@ -151,9 +151,9 @@ describe('TempDirDispenser', () => {
     })
 
     it('does not remove directories that were not created by the dispenser', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const created = dispenser.create()
-      const unrelated = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-test-unrelated-')))
+      const unrelated = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'my-temp-dirunrelated-')))
 
       dispenser.cleanup()
 
@@ -164,7 +164,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('cleans up directories created after a previous cleanup', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const first = dispenser.create()
       dispenser.cleanup()
 
@@ -176,7 +176,7 @@ describe('TempDirDispenser', () => {
     })
 
     it('removes the root directory itself', () => {
-      const dispenser = new TempDirDispenser('monocrate-test-')
+      const dispenser = new TempDirDispenser('my-temp-dir')
       const dir = dispenser.create()
       const root = path.dirname(dir)
 
