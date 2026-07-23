@@ -12,7 +12,7 @@ A clear and concise description of the bug.
 
 ## Environment
 
-- Monopush version: (run `monopush --version`)
+- Monodrop version: (run `monodrop --version`)
 - Node.js version: (run `node --version`)
 - Operating System:
 - Package manager: (npm/yarn/pnpm)

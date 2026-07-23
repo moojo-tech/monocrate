@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Monopush
+about: Suggest an idea for Monodrop
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''
@@ -12,7 +12,7 @@ Describe the problem this feature would solve.
 
 ## Proposed Solution
 
-Describe how you'd like Monopush to work.
+Describe how you'd like Monodrop to work.
 
 ## Alternatives Considered
 
