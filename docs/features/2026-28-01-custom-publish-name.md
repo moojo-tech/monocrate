@@ -10,13 +10,13 @@ The publish name feature allows a package to be published to npm with a differen
 
 ## Configuration
 
-Add the `monocrate` field to a package's `package.json`:
+Add the `monodrop` field to a package's `package.json`:
 
 ```json
 {
   "name": "@internal/utils",
   "version": "1.0.0",
-  "monocrate": {
+  "monodrop": {
     "publishName": "my-public-utils"
   }
 }
@@ -28,7 +28,7 @@ When published, the package appears on npm as `my-public-utils` instead of `@int
 
 ### Name Mapping
 
-- The `publishName` in `monocrate.publishName` overrides the package `name` field in the published `package.json`
+- The `publishName` in `monodrop.publishName` overrides the package `name` field in the published `package.json`
 - Internal imports and dependency rewriting use the original package name (`@internal/utils`)
 - The published output contains only the `publishName`, not the internal name
 
@@ -38,7 +38,7 @@ Example output:
 monorepo/
   packages/
     utils/              # internal name: @internal/utils
-      package.json      # monocrate.publishName: "my-public-utils"
+      package.json      # monodrop.publishName: "my-public-utils"
 
 output/
   package.json          # name: "my-public-utils"
@@ -78,7 +78,7 @@ Multiple packages are trying to use the same publish name.
 
 ### Files Involved
 
-- `src/package-json.ts` — Schema definition for `monocrate.publishName`
+- `src/package-json.ts` — Schema definition for `monodrop.publishName`
 - `src/validate-publish-names.ts` — Validation of uniqueness constraints
 - `src/rewrite-package-json.ts` — Applies `publishName` to output `package.json`
 
@@ -107,7 +107,7 @@ Example test case:
 // packages/@internal/utils/package.json
 {
   "name": "@internal/utils",
-  "monocrate": { "publishName": "utils" }
+  "monodrop": { "publishName": "utils" }
 }
 
 // Published output should have:

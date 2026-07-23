@@ -2,11 +2,11 @@
 
 ## Summary
 
-Allow Monocrate to use the version already declared in the subject package's `package.json` as the publish version, instead of requiring users to specify a version via CLI or having Monocrate compute one by bumping the npm-published version.
+Allow Monodrop to use the version already declared in the subject package's `package.json` as the publish version, instead of requiring users to specify a version via CLI or having Monodrop compute one by bumping the npm-published version.
 
 ## Problem
 
-Currently, Monocrate determines the publish version in one of two ways:
+Currently, Monodrop determines the publish version in one of two ways:
 
 1. **Increment keywords** (`--bump patch/minor/major`) - Queries npm for the current published version and increments it
 2. **Explicit version** (`--bump 2.3.4`) - Uses the provided version literally
@@ -22,10 +22,10 @@ Both approaches require users to specify version information at the CLI level. T
 Introduce a new `--bump` value: **`package`** (or **`package.json`**)
 
 ```bash
-monocrate packages/mylib --bump package
+monodrop packages/mylib --bump package
 ```
 
-When specified, Monocrate reads the `version` field from the subject package's `package.json` and uses it directly as the resolved version.
+When specified, Monodrop reads the `version` field from the subject package's `package.json` and uses it directly as the resolved version.
 
 ## User Experience
 
@@ -33,7 +33,7 @@ When specified, Monocrate reads the `version` field from the subject package's `
 
 ```bash
 # Use the version from packages/mylib/package.json
-monocrate packages/mylib --bump package
+monodrop packages/mylib --bump package
 ```
 
 If `packages/mylib/package.json` contains `"version": "3.2.1"`, the output package will be published at version `3.2.1`.
@@ -53,10 +53,10 @@ If `packages/mylib/package.json` contains `"version": "3.2.1"`, the output packa
 When assembling multiple packages:
 
 ```bash
-monocrate packages/alpha packages/beta --bump package
+monodrop packages/alpha packages/beta --bump package
 ```
 
-Monocrate reads the version from each package's `package.json` and uses the **maximum version** across all packages (consistent with current multi-package behavior). All packages are published at this unified version.
+Monodrop reads the version from each package's `package.json` and uses the **maximum version** across all packages (consistent with current multi-package behavior). All packages are published at this unified version.
 
 ### Error Cases
 
@@ -73,8 +73,8 @@ Monocrate reads the version from each package's `package.json` and uses the **ma
 # Developer bumps version in package.json
 npm version minor --no-git-tag-version
 
-# Monocrate uses that version
-monocrate . --bump package --publish
+# Monodrop uses that version
+monodrop . --bump package --publish
 ```
 
 ### Workflow 2: CI/CD with Pre-computed Version
@@ -87,8 +87,8 @@ steps:
       # Some version calculation logic...
       npm version $COMPUTED_VERSION --no-git-tag-version
 
-  - name: Publish with Monocrate
-    run: monocrate packages/mylib --bump package --publish
+  - name: Publish with Monodrop
+    run: monodrop packages/mylib --bump package --publish
 ```
 
 ### Workflow 3: Changesets or Similar Tools
@@ -97,8 +97,8 @@ steps:
 # Changesets has already updated package.json versions
 npx changeset version
 
-# Monocrate respects those versions
-monocrate packages/core packages/cli --bump package --publish
+# Monodrop respects those versions
+monodrop packages/core packages/cli --bump package --publish
 ```
 
 ## Why Not Make It the Default?
@@ -115,4 +115,4 @@ A future major version could consider changing the default.
 
 1. **Naming**: Should the keyword be `package`, `package.json`, `source`, or `local`?
 2. **Shorthand**: Should there be a dedicated flag like `--from-package-json` instead of overloading `--bump`?
-3. **Validation**: Should Monocrate warn if the `package.json` version is lower than the currently published version?
+3. **Validation**: Should Monodrop warn if the `package.json` version is lower than the currently published version?
