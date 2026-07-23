@@ -1,12 +1,12 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { monopush } from '../../src/index.js'
+import { monodrop } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
-import { MonopushTeskit, pj } from '../testing/monopush-teskit.js'
+import { MonodropTestkit, pj } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
 describe('version conflict detection', () => {
-  const teskit = new MonopushTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })
@@ -22,7 +22,7 @@ describe('version conflict detection', () => {
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -46,7 +46,7 @@ describe('version conflict detection', () => {
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -86,7 +86,7 @@ describe('version conflict detection', () => {
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,

@@ -1,9 +1,9 @@
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import type { MonopushOptions } from '../src/index.js'
-import { monopush } from '../src/index.js'
-import { pj, createTempDir } from './testing/monopush-teskit.js'
+import type { MonodropOptions } from '../src/index.js'
+import { monodrop } from '../src/index.js'
+import { pj, createTempDir } from './testing/monodrop-teskit.js'
 import { folderify } from './testing/folderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
@@ -22,7 +22,7 @@ describe('npm login check', () => {
 
     // Should throw when publish is true
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
         monorepoRoot,
@@ -33,7 +33,7 @@ describe('npm login check', () => {
     ).rejects.toThrow('Not logged in to npm')
 
     // Should not throw when publish is false
-    const result = await monopush({
+    const result = await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -71,7 +71,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mylib/dist/index.js': `export function hello() { return 'Hello from mylib!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -97,7 +97,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/dry-lib/dist/index.js': `export function hello() { return 'Hello from dry-run tarball!'; }`,
     })
 
-    const result = await monopush({
+    const result = await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/dry-lib'),
       monorepoRoot,
@@ -130,7 +130,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mylib/dist/index.js': `export const foo = 'foo'`,
     })
 
-    const result = await monopush({
+    const result = await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -151,7 +151,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mylib/dist/index.js': `export function hello() { return 'Hello from mylib!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -179,7 +179,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -222,7 +222,7 @@ describe('npm publishing with Verdaccio', () => {
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
         monorepoRoot,
@@ -247,7 +247,7 @@ describe('npm publishing with Verdaccio', () => {
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: path.join(monorepoRoot, 'packages/my-app-foo'),
         monorepoRoot,
@@ -274,7 +274,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -301,7 +301,7 @@ describe('npm publishing with Verdaccio', () => {
     })
 
     expect(
-      await monopush({
+      await monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/foo',
         monorepoRoot,
@@ -314,7 +314,7 @@ describe('npm publishing with Verdaccio', () => {
     expect(verdaccio.runView(pkgName)).toMatchObject({ version: '1.4.1' })
 
     expect(
-      await monopush({
+      await monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/foo',
         monorepoRoot,
@@ -327,7 +327,7 @@ describe('npm publishing with Verdaccio', () => {
     expect(verdaccio.runView(pkgName)).toMatchObject({ version: '2.7.1' })
 
     expect(
-      await monopush({
+      await monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/foo',
         monorepoRoot,
@@ -363,7 +363,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/boo/dist/index.js': `import isEven from 'is-even'; export function classify(n) { return isEven(n) ? 'even' : 'odd'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/foo',
       monorepoRoot,
@@ -390,7 +390,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mypkg/dist/index.js': `export const whatever = () => {}`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mypkg'),
       monorepoRoot,
@@ -399,7 +399,7 @@ describe('npm publishing with Verdaccio', () => {
       npmrcPath: verdaccio.npmrcPath(),
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mypkg'),
       monorepoRoot,
@@ -407,7 +407,7 @@ describe('npm publishing with Verdaccio', () => {
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
     })
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mypkg'),
       monorepoRoot,
@@ -415,7 +415,7 @@ describe('npm publishing with Verdaccio', () => {
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
     })
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mypkg'),
       monorepoRoot,
@@ -423,7 +423,7 @@ describe('npm publishing with Verdaccio', () => {
       publish: true,
       npmrcPath: verdaccio.npmrcPath(),
     })
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mypkg'),
       monorepoRoot,
@@ -445,7 +445,7 @@ describe('npm publishing with Verdaccio', () => {
     })
     const indexPath = path.join(monorepoRoot, 'packages/calculator/dist/index.js')
 
-    const opts: MonopushOptions = {
+    const opts: MonodropOptions = {
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/calculator',
       monorepoRoot,
@@ -456,15 +456,15 @@ describe('npm publishing with Verdaccio', () => {
 
     // Version 1.0.0: addition
     fs.writeFileSync(indexPath, `export function compute(a, b) { return a + b; }`)
-    await monopush(opts)
+    await monodrop(opts)
 
     // Version 2.0.0: multiplication
     fs.writeFileSync(indexPath, `export function compute(a, b) { return a * b; }`)
-    await monopush(opts)
+    await monodrop(opts)
 
     // Version 3.0.0: power
     fs.writeFileSync(indexPath, `export function compute(a, b) { return Math.pow(a, b); }`)
-    await monopush(opts)
+    await monodrop(opts)
 
     expect(
       verdaccio.runConsumer('calculator@1.0.0', `import { compute } from 'calculator'; console.log(compute(3, 4))`)
@@ -486,7 +486,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/twophase-b/dist/index.js': `export const b = 'B'`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/twophase-a', 'packages/twophase-b'],
       monorepoRoot,
@@ -510,7 +510,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/onephase/dist/index.js': `export const a = 'A'`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/onephase',
       monorepoRoot,
@@ -538,7 +538,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -568,7 +568,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mylib/dist/index.js': `export function hello() { return 'Hello from yarn berry!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -606,7 +606,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -644,7 +644,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -674,7 +674,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/mylib/dist/index.js': `export function hello() { return 'Hello from bun!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -712,7 +712,7 @@ describe('npm publishing with Verdaccio', () => {
       'packages/lib/dist/index.js': `export function greet(name) { return 'Hello, ' + name + '!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       monorepoRoot,
@@ -745,7 +745,7 @@ describe('npm publishing with Verdaccio', () => {
 
     // Try to publish both packages - atomic-b should fail because 8.7.6 already exists
     await expect(
-      monopush({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: ['packages/atomic-a', 'packages/atomic-b'],
         monorepoRoot,

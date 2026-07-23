@@ -1,11 +1,11 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { MonopushTeskit } from '../testing/monopush-teskit.js'
+import { MonodropTestkit } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
 describe('files property support', () => {
-  const teskit = new MonopushTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })

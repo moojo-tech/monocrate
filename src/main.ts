@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { monopushCli } from './monopush-cli.js'
+import { monodropCli } from './monodrop-cli.js'
 
-monopushCli()
+monodropCli()

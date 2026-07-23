@@ -8,7 +8,7 @@ export class TempDirDispenser {
   private readonly prefix: string
   private root: AbsolutePath | undefined
 
-  constructor(prefix = 'monopush-') {
+  constructor(prefix = 'monodrop-') {
     this.prefix = prefix
   }
 

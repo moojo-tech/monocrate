@@ -3,8 +3,8 @@ import * as path from 'node:path'
 import yargs from 'yargs'
 import type { Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import type { MonopushOptions } from './monopush.js'
-import { monopush } from './monopush.js'
+import type { MonodropOptions } from './monodrop.js'
+import { monodrop } from './monodrop.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
 const addSharedOptions = (y: Argv) =>
@@ -48,8 +48,8 @@ const addSharedOptions = (y: Argv) =>
       },
     })
 
-async function runMonopush(options: MonopushOptions, report: string | undefined): Promise<void> {
-  const result = await monopush(options)
+async function runMonodrop(options: MonodropOptions, report: string | undefined): Promise<void> {
+  const result = await monodrop(options)
   const output = result.resolvedVersion ?? result.summaries.map((s) => `${s.packageName}@${s.version}`).join('\n')
   if (report) {
     const outputFilePath = path.resolve(process.cwd(), report)
@@ -59,9 +59,9 @@ async function runMonopush(options: MonopushOptions, report: string | undefined)
   }
 }
 
-export function monopushCli(): void {
+export function monodropCli(): void {
   const parser = yargs(hideBin(process.argv))
-    .scriptName('monopush')
+    .scriptName('monodrop')
     .usage(
       `From monorepo to npm in one command.
 
@@ -74,7 +74,7 @@ Usage: $0 <command> [options]`
       'Assemble package(s) with their in-repo dependencies and publish to npm',
       (y) => addSharedOptions(y),
       (args) =>
-        runMonopush(
+        runMonodrop(
           {
             pathToSubjectPackages: args.packages,
             monorepoRoot: args.root,
@@ -97,7 +97,7 @@ Usage: $0 <command> [options]`
           description: 'Directory where publishable tarball(s) will be placed',
         }),
       (args) =>
-        runMonopush(
+        runMonodrop(
           {
             pathToSubjectPackages: args.packages,
             monorepoRoot: args.root,

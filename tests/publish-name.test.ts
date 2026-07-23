@@ -1,8 +1,8 @@
 import * as path from 'node:path'
 import { describe, expect, test, beforeAll, afterAll } from 'vitest'
-import { monopush } from '../src/monopush.js'
+import { monodrop } from '../src/monodrop.js'
 import { folderify } from './testing/folderify.js'
-import { pj } from './testing/monopush-teskit.js'
+import { pj } from './testing/monodrop-teskit.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
 describe('publishName feature', () => {
@@ -12,13 +12,13 @@ describe('publishName feature', () => {
       'packages/package-a/package.json': pj('package-a', '1.0.0'),
       'packages/package-a/dist/index.js': 'export const a = "a";\n',
       'packages/package-b/package.json': pj('package-b', '1.0.0', {
-        monopush: { publishName: 'package-a' },
+        monodrop: { publishName: 'package-a' },
       }),
       'packages/package-b/dist/index.js': 'export const b = "b";\n',
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: repoDir,
         pathToSubjectPackages: path.join(repoDir, 'packages/package-b'),
         monorepoRoot: repoDir,
@@ -31,17 +31,17 @@ describe('publishName feature', () => {
     const repoDir = folderify({
       'package.json': { name: 'root', workspaces: ['packages/*'] },
       'packages/package-a/package.json': pj('package-a', '1.0.0', {
-        monopush: { publishName: '@published/shared-name' },
+        monodrop: { publishName: '@published/shared-name' },
       }),
       'packages/package-a/dist/index.js': 'export const a = "a";\n',
       'packages/package-b/package.json': pj('package-b', '1.0.0', {
-        monopush: { publishName: '@published/shared-name' },
+        monodrop: { publishName: '@published/shared-name' },
       }),
       'packages/package-b/dist/index.js': 'export const b = "b";\n',
     })
 
     await expect(
-      monopush({
+      monodrop({
         cwd: repoDir,
         pathToSubjectPackages: path.join(repoDir, 'packages/package-a'),
         monorepoRoot: repoDir,
@@ -75,12 +75,12 @@ describe('publishName integration with npm registry', () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/mylib/package.json': pj('@workspace/mylib', '1.0.0', {
-        monopush: { publishName: '@published/mylib' },
+        monodrop: { publishName: '@published/mylib' },
       }),
       'packages/mylib/dist/index.js': `export function getPublished() { return 'Published under custom name!'; }`,
     })
 
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/mylib'),
       monorepoRoot,
@@ -96,8 +96,8 @@ describe('publishName integration with npm registry', () => {
       version: '99.99.99',
     })
 
-    // Verify the monopush config field was stripped from the published package.json
-    expect(viewResult).not.toHaveProperty('monopush')
+    // Verify the monodrop config field was stripped from the published package.json
+    expect(viewResult).not.toHaveProperty('monodrop')
 
     // Verify the internal name was NOT published
     expect(() => verdaccio.runView('@workspace/mylib')).toThrow('404')
@@ -115,19 +115,19 @@ describe('publishName integration with npm registry', () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/lib-a/package.json': pj('@internal/lib-a', '1.0.0', {
-        monopush: { publishName: '@public/lib-a' },
+        monodrop: { publishName: '@public/lib-a' },
         main: 'dist/index.js',
       }),
       'packages/lib-a/dist/index.js': `export const getName = () => 'lib-a'`,
       'packages/lib-b/package.json': pj('@internal/lib-b', '1.0.0', {
-        monopush: { publishName: '@public/lib-b' },
+        monodrop: { publishName: '@public/lib-b' },
         main: 'dist/index.js',
       }),
       'packages/lib-b/dist/index.js': `export const getName = () => 'lib-b'`,
     })
 
     // Publish first package
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/lib-a'),
       monorepoRoot,
@@ -137,7 +137,7 @@ describe('publishName integration with npm registry', () => {
     })
 
     // Publish second package
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/lib-b'),
       monorepoRoot,
@@ -171,18 +171,18 @@ describe('publishName integration with npm registry', () => {
     const monorepoRoot = folderify({
       'package.json': { workspaces: ['packages/*'] },
       'packages/shared/package.json': pj('@internal/shared', '1.0.0', {
-        monopush: { publishName: '@public/shared' },
+        monodrop: { publishName: '@public/shared' },
       }),
       'packages/shared/dist/index.js': `export const getMessage = () => 'Shared message'`,
       'packages/app/package.json': pj('@internal/app', '1.0.0', {
-        monopush: { publishName: '@public/app' },
+        monodrop: { publishName: '@public/app' },
         dependencies: { '@internal/shared': 'workspace:*' },
       }),
       'packages/app/dist/index.js': `import { getMessage } from '@internal/shared'; export const getAppMessage = () => 'App: ' + getMessage()`,
     })
 
     // Publish both packages together
-    await monopush({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: [path.join(monorepoRoot, 'packages/shared'), path.join(monorepoRoot, 'packages/app')],
       monorepoRoot,

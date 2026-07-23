@@ -1,1 +1,1 @@
-export { monopush, type MonopushOptions, type MonopushResult } from './monopush.js'
+export { monodrop, type MonodropOptions, type MonodropResult } from './monodrop.js'

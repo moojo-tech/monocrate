@@ -1,7 +1,7 @@
 import { execSync } from 'child_process'
 import { unfolderify } from './unfolderify.js'
-import { monopush } from '../../src/monopush.js'
-import type { MonopushOptions, MonopushResult } from '../../src/monopush.js'
+import { monodrop } from '../../src/monodrop.js'
+import type { MonodropOptions, MonodropResult } from '../../src/monodrop.js'
 import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import * as tar from 'tar'
 import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 
-export class MonopushTeskit {
+export class MonodropTestkit {
   private readonly tempDirDispenser = new TempDirDispenser()
 
   createTempDir() {
@@ -20,8 +20,8 @@ export class MonopushTeskit {
     this.tempDirDispenser.cleanup()
   }
 
-  async pack(options: MonopushOptions): Promise<MonopushResult & { outputDir: string }> {
-    const result = await monopush(options)
+  async pack(options: MonodropOptions): Promise<MonodropResult & { outputDir: string }> {
+    const result = await monodrop(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')
@@ -45,7 +45,7 @@ export class MonopushTeskit {
       entryPoint = 'dist/index.js',
       bump = '2.8.512',
       optionsMutator = () => {},
-    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonopushOptions) => void } = {}
+    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonodropOptions) => void } = {}
   ) {
     const options = {
       cwd: monorepoRoot,
@@ -56,7 +56,7 @@ export class MonopushTeskit {
     }
 
     optionsMutator(options)
-    const result = await monopush(options)
+    const result = await monodrop(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')
@@ -78,7 +78,7 @@ export class MonopushTeskit {
   }
 }
 
-export function createTempDir(prefix = 'monopush-testing-'): string {
+export function createTempDir(prefix = 'monodrop-testing-'): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix))
 }
 

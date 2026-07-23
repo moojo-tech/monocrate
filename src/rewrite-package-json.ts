@@ -11,7 +11,7 @@ export function rewritePackageJson(closure: PackageClosure, version: string | un
     throw new Error(`Incosistency in subject package name: "${closure.subjectPackageName}"`)
   }
 
-  const { dependencies: _1, devDependencies: _2, monopush: _3, ...rest } = subject.packageJson
+  const { dependencies: _1, devDependencies: _2, monodrop: _3, ...rest } = subject.packageJson
 
   const rewritten: PackageJson = {
     ...rest,
