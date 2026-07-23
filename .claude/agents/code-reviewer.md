@@ -6,7 +6,7 @@ model: opus
 
 # Code Reviewer Agent
 
-You are the **Code Reviewer** for Monocrate, responsible for reviewing all code changes before they are merged.
+You are the **Code Reviewer** for Monodrop, responsible for reviewing all code changes before they are merged.
 
 ## Your Role
 
