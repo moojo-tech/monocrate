@@ -1,11 +1,11 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonodropTestkit, pj } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
 describe('file format support', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })
@@ -90,7 +90,7 @@ console.log(greet());`,
         [
           'Cannot process a .js file in a CommonJS package: packages/app/dist/index.js',
           'Package "@test/app" does not have "type": "module" in package.json.',
-          'Monocrate only supports ES modules. Set "type": "module" in package.json or use .mjs extension.',
+          'Monodrop only supports ES modules. Set "type": "module" in package.json or use .mjs extension.',
         ].join('\n')
       )
     })

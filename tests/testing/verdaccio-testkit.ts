@@ -1,7 +1,7 @@
 import type { ChildProcess } from 'node:child_process'
 import { execSync, spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { createTempDir } from './monocrate-teskit.js'
+import { createTempDir } from './monodrop-teskit.js'
 import getPort from 'get-port'
 import path from 'node:path'
 import fs from 'node:fs'

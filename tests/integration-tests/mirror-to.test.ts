@@ -1,10 +1,10 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monodrop } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { createTempDir, initGitRepo, pj } from '../testing/monocrate-teskit.js'
+import { createTempDir, initGitRepo, pj } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
@@ -22,7 +22,7 @@ describe('--mirror-to option', () => {
 
     const mirrorDir = createTempDir('mirror-')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -57,7 +57,7 @@ describe('--mirror-to option', () => {
 
     const mirrorDir = createTempDir('mirror-')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -88,7 +88,7 @@ describe('--mirror-to option', () => {
 
     const mirrorDir = createTempDir('mirror-')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -122,7 +122,7 @@ describe('--mirror-to option', () => {
     fs.mkdirSync(path.join(mirrorDir, 'packages/app'), { recursive: true })
     fs.writeFileSync(path.join(mirrorDir, 'packages/app/old-file.txt'), 'old content')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -162,7 +162,7 @@ describe('--mirror-to option', () => {
 
     const mirrorDir = createTempDir('mirror-')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/app1', 'packages/app2'],
       publish: false,
@@ -198,7 +198,7 @@ describe('--mirror-to option', () => {
     const mirrorDir = createTempDir('mirror-')
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -223,7 +223,7 @@ describe('--mirror-to option', () => {
 
     const mirrorDir = createTempDir('mirror-')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,
@@ -281,7 +281,7 @@ describe('--mirror-to option', () => {
 
     const mirrorDir = createTempDir('mirror-')
 
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: 'packages/app',
       publish: false,

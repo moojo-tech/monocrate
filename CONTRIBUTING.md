@@ -1,6 +1,6 @@
-# Contributing to Monocrate
+# Contributing to Monodrop
 
-Thank you for your interest in contributing to Monocrate! We welcome contributions from everyone, regardless of experience level. This guide will help you get started.
+Thank you for your interest in contributing to Monodrop! We welcome contributions from everyone, regardless of experience level. This guide will help you get started.
 
 ## Table of Contents
 
@@ -19,10 +19,10 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ## Ways to Contribute
 
-There are many ways to contribute to Monocrate:
+There are many ways to contribute to Monodrop:
 
-- **Report bugs**: Found something broken? [Open a bug report](https://github.com/imaman/monocrate/issues/new?template=bug_report.md)
-- **Suggest features**: Have an idea? [Submit a feature request](https://github.com/imaman/monocrate/issues/new?template=feature_request.md)
+- **Report bugs**: Found something broken? [Open a bug report](https://github.com/moojo-tech/monodrop/issues/new?template=bug_report.md)
+- **Suggest features**: Have an idea? [Submit a feature request](https://github.com/moojo-tech/monodrop/issues/new?template=feature_request.md)
 - **Improve documentation**: Help others by clarifying docs or adding examples
 - **Submit code changes**: Fix bugs, add features, or improve performance
 - **Review pull requests**: Help review and test changes from other contributors
@@ -42,13 +42,13 @@ There are many ways to contribute to Monocrate:
 
 2. **Clone your fork**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/monocrate.git
-   cd monocrate
+   git clone https://github.com/YOUR_USERNAME/monodrop.git
+   cd monodrop
    ```
 
 3. **Add the upstream remote**:
    ```bash
-   git remote add upstream https://github.com/imaman/monocrate.git
+   git remote add upstream https://github.com/moojo-tech/monodrop.git
    ```
 
 4. **Install dependencies**:
@@ -267,10 +267,10 @@ Your pull request should:
 
 ## Getting Help
 
-- **Questions?** Open a [GitHub Discussion](https://github.com/imaman/monocrate/discussions)
-- **Found a bug?** [Open an issue](https://github.com/imaman/monocrate/issues/new?template=bug_report.md)
-- **Have an idea?** [Submit a feature request](https://github.com/imaman/monocrate/issues/new?template=feature_request.md)
+- **Questions?** Open a [GitHub Discussion](https://github.com/moojo-tech/monodrop/discussions)
+- **Found a bug?** [Open an issue](https://github.com/moojo-tech/monodrop/issues/new?template=bug_report.md)
+- **Have an idea?** [Submit a feature request](https://github.com/moojo-tech/monodrop/issues/new?template=feature_request.md)
 
 ---
 
-Thank you for contributing to Monocrate!
+Thank you for contributing to Monodrop!

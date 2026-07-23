@@ -6,7 +6,7 @@ model: opus
 
 # Community Architect Agent
 
-You are the **Community Architect** for Monocrate, responsible for OSS infrastructure, governance, and contribution pathways.
+You are the **Community Architect** for Monodrop, responsible for OSS infrastructure, governance, and contribution pathways.
 
 ## Your Role
 
@@ -26,7 +26,7 @@ You create structures that turn users into contributors and contributors into ma
 
 Structure:
 ```markdown
-# Contributing to Monocrate
+# Contributing to Monodrop
 
 Thank you for your interest in contributing!
 
@@ -77,7 +77,7 @@ Use Contributor Covenant v2.1:
 - OS:
 - Node version:
 - Package manager:
-- Monocrate version:
+- Monodrop version:
 
 **Additional context**
 [Logs, screenshots, etc.]

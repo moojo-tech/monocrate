@@ -1,4 +1,4 @@
-# File Format Support for .mjs in Monocrate
+# File Format Support for .mjs in Monodrop
 
 ## Status: Implemented
 
@@ -8,18 +8,18 @@ Support for ES module file formats (`.mjs`) and their TypeScript declaration equ
 
 ## ES Modules Only
 
-Monocrate only supports ES modules. All packages must have `"type": "module"` in their package.json, or use `.mjs` file extensions.
+Monodrop only supports ES modules. All packages must have `"type": "module"` in their package.json, or use `.mjs` file extensions.
 
 ### Why ES Modules Only?
 
-Monocrate rewrites imports from in-repo packages to relative paths. This rewriting relies on parsing ES module syntax (`import`/`export` declarations and dynamic `import()` calls).
+Monodrop rewrites imports from in-repo packages to relative paths. This rewriting relies on parsing ES module syntax (`import`/`export` declarations and dynamic `import()` calls).
 
 CommonJS `require()` calls cannot be reliably rewritten because:
 - `require()` is a regular function call, not special syntax
 - It can be aliased, dynamically constructed, or wrapped
 - Detecting all `require()` usages would require complex static analysis with edge cases
 
-Rather than silently produce broken output, monocrate rejects CommonJS files upfront with a clear error message.
+Rather than silently produce broken output, monodrop rejects CommonJS files upfront with a clear error message.
 
 ---
 
@@ -42,21 +42,21 @@ Rather than silently produce broken output, monocrate rejects CommonJS files upf
 ### For `.cjs` files:
 ```
 Cannot process CommonJS file: packages/lib/dist/index.cjs
-Monocrate only supports ES modules. Use .mjs extension or set "type": "module" in package.json.
+Monodrop only supports ES modules. Use .mjs extension or set "type": "module" in package.json.
 ```
 
 ### For `.js` files without `type: "module"`:
 ```
 Cannot process CommonJS file: packages/lib/dist/index.js
 Package "@myorg/lib" does not have "type": "module" in package.json.
-Monocrate only supports ES modules. Set "type": "module" in package.json or use .mjs extension.
+Monodrop only supports ES modules. Set "type": "module" in package.json or use .mjs extension.
 ```
 
 ---
 
 ## Migration Guide
 
-To use monocrate with your monorepo:
+To use monodrop with your monorepo:
 
 1. **Add `"type": "module"` to all package.json files** that contain JavaScript code
 2. **Use ES module syntax** (`import`/`export`) instead of CommonJS (`require`/`module.exports`)

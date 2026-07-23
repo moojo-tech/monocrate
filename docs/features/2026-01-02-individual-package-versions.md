@@ -2,7 +2,7 @@
 
 ## Intent
 
-When publishing multiple packages from a monorepo, monocrate currently computes a single "resolved version" by taking the maximum of all individual package versions and applying the bump. This ensures version alignment across packages but can lead to large version jumps for packages that were already at lower versions.
+When publishing multiple packages from a monorepo, monodrop currently computes a single "resolved version" by taking the maximum of all individual package versions and applying the bump. This ensures version alignment across packages but can lead to large version jumps for packages that were already at lower versions.
 
 The individual package versions feature allows each package to be published at its own resolved version, computed independently from its current published version. This is useful when:
 
@@ -29,7 +29,7 @@ Given packages with current published versions:
 - `pkg-b`: 2.0.0
 - `pkg-c`: 3.0.0
 
-Running `monocrate --bump=patch` computes:
+Running `monodrop --bump=patch` computes:
 1. pkg-a: 1.0.0 → 1.0.1
 2. pkg-b: 2.0.0 → 2.0.1
 3. pkg-c: 3.0.0 → 3.0.1
@@ -39,7 +39,7 @@ All packages are published at **3.0.1**.
 
 ### New Behavior (`--max=false`)
 
-Same packages, running `monocrate --bump=patch --max=false`:
+Same packages, running `monodrop --bump=patch --max=false`:
 1. pkg-a: 1.0.0 → **1.0.1**
 2. pkg-b: 2.0.0 → **2.0.1**
 3. pkg-c: 3.0.0 → **3.0.1**
@@ -101,7 +101,7 @@ pkg-c gets 3.0.1
 
 ### Result Structure
 
-The `MonocrateResult` type changes to support per-package versions:
+The `MonodropResult` type changes to support per-package versions:
 
 ```typescript
 // With --max (default)
@@ -128,7 +128,7 @@ When using `--max=false` with two-phase publishing:
 
 ```bash
 # Publish multiple packages, each at its own version
-monocrate --publish \
+monodrop --publish \
   --path packages/api \
   --path packages/client \
   --path packages/shared \

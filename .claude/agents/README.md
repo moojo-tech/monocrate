@@ -1,6 +1,6 @@
-# Monocrate Agent Architecture
+# Monodrop Agent Architecture
 
-This directory contains agent definitions for building and maintaining the Monocrate project.
+This directory contains agent definitions for building and maintaining the Monodrop project.
 
 ## Agents
 

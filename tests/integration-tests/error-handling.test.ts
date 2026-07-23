@@ -1,15 +1,15 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monodrop } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonodropTestkit, pj } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
 describe('error handling', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })
@@ -42,7 +42,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         monorepoRoot,
@@ -60,7 +60,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         monorepoRoot,
@@ -77,7 +77,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -103,7 +103,7 @@ describe('error handling', () => {
     fs.symlinkSync(externalPackage, path.join(monorepoRoot, 'packages/external'))
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
         monorepoRoot,
@@ -121,7 +121,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         monorepoRoot,
@@ -142,7 +142,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         monorepoRoot,
@@ -188,7 +188,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app-foo',
         monorepoRoot,
@@ -209,7 +209,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         monorepoRoot,
@@ -229,7 +229,7 @@ describe('error handling', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         monorepoRoot,

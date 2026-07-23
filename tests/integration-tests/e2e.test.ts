@@ -1,6 +1,6 @@
 import { afterAll, describe, it, expect } from 'vitest'
 import { folderify } from '../testing/folderify.js'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonodropTestkit, pj } from '../testing/monodrop-teskit.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { x } from 'tinyexec'
@@ -70,7 +70,7 @@ function createConsumerProject(source: string): string {
   })
 }
 
-async function packPackageWithImportedDeclarations(teskit: MonocrateTeskit): Promise<string> {
+async function packPackageWithImportedDeclarations(teskit: MonodropTestkit): Promise<string> {
   const monorepoRoot = folderify({
     'package.json': { name, workspaces: ['packages/*'] },
     'packages/a/package.json': pj(packageWithImportedDeclarationsName, undefined, {
@@ -104,7 +104,7 @@ export declare const bar: typeof foo;
 }
 
 describe('e2e', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })

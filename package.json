@@ -1,12 +1,12 @@
 {
-  "name": "monocrate",
+  "name": "monodrop",
   "version": "0.2.0",
   "description": "From monorepo to npm in one command",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "bin": {
-    "monocrate": "./dist/src/main.js"
+    "monodrop": "./dist/src/main.js"
   },
   "exports": {
     ".": {
@@ -40,12 +40,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/moojo-tech/monocrate.git"
+    "url": "git+https://github.com/moojo-tech/monodrop.git"
   },
   "bugs": {
-    "url": "https://github.com/moojo-tech/monocrate/issues"
+    "url": "https://github.com/moojo-tech/monodrop/issues"
   },
-  "homepage": "https://github.com/moojo-tech/monocrate#readme",
+  "homepage": "https://github.com/moojo-tech/monodrop#readme",
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^20.19.29",

@@ -9,13 +9,13 @@ import { AbsolutePath } from './paths.js'
 import { maxVersion } from './resolve-version.js'
 import { NpmClient } from './npm-client.js'
 import { mirrorSources } from './mirror-sources.js'
-import type { MonocrateResult } from './monocrate-result.js'
-import type { MonocrateOptions } from './monocrate-options.js'
+import type { MonodropResult } from './monodrop-result.js'
+import type { MonodropOptions } from './monodrop-options.js'
 import { TempDirDispenser } from './temp-dir-dispenser.js'
 import { defaultDynamicImportsPolicy } from './default-dynamic-imports-policy.js'
 
-export type { MonocrateOptions } from './monocrate-options.js'
-export type { MonocrateResult } from './monocrate-result.js'
+export type { MonodropOptions } from './monodrop-options.js'
+export type { MonodropResult } from './monodrop-result.js'
 
 /**
  * Assembles a monorepo package and its in-repo dependencies for npm publishing.
@@ -23,16 +23,16 @@ export type { MonocrateResult } from './monocrate-result.js'
  * @returns The result of the assembly operation
  * @throws Error if assembly or publishing fails
  */
-export async function monocrate(options: MonocrateOptions): Promise<MonocrateResult> {
+export async function monodrop(options: MonodropOptions): Promise<MonodropResult> {
   const dispenser = new TempDirDispenser()
   try {
-    return await monocrateImpl(options, dispenser)
+    return await monodropImpl(options, dispenser)
   } finally {
     dispenser.cleanup()
   }
 }
 
-async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispenser): Promise<MonocrateResult> {
+async function monodropImpl(options: MonodropOptions, dispenser: TempDirDispenser): Promise<MonodropResult> {
   // Resolve and validate cwd first, then use it to resolve all other paths
   const cwd = AbsolutePath(path.resolve(options.cwd))
   const cwdExists = fs.existsSync(cwd)
@@ -53,7 +53,7 @@ async function monocrateImpl(options: MonocrateOptions, dispenser: TempDirDispen
   // Determine whether to use unified max version or individual versions per package
   const useMax = options.max ?? false
 
-  const outputRoot = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monocrate-')))
+  const outputRoot = AbsolutePath(fs.mkdtempSync(path.join(os.tmpdir(), 'monodrop-')))
 
   // Validate bump argument before any side effects (defaults to 'minor')
   const versionSpecifier = parseVersionSpecifier(options.bump ?? 'minor')

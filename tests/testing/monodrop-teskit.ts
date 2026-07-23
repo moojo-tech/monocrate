@@ -1,7 +1,7 @@
 import { execSync } from 'child_process'
 import { unfolderify } from './unfolderify.js'
-import { monocrate } from '../../src/monocrate.js'
-import type { MonocrateOptions, MonocrateResult } from '../../src/monocrate.js'
+import { monodrop } from '../../src/monodrop.js'
+import type { MonodropOptions, MonodropResult } from '../../src/monodrop.js'
 import path from 'node:path'
 import type { PackageJson } from '../../src/package-json.js'
 import os from 'node:os'
@@ -9,15 +9,19 @@ import fs from 'node:fs'
 import * as tar from 'tar'
 import { TempDirDispenser } from '../../src/temp-dir-dispenser.js'
 
-export class MonocrateTeskit {
+export class MonodropTestkit {
   private readonly tempDirDispenser = new TempDirDispenser()
+
+  createTempDir() {
+    return this.tempDirDispenser.create()
+  }
 
   shutdown() {
     this.tempDirDispenser.cleanup()
   }
 
-  async pack(options: MonocrateOptions): Promise<MonocrateResult & { outputDir: string }> {
-    const result = await monocrate(options)
+  async pack(options: MonodropOptions): Promise<MonodropResult & { outputDir: string }> {
+    const result = await monodrop(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')
@@ -41,7 +45,7 @@ export class MonocrateTeskit {
       entryPoint = 'dist/index.js',
       bump = '2.8.512',
       optionsMutator = () => {},
-    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonocrateOptions) => void } = {}
+    }: { entryPoint?: string; bump?: string; optionsMutator?: (opts: MonodropOptions) => void } = {}
   ) {
     const options = {
       cwd: monorepoRoot,
@@ -52,7 +56,7 @@ export class MonocrateTeskit {
     }
 
     optionsMutator(options)
-    const result = await monocrate(options)
+    const result = await monodrop(options)
     const summary = result.summaries.at(0)
     if (!summary) {
       throw new Error('Expected at least one package summary')
@@ -74,7 +78,7 @@ export class MonocrateTeskit {
   }
 }
 
-export function createTempDir(prefix = 'monocrate-testing-'): string {
+export function createTempDir(prefix = 'monodrop-testing-'): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix))
 }
 

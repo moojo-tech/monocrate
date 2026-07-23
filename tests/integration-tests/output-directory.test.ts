@@ -2,15 +2,15 @@ import os from 'node:os'
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monodrop } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { createTempDir, MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonodropTestkit, pj } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
 describe('optional output directory', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })
@@ -30,7 +30,7 @@ describe('optional output directory', () => {
     })
 
     // Verify a temp directory was created
-    expect(result.outputDir).toContain('monocrate-')
+    expect(result.outputDir).toContain('monodrop-')
     expect(fs.existsSync(result.outputDir)).toBe(true)
 
     // Verify the assembly was created there
@@ -50,8 +50,8 @@ describe('optional output directory', () => {
 `,
     })
 
-    const specifiedPackDestination = createTempDir('monocrate-explicit-output-')
-    await monocrate({
+    const specifiedPackDestination = teskit.createTempDir()
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app'),
       packDestination: specifiedPackDestination,
@@ -73,7 +73,7 @@ describe('optional output directory', () => {
 
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), '111'))
 
-    const { summaries } = await monocrate({
+    const { summaries } = await monodrop({
       cwd,
       pathToSubjectPackages: path.join(monorepoRoot, 'packages/app-foo'),
       packDestination: 'THIS_IS_THE_DIR',

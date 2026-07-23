@@ -7,11 +7,11 @@
 
 ## Summary
 
-This document explores approaches for extending monocrate to support CommonJS modules. After analysis, we concluded that no approach provides acceptable trade-offs, and monocrate will remain ESM-only.
+This document explores approaches for extending monodrop to support CommonJS modules. After analysis, we concluded that no approach provides acceptable trade-offs, and monodrop will remain ESM-only.
 
 ## Current Behavior
 
-Monocrate rejects CommonJS files with an error:
+Monodrop rejects CommonJS files with an error:
 
 - `.cjs` files → Error: "Cannot process a .cjs file"
 - `.js` files without `"type": "module"` → Error: "Cannot process a .js file in a CommonJS package"
@@ -52,7 +52,7 @@ Module._resolveFilename = function(request, parent, isMain, options) {
 
 This catches 100% of `require()` calls regardless of aliasing.
 
-**Why rejected:** Bundlers (webpack, esbuild, rollup) resolve `require()` at **build time**, not runtime. When a consumer bundles code that uses a monocrate-packaged CJS package:
+**Why rejected:** Bundlers (webpack, esbuild, rollup) resolve `require()` at **build time**, not runtime. When a consumer bundles code that uses a monodrop-packaged CJS package:
 
 1. Bundler sees `require('@myorg/utils')` in the source
 2. Bundler tries to resolve `@myorg/utils` at build time
@@ -63,11 +63,11 @@ The runtime hook never gets a chance to intervene because the bundler transforms
 
 #### Performance Considerations (for reference)
 
-We also investigated the performance impact of runtime hooks. Since `Module` is a process-wide singleton, multiple monocrate-packaged packages would compound hooks. We designed a solution using a single shared hook with O(1) lookup by package name:
+We also investigated the performance impact of runtime hooks. Since `Module` is a process-wide singleton, multiple monodrop-packaged packages would compound hooks. We designed a solution using a single shared hook with O(1) lookup by package name:
 
 - Registry keyed by package name (extracted from request)
-- Non-monocrate requires: O(1) overhead (negligible)
-- Monocrate requires: O(K) where K = packages depending on that in-repo package (typically 1-3)
+- Non-monodrop requires: O(1) overhead (negligible)
+- Monodrop requires: O(K) where K = packages depending on that in-repo package (typically 1-3)
 
 This solved the performance concern, but doesn't address the bundler incompatibility.
 
@@ -89,10 +89,10 @@ No approach provides acceptable trade-offs:
 
 Given that:
 - CJS is legacy; ESM is the ecosystem direction
-- Monocrate's value proposition is already strong for ESM
+- Monodrop's value proposition is already strong for ESM
 - Half-working CJS support with caveats would cause more confusion than value
 
-We decided to keep monocrate focused on ESM, where it can provide reliable, complete support.
+We decided to keep monodrop focused on ESM, where it can provide reliable, complete support.
 
 ## Recommendation for CJS Users
 
@@ -100,4 +100,4 @@ If you have a monorepo with CommonJS packages, consider:
 
 1. **Migrate to ESM** - Add `"type": "module"` to package.json and update imports
 2. **Use `.mjs` extension** - For gradual migration, rename files to `.mjs`
-3. **Dual publishing** - Build both CJS and ESM outputs, use monocrate for the ESM version
+3. **Dual publishing** - Build both CJS and ESM outputs, use monodrop for the ESM version

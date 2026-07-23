@@ -2,7 +2,7 @@
 
 ## Intent
 
-When publishing multiple packages from a monorepo, a failure partway through can leave packages at misaligned versions. Since monocrate packages are self-contained (each includes its in-repo dependencies), this isn't a compatibility problem—but it creates confusion when "the current version" differs across packages. Two phase publishing keeps all packages aligned: either they all move to the new version, or none do.
+When publishing multiple packages from a monorepo, a failure partway through can leave packages at misaligned versions. Since monodrop packages are self-contained (each includes its in-repo dependencies), this isn't a compatibility problem—but it creates confusion when "the current version" differs across packages. Two phase publishing keeps all packages aligned: either they all move to the new version, or none do.
 
 Note: This approach reduces the risk of misalignment but does not provide true atomicity. Failures during Phase 2 can still leave some packages updated and some not.
 
@@ -45,7 +45,7 @@ npm dist-tag add pkg-c@2.0.0 latest
 
 ## Implementation
 
-The `NpmClient` class has two methods: `publish(dir, tag)` publishes with a specified tag, and `distTagAdd(packageNameAtVersion, tag, cwd)` moves a tag to point to an existing version. The orchestration in `monocrate.ts` loops through assemblers twice—first to publish all packages with the `pending` tag, then (only if all succeed) to move `latest` to each package.
+The `NpmClient` class has two methods: `publish(dir, tag)` publishes with a specified tag, and `distTagAdd(packageNameAtVersion, tag, cwd)` moves a tag to point to an existing version. The orchestration in `monodrop.ts` loops through assemblers twice—first to publish all packages with the `pending` tag, then (only if all succeed) to move `latest` to each package.
 
 ## Dist Tags After Publishing
 

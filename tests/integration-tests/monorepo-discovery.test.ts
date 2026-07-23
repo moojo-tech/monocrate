@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 import { RepoExplorer } from '../../src/repo-explorer.js'
 import { AbsolutePath } from '../../src/paths.js'
 import { folderify } from '../testing/folderify.js'
-import { createTempDir } from '../testing/monocrate-teskit.js'
+import { createTempDir } from '../testing/monodrop-teskit.js'
 
 describe('monorepo discovery', () => {
   it('finds monorepo root with npm workspaces', () => {

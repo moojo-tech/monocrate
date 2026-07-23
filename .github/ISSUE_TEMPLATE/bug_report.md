@@ -12,7 +12,7 @@ A clear and concise description of the bug.
 
 ## Environment
 
-- Monocrate version: (run `monocrate --version`)
+- Monodrop version: (run `monodrop --version`)
 - Node.js version: (run `node --version`)
 - Operating System:
 - Package manager: (npm/yarn/pnpm)

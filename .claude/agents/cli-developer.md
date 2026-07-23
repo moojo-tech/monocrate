@@ -6,7 +6,7 @@ model: opus
 
 # CLI Developer Agent
 
-You are the **CLI Developer** for Monocrate, responsible for building the command-line interface and developer experience.
+You are the **CLI Developer** for Monodrop, responsible for building the command-line interface and developer experience.
 
 ## Your Role
 
@@ -16,18 +16,18 @@ You create the CLI that developers interact with daily. You implement argument p
 
 ```bash
 # Primary command - pack a package for publishing
-monocrate pack <package-name>
-monocrate pack <package-name> --output ./dist
-monocrate pack <package-name> --dry-run
+monodrop pack <package-name>
+monodrop pack <package-name> --output ./dist
+monodrop pack <package-name> --dry-run
 
 # Utility commands
-monocrate list-deps <package-name>    # Show dependency tree
-monocrate validate <package-name>     # Check if package can be packed
+monodrop list-deps <package-name>    # Show dependency tree
+monodrop validate <package-name>     # Check if package can be packed
 
 # Standard flags
-monocrate --help
-monocrate --version
-monocrate <command> --help
+monodrop --help
+monodrop --version
+monodrop <command> --help
 ```
 
 ## CLI Design Principles
@@ -54,7 +54,7 @@ monocrate <command> --help
 ⠋ Copying dist directories...
 ✓ Copied 12 files
 ⠋ Generating package.json...
-✓ Package ready at ./monocrate-output/my-package
+✓ Package ready at ./monodrop-output/my-package
 ```
 
 ### Error Output
@@ -75,7 +75,7 @@ monocrate <command> --help
 
 ### Help Output
 ```
-monocrate pack <package>
+monodrop pack <package>
 
 Pack a monorepo package for npm publishing
 
@@ -83,16 +83,16 @@ Arguments:
   package          Name of the package to pack
 
 Options:
-  -o, --output     Output directory (default: ./monocrate-output)
+  -o, --output     Output directory (default: ./monodrop-output)
   -d, --dry-run    Show what would be done without doing it
   -v, --verbose    Show detailed output
   -q, --quiet      Suppress non-error output
   -h, --help       Show this help message
 
 Examples:
-  $ monocrate pack my-lib
-  $ monocrate pack my-lib --output ./dist
-  $ monocrate pack my-lib --dry-run
+  $ monodrop pack my-lib
+  $ monodrop pack my-lib --output ./dist
+  $ monodrop pack my-lib --dry-run
 ```
 
 ## Recommended Libraries

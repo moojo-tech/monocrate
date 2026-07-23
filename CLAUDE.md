@@ -16,7 +16,7 @@ npm run typecheck      # Type-check without emitting (tsc --noEmit)
 
 Run a single test file:
 ```bash
-npx vitest run src/monocrate.test.ts
+npx vitest run tests/publish.test.ts
 ```
 
 Run tests matching a pattern:
@@ -24,11 +24,11 @@ Run tests matching a pattern:
 npx vitest run -t "pattern"
 ```
 
-## What Monocrate Does
+## What Monodrop Does
 
 Publishing a package from a monorepo to npm is painful when your package depends on other internal packages (like `@myorg/utils`). npm doesn't understand workspace dependencies, forcing you to either publish every internal dependency separately, manually assemble and merge dependencies, or use complex build pipelines that lose module structure.
 
-Monocrate solves this by assembling a package and all its in-repo dependencies into a single publishable unit. In-repo dependencies get copied and their imports rewritten; third-party dependencies are collected from all packages and merged into a single output package.json.
+Monodrop solves this by assembling a package and all its in-repo dependencies into a single publishable unit. In-repo dependencies get copied and their imports rewritten; third-party dependencies are collected from all packages and merged into a single output package.json.
 
 Only `dependencies` are traversed and included—`devDependencies` are ignored entirely. This is because devDependencies are only needed during development (build tools, test frameworks, linters); consumers of the published package don't need them at runtime.
 
@@ -37,12 +37,12 @@ Only `dependencies` are traversed and included—`devDependencies` are ignored e
 ### Main Responsibilities
 
 - `main.ts` - CLI entry point (shebang)
-- `monocrate-cli.ts` - CLI argument parsing (uses yargs)
+- `monodrop-cli.ts` - CLI argument parsing (uses yargs)
 - `index.ts` - Library exports (public API re-exports)
 
 ### Core Flow
 
-The `monocrate()` function orchestrates: discover monorepo root → build dependency graph → assemble (copy dist directories and rewrite imports) → transform package.json → write output.
+The `monodrop()` function orchestrates: discover monorepo root → build dependency graph → assemble (copy dist directories and rewrite imports) → transform package.json → write output.
 
 ### Testing
 

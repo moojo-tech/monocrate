@@ -20,7 +20,7 @@ export interface PackageLocation {
 
   /**
    * Absolute path to the the package's output directory
-   * @example "/tmp/monocrate-ab00003/deps/__myorg__my-package" (in-repo dependency)
+   * @example "/tmp/monodrop-ab00003/deps/__myorg__my-package" (in-repo dependency)
    */
   toDir: AbsolutePath
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Publish monocrate to npm
+# Publish monodrop to npm
 # Steps:
 # 1. Clean build
 # 2. Run tests
@@ -10,7 +10,7 @@ set -euo pipefail
 # 5. Run npm publish
 # 6. Add git tag 'published@x.y.z' and push
 
-PACKAGE_NAME="monocrate"
+PACKAGE_NAME="monodrop"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 

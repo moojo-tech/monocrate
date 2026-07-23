@@ -1,13 +1,13 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { monocrate } from '../../src/index.js'
+import { monodrop } from '../../src/index.js'
 import { folderify } from '../testing/folderify.js'
 import { unfolderify } from '../testing/unfolderify.js'
-import { MonocrateTeskit } from '../testing/monocrate-teskit.js'
+import { MonodropTestkit } from '../testing/monodrop-teskit.js'
 
 const name = 'root-package'
 
 describe('--bump package option', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })
@@ -46,7 +46,7 @@ describe('--bump package option', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -68,7 +68,7 @@ describe('--bump package option', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -92,7 +92,7 @@ describe('--bump package option', () => {
     })
 
     await expect(
-      monocrate({
+      monodrop({
         cwd: monorepoRoot,
         pathToSubjectPackages: 'packages/app',
         publish: false,
@@ -122,7 +122,7 @@ describe('--bump package option', () => {
       'packages/app2/dist/index.js': `export const app2 = 'app2';`,
     })
 
-    const { resolvedVersion } = await monocrate({
+    const { resolvedVersion } = await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/app1', 'packages/app2'],
       publish: false,

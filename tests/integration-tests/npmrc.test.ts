@@ -1,11 +1,11 @@
 import { afterAll, describe, it, expect } from 'vitest'
-import { MonocrateTeskit, pj } from '../testing/monocrate-teskit.js'
+import { MonodropTestkit, pj } from '../testing/monodrop-teskit.js'
 import { folderify } from '../testing/folderify.js'
 
 const name = 'root-package'
 
 describe('.npmrc file handling', () => {
-  const teskit = new MonocrateTeskit()
+  const teskit = new MonodropTestkit()
   afterAll(() => {
     teskit.shutdown()
   })

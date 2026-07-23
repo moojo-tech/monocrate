@@ -1,8 +1,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { monocrate } from '../src/index.js'
-import { pj } from './testing/monocrate-teskit.js'
+import { monodrop } from '../src/index.js'
+import { pj } from './testing/monodrop-teskit.js'
 import { folderify } from './testing/folderify.js'
 import { VerdaccioTestkit } from './testing/verdaccio-testkit.js'
 
@@ -40,7 +40,7 @@ describe('multi-package versioning', () => {
       'packages/delta/index.js': `export const value = 'delta-new'`,
     })
 
-    const result = await monocrate({
+    const result = await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/alpha', 'packages/beta', 'packages/gamma', 'packages/delta'],
       monorepoRoot,
@@ -83,7 +83,7 @@ describe('multi-package versioning', () => {
     })
 
     // Step 1: Publish both app and lib
-    await monocrate({
+    await monodrop({
       cwd: root,
       pathToSubjectPackages: ['packages/app', 'packages/lib'],
       monorepoRoot: root,
@@ -102,7 +102,7 @@ describe('multi-package versioning', () => {
     fs.writeFileSync(path.join(root, 'packages/lib/dist/index.js'), `export const getMessage = () => 'updated'`)
 
     // Step 3: Publish only app (which depends on lib)
-    await monocrate({
+    await monodrop({
       cwd: root,
       pathToSubjectPackages: 'packages/app',
       monorepoRoot: root,
@@ -138,7 +138,7 @@ describe('multi-package versioning', () => {
       'packages/delta/index.js': `export const value = 'delta-new'`,
     })
 
-    const result = await monocrate({
+    const result = await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/alpha', 'packages/beta', 'packages/gamma', 'packages/delta'],
       monorepoRoot,
@@ -193,7 +193,7 @@ describe('multi-package versioning', () => {
     const cPath = path.join(monorepoRoot, 'packages/c/index.js')
 
     // Publish A, B, C at 1.0.0
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/a', 'packages/b', 'packages/c'],
       monorepoRoot,
@@ -205,7 +205,7 @@ describe('multi-package versioning', () => {
 
     // Update C, publish A and C (major → 2.0.0)
     fs.writeFileSync(cPath, `export const c = () => 'c2';`)
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/a', 'packages/c'],
       monorepoRoot,
@@ -217,7 +217,7 @@ describe('multi-package versioning', () => {
 
     // Update C, publish A and B (major → 3.0.0)
     fs.writeFileSync(cPath, `export const c = () => 'c3';`)
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/a', 'packages/b'],
       monorepoRoot,
@@ -229,7 +229,7 @@ describe('multi-package versioning', () => {
 
     // Update C, publish B and C (major → 4.0.0)
     fs.writeFileSync(cPath, `export const c = () => 'c4';`)
-    await monocrate({
+    await monodrop({
       cwd: monorepoRoot,
       pathToSubjectPackages: ['packages/b', 'packages/c'],
       monorepoRoot,
