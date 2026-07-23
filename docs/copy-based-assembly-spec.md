@@ -1,8 +1,8 @@
-# Monocrate: Copy-Based Assembly
+# Monopush: Copy-Based Assembly
 
 ## Problem Statement
 
-An earlier version of Monocrate used esbuild to bundle a package and its in-repo dependencies into a single `index.js` file. This worked for JavaScript but **produced no type declarations**. The published package had no `.d.ts` files, making it unusable for TypeScript consumers.
+An earlier version of Monopush used esbuild to bundle a package and its in-repo dependencies into a single `index.js` file. This worked for JavaScript but **produced no type declarations**. The published package had no `.d.ts` files, making it unusable for TypeScript consumers.
 
 Bundling `.d.ts` files is possible (via `dts-bundle-generator`, `rollup-plugin-dts`, or `api-extractor`) but adds complexity and another tool to maintain.
 
@@ -45,7 +45,7 @@ monorepo/
       package.json
 ```
 
-Monocrate produces:
+Monopush produces:
 ```
 output/
   package.json            ← transformed from source package
@@ -257,7 +257,7 @@ const x: string = bar  // Should typecheck
 
 ## Migration Path
 
-This was a breaking change to monocrate's output format. The output changed from:
+This was a breaking change to monopush's output format. The output changed from:
 ```
 output/
   index.js          ← single bundled file (old approach)
@@ -272,7 +272,7 @@ output/
   package.json
 ```
 
-Consumers of monocrate needed to update any assumptions about output structure.
+Consumers of monopush needed to update any assumptions about output structure.
 
 ---
 

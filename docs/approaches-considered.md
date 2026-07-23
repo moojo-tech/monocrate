@@ -1,12 +1,12 @@
 # Approaches for Embedding In-Repo Dependencies
 
-Monocrate needs to embed in-repo (workspace) dependencies into the published tarball so consumers can install the package without those internal packages existing on npm. Three approaches were tried. Two failed for reasons rooted in how package managers and Node.js resolve modules; the first — import rewriting — is the adopted approach, at the cost of supporting ESM only.
+Monopush needs to embed in-repo (workspace) dependencies into the published tarball so consumers can install the package without those internal packages existing on npm. Three approaches were tried. Two failed for reasons rooted in how package managers and Node.js resolve modules; the first — import rewriting — is the adopted approach, at the cost of supporting ESM only.
 
 ## Approach 1: Rewrite Import Paths at Pack Time (adopted)
 
 Copy in-repo dependency files into the output and rewrite all import specifiers from package names (`@myorg/utils`) to relative paths (`./deps/@myorg/utils/dist/index.js`).
 
-**Result: works for ESM, fails for CJS. This is the adopted approach — monocrate is ESM-only by design.**
+**Result: works for ESM, fails for CJS. This is the adopted approach — monopush is ESM-only by design.**
 
 ESM `import` declarations are static: the specifier must be a string literal, it must appear at the top level, and it is parsed before execution ([Node.js ESM docs](https://nodejs.org/api/esm.html), [MDN import reference](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import)). This makes them straightforward to find and rewrite with an AST tool.
 

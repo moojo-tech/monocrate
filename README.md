@@ -1,7 +1,7 @@
-# monocrate
+# monopush
 
-[![npm version](https://img.shields.io/npm/v/monocrate.svg)](https://www.npmjs.com/package/monocrate)
-[![CI](https://github.com/imaman/monocrate/actions/workflows/ci.yml/badge.svg)](https://github.com/imaman/monocrate/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/monopush.svg)](https://www.npmjs.com/package/monopush)
+[![CI](https://github.com/moojo-tech/monopush/actions/workflows/ci.yml/badge.svg)](https://github.com/moojo-tech/monopush/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 *Monorepos? Great. Publishing from a monorepo? Comically hard.*
@@ -22,7 +22,7 @@ sourcemaps often break, and consumers can't tree-shake a pre-bundled blob.
 
 ## The Solution
 
-[monocrate](https://www.npmjs.com/package/monocrate) is a publishing CLI that gets this right. It produces a single 
+[monopush](https://www.npmjs.com/package/monopush) is a publishing CLI that gets this right. It produces a single 
 publishable directory containing everything needed from your package and its in-repo dependencies. Essentially, it 
 produces a standard npm package that looks like you hand-crafted it for publication.
 
@@ -31,24 +31,24 @@ produces a standard npm package that looks like you hand-crafted it for publicat
 - ✅ Tree-shaking, sourcemaps, and types all work
 
 > [!NOTE]
-> **ESM only** — monocrate supports ES modules exclusively. CommonJS packages (`.cjs` files or `.js` without `"type": "module"`) are not supported. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
+> **ESM only** — monopush supports ES modules exclusively. CommonJS packages (`.cjs` files or `.js` without `"type": "module"`) are not supported. If your monorepo uses CommonJS, consider [migrating to ESM](https://nodejs.org/api/esm.html).
 
 ### Quickstart
 
 ```bash
 # Install
-pnpm add --save-dev monocrate
-# or: yarn add --dev monocrate
-# or: npm install --save-dev monocrate
+pnpm add --save-dev monopush
+# or: yarn add --dev monopush
+# or: npm install --save-dev monopush
 
-# Build (monocrate publishes, it doesn't build)
+# Build (monopush publishes, it doesn't build)
 npm run build
 
 # Publish
-npx monocrate publish packages/my-awesome-package --bump patch
+npx monopush publish packages/my-awesome-package --bump patch
 
 # Or use "pack" to do everything short of publishing
-npx monocrate pack packages/my-awesome-package --pack-destination /tmp/inspect --bump patch
+npx monopush pack packages/my-awesome-package --pack-destination /tmp/inspect --bump patch
 ```
 
 ### What Gets Published
@@ -67,9 +67,9 @@ Given this monorepo structure:
             └── index.ts
 ```
 
-Running `npx monocrate publish packages/my-awesome-package` produces:
+Running `npx monopush publish packages/my-awesome-package` produces:
 ```
-/tmp/monocrate-xxxxxx/
+/tmp/monopush-xxxxxx/
 └── packages/
     └── my-awesome-package/      # preserves the package's path in the monorepo
         ├── package.json         # name: "@acme/my-awesome-package", version: "1.3.0" (the new resolved version)
@@ -87,14 +87,14 @@ mangled version of its package name. This avoids name collisions regardless of w
 
 ### Version Resolution
 
-`monocrate` uses **registry-based versioning**: it queries the registry for the latest published version and bumps it
+`monopush` uses **registry-based versioning**: it queries the registry for the latest published version and bumps it
 according to your `--bump` flag (`patch`, `minor`, `major`). Your source `package.json` is never modified.
 
 This means you don't need to maintain version numbers in your source code. The registry is the versioning source of
-truth, and `monocrate` computes the next version at publish time. Of course, if an exact version is specified
+truth, and `monopush` computes the next version at publish time. Of course, if an exact version is specified
 (`--bump 1.7.9`) it is used as-is.
 
-For first-time publishing (when the package doesn't exist in the registry yet), `monocrate` treats the current version
+For first-time publishing (when the package doesn't exist in the registry yet), `monopush` treats the current version
 as `0.0.0` and applies the bump—resulting in `0.0.1` for patch, `0.1.0` for minor (the default), or `1.0.0` for major.
 
 If the version to publish to is already set in the package's `package.json` file (via `npm version`, Changesets, Lerna,
@@ -102,34 +102,34 @@ etc.), you can use `--bump package` to read the version directly from there:
 
 ```bash
 npm version minor --no-git-tag-version   # Sets version in package.json
-npx monocrate publish . --bump package   # Uses that version
+npx monopush publish . --bump package   # Uses that version
 ```
 
 ## Examples
 
 ```bash
 # --bump defaults to "minor", so these two are equivalent:
-npx monocrate publish packages/my-awesome-package --bump minor
-npx monocrate publish packages/my-awesome-package
+npx monopush publish packages/my-awesome-package --bump minor
+npx monopush publish packages/my-awesome-package
 
 # Explicit version
-npx monocrate publish packages/my-awesome-package --bump 2.3.0
+npx monopush publish packages/my-awesome-package --bump 2.3.0
 
 # Prepare everything (including the tarball) without publishing
-npx monocrate pack packages/my-awesome-package --bump 2.3.0
+npx monopush pack packages/my-awesome-package --bump 2.3.0
 
 # Package location is resolved relative to CWD
 cd /path/to/my-monorepo/packages
-npx monocrate publish my-awesome-package --bump 2.3.0
+npx monopush publish my-awesome-package --bump 2.3.0
 ```
 
 ## Programmatic API
 
-For custom build steps, or integration with other tooling, you can use `monocrate` as a library instead of invoking the
+For custom build steps, or integration with other tooling, you can use `monopush` as a library instead of invoking the
 CLI:
 
 ```typescript
-import { monocrate } from 'monocrate'
+import { monopush } from 'monopush'
 
 const result = await monopush({
   pathToSubjectPackages: ['packages/my-awesome-package'],
@@ -141,19 +141,19 @@ const result = await monopush({
 console.log(result.summaries[0].version) // '1.3.0'
 ```
 
-The above snippet is the programmatic equivalent of `npx monocrate publish packages/my-awesome-package --bump minor`.
+The above snippet is the programmatic equivalent of `npx monopush publish packages/my-awesome-package --bump minor`.
 
 ## Advanced Features
 
 ### Custom Publish Name
 
-Sometimes your internal package name doesn't match the name you want on npm. Add a `monocrate.publishName` field to 
+Sometimes your internal package name doesn't match the name you want on npm. Add a `monopush.publishName` field to 
 your `package.json` to publish under a different name without renaming the package across your monorepo:
 
 ```json
 {
   "name": "@acme/my-awesome-package",
-  "monocrate": {
+  "monopush": {
     "publishName": "best-package-ever"
   }
 }
@@ -165,7 +165,7 @@ Want to open-source your package while keeping your monorepo private? Use `--mir
 in-repo dependencies to a separate public repository:
 
 ```bash
-npx monocrate publish packages/my-awesome-package --mirror-to ../public-repo
+npx monopush publish packages/my-awesome-package --mirror-to ../public-repo
 ```
 
 This way, your public repo stays in sync with what you publish—all necessary packages included. Contributors can
@@ -178,7 +178,7 @@ Requires a clean working tree. Only committed files (from `git HEAD`) are mirror
 If you have several public packages in your monorepo, publish them in one go by listing multiple directories:
 
 ```bash
-npx monocrate publish packages/lib-a packages/lib-b --bump patch
+npx monopush publish packages/lib-a packages/lib-b --bump patch
 ```
 
 By default, each package will be published at its own version (individual versioning). If `lib-a` is at `1.0.0` and `lib-b`
@@ -189,38 +189,38 @@ You can also publish all specified packages at the same version (unified version
 
 ```bash
 # Now both will be published at 2.0.1 (the max)
-npx monocrate publish packages/lib-a packages/lib-b --bump patch --max
+npx monopush publish packages/lib-a packages/lib-b --bump patch --max
 ```
 
 This is purely a stylistic choice; correctness is unaffected since in-repo dependencies are always embedded.
 
 ## Scope
 
-monocrate makes a few deliberate choices:
+monopush makes a few deliberate choices:
 
 - **Runtime dependencies only** — Only `dependencies` are traversed and embedded. `devDependencies` are ignored since 
 consumers don't need your build tools.
 - **Version conflicts fail early** — If two in-repo packages require different versions of the same third-party 
-dependency, monocrate stops with a clear error rather than silently picking one.
+dependency, monopush stops with a clear error rather than silently picking one.
 - **File selection via `npm pack`** — Your `files` field in package.json is the source of truth for what gets published.
-monocrate doesn't introduce its own file configuration.
+monopush doesn't introduce its own file configuration.
 - **Validates before heavy work** — npm login and other prerequisites are checked upfront, before any file copying 
 begins.
 
 A few constraints to be aware of:
 
-- **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; if a dynamic module path like `await import(variable)` is detected, `monocrate` stops with a clear error.
+- **Dynamic imports must use string literals** — `await import('@pkg/lib')` works; if a dynamic module path like `await import(variable)` is detected, `monopush` stops with a clear error.
 - **Prerelease versions require explicit `--bump`** — `--bump package` expects strict semver (`X.Y.Z`). For prereleases, pass the version explicitly: `--bump 1.0.0-beta.1`.
 - **peerDependencies are preserved, not embedded** — As with any package publishing tool, you're responsible for ensuring peer dependencies (in-repo or not) are published and available to consumers.
 - **optionalDependencies are preserved, not embedded** — If you list an in-repo package as optional, you're responsible for publishing it separately.
 - **Symlinks must stay within monorepo** — Packages symlinked from outside the monorepo root are rejected.
-- **Undeclared in-repo imports fail** — If your code imports an in-repo package not listed in `dependencies`, monocrate catches this and fails with a clear error.
+- **Undeclared in-repo imports fail** — If your code imports an in-repo package not listed in `dependencies`, monopush catches this and fails with a clear error.
 
 ## CLI Reference
 
 ```
-monocrate publish <packages...> [options]
-monocrate pack <packages...> [options]
+monopush publish <packages...> [options]
+monopush pack <packages...> [options]
 ```
 
 ### Commands
@@ -253,11 +253,11 @@ monocrate pack <packages...> [options]
 
 ## API Reference
 
-### `monocrate(options): Promise<MonocrateResult>`
+### `monopush(options): Promise<MonopushResult>`
 
 Assembles one or more monorepo packages and their in-repo dependencies, and optionally publishes to npm.
 
-### `MonocrateOptions`
+### `MonopushOptions`
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
@@ -271,7 +271,7 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 | `mirrorTo` | `string` | No | — | Mirror source files to this directory. |
 | `npmrcPath` | `string` | No | — | Path to `.npmrc` file for npm authentication. |
 
-### `MonocrateResult`
+### `MonopushResult`
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -282,7 +282,7 @@ Assembles one or more monorepo packages and their in-repo dependencies, and opti
 
 ## The Assembly Process
 
-Here's a conceptual breakdown of the steps that happen at a typical `monocrate` run:
+Here's a conceptual breakdown of the steps that happen at a typical `monopush` run:
 
 0. **Setup**: Creates a dedicated output directory
 1. **Version Resolution**: Computes the new version (see [above](#version-resolution))
